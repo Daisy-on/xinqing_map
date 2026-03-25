@@ -1,45 +1,138 @@
 <template>
   <main class="home-view">
-    <h1>心晴地图</h1>
-    <p>地图主页骨架已就绪，先从这里开始开发。</p>
-    <nav class="entry-nav">
-      <RouterLink to="/auth">登录/注册</RouterLink>
-      <RouterLink to="/spots/1">地点详情示例</RouterLink>
-      <RouterLink to="/compose">发布心情</RouterLink>
-      <RouterLink to="/profile">我的主页</RouterLink>
-    </nav>
+    <div ref="mapContainer" class="map-container"></div>
+    <div v-if="pickedPoint" class="coord-panel">
+      <p>已选点位</p>
+      <p>坐标系：BD-09（经纬度）</p>
+      <p>lng: {{ pickedPoint.lng }}</p>
+      <p>lat: {{ pickedPoint.lat }}</p>
+    </div>
+    <div v-if="loadError" class="map-error">{{ loadError }}</div>
   </main>
 </template>
 
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+const mapContainer = ref<HTMLElement | null>(null)
+const loadError = ref('')
+const pickedPoint = ref<{ lng: string; lat: string } | null>(null)
+let map: BMapGLMap | null = null
+let marker: BMapGLMarker | null = null
+let clickHandler: ((event: BMapGLClickEvent) => void) | null = null
+
+onMounted(() => {
+  if (!mapContainer.value) {
+    loadError.value = '地图容器初始化失败，请刷新页面重试。'
+    return
+  }
+
+  if (!window.BMapGL) {
+    loadError.value = '百度地图脚本加载失败，请检查网络或 AK 配置。'
+    return
+  }
+
+  const { Map, Point, Marker, NavigationControl, ScaleControl } = window.BMapGL
+  const center = new Point(106.791034, 29.712457)
+  const instance = new Map(mapContainer.value)
+
+  instance.centerAndZoom(center, 14)
+  instance.enableScrollWheelZoom(true)
+  instance.addControl(new NavigationControl())
+  instance.addControl(new ScaleControl())
+
+  clickHandler = (event: BMapGLClickEvent) => {
+    const source = event.latlng ?? event.point
+    if (!source) {
+      loadError.value = '未能读取点击坐标，请重试。'
+      return
+    }
+
+    const { lng, lat } = source
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+      loadError.value = '坐标解析失败，请重试。'
+      return
+    }
+
+    // point 在某些场景可能是投影坐标；优先使用 latlng 作为标准经纬度。
+    if (!event.latlng && (Math.abs(lng) > 180 || Math.abs(lat) > 90)) {
+      loadError.value = '当前事件返回的是投影坐标，未拿到标准经纬度。请升级脚本版本或开启逆转换。'
+      return
+    }
+
+    const normalizedLng = lng
+    const normalizedLat = lat
+    const point = new Point(normalizedLng, normalizedLat)
+
+    if (marker) {
+      instance.removeOverlay(marker)
+    }
+
+    marker = new Marker(point)
+    instance.addOverlay(marker)
+    pickedPoint.value = {
+      lng: normalizedLng.toFixed(6),
+      lat: normalizedLat.toFixed(6),
+    }
+    loadError.value = ''
+  }
+
+  instance.addEventListener('click', clickHandler)
+
+  map = instance
+})
+
+onBeforeUnmount(() => {
+  if (!map) return
+
+  if (clickHandler) {
+    map.removeEventListener('click', clickHandler)
+  }
+
+  map.clearOverlays()
+  marker = null
+  clickHandler = null
+  map = null
+})
 </script>
 
 <style scoped>
 .home-view {
-  min-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+  position: relative;
+  width: 100%;
+  height: 100vh;
 }
 
-.entry-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.map-container {
+  width: 100%;
+  height: 100%;
 }
 
-.entry-nav a {
-  padding: 0.4rem 0.7rem;
-  border-radius: 8px;
-  background: #f4f6fb;
-  color: #334155;
-  text-decoration: none;
+.map-error {
+  position: absolute;
+  inset: auto 16px 16px 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.entry-nav a:hover {
-  background: #e2e8f0;
+.coord-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.15);
+}
+
+.coord-panel p {
+  margin: 0;
 }
 </style>
