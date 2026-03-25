@@ -24,10 +24,10 @@ onMounted(() => {
   }
 
   const { Map, Point, NavigationControl, ScaleControl } = window.BMapGL
-  const center = new Point(106.791034, 29.712457)
+  const center = new Point(106.796971, 29.719559)
   const instance = new Map(mapContainer.value)
 
-  instance.centerAndZoom(center, 14)
+  instance.centerAndZoom(center, 19)
   instance.enableScrollWheelZoom(true)
   instance.addControl(new NavigationControl())
   instance.addControl(new ScaleControl())
