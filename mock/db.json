@@ -1,0 +1,28 @@
+{
+  "locations": [
+    {
+      "id": 1,
+      "name": "图书馆",
+      "lng": 106.796967,
+      "lat": 29.719555,
+      "icon": "LIB",
+      "weatherCode": "CALM",
+      "weatherText": "局部放晴",
+      "moodText": "平静",
+      "description": "靠窗位采光很好，适合独处和专注。",
+      "locationImage": ""
+    },
+    {
+      "id": 2,
+      "name": "操场",
+      "lng": 106.79526,
+      "lat": 29.71482,
+      "icon": "RUN",
+      "weatherCode": "SUNNY",
+      "weatherText": "晴空万里",
+      "moodText": "畅快",
+      "description": "晚风一吹，跑道会让人慢慢放松。",
+      "locationImage": ""
+    }
+  ]
+}

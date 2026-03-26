@@ -8,8 +8,12 @@ export interface User {
 export interface Location {
   id: number
   name: string
+  lng: number
+  lat: number
+  icon: string
   weatherCode: string
   weatherText: string
+  moodText: string
   description?: string
   locationImage?: string
 }

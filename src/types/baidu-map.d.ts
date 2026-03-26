@@ -4,6 +4,20 @@ declare global {
     lat: number
   }
 
+  interface BMapGLPanes {
+    labelPane: HTMLElement
+  }
+
+  interface BMapGLOverlay {
+    initialize(map: BMapGLMap): HTMLElement
+    draw(): void
+  }
+
+  interface BMapGLOverlayConstructor {
+    new (): BMapGLOverlay
+    getZIndex(lat: number): number
+  }
+
   interface BMapGLPolygon {}
 
   interface BMapGLMap {
@@ -19,7 +33,9 @@ declare global {
     addEventListener(type: string, handler: (event: unknown) => void): void
     removeEventListener(type: string, handler: (event: unknown) => void): void
     pointToPixel(point: BMapGLPoint): { x: number; y: number }
+    pointToOverlayPixel(point: BMapGLPoint): { x: number; y: number }
     getCenter(): BMapGLLngLat
+    getPanes(): BMapGLPanes
     clearOverlays(): void
   }
 
@@ -29,6 +45,7 @@ declare global {
     Map: new (container: string | HTMLElement, options?: Record<string, unknown>) => BMapGLMap
     Point: new (lng: number, lat: number) => BMapGLPoint
     Polygon: new (points: BMapGLPoint[] | BMapGLPoint[][], options?: Record<string, unknown>) => BMapGLPolygon
+    Overlay: BMapGLOverlayConstructor
     NavigationControl: new () => unknown
     ScaleControl: new () => unknown
   }

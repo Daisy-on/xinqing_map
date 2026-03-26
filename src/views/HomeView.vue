@@ -1,6 +1,17 @@
 <template>
   <main class="home-view">
     <div ref="mapContainer" class="map-container"></div>
+    <div v-if="landmarkLocation && landmarkPixel" class="landmark-layer">
+      <div
+        class="landmark-anchor"
+        :style="{
+          left: `${landmarkPixel.x}px`,
+          top: `${landmarkPixel.y}px`,
+        }"
+      >
+        <LandmarkCard :location="landmarkLocation" />
+      </div>
+    </div>
     <svg v-if="svgMaskPath" class="dom-mask" xmlns="http://www.w3.org/2000/svg">
       <path :d="svgMaskPath" fill="#ffffff" fill-rule="evenodd" />
     </svg>
@@ -10,6 +21,9 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { fetchLocationList } from '@/api/location'
+import LandmarkCard from '@/components/map/LandmarkCard.vue'
+import type { Location } from '@/types/models'
 
 type BoundaryPoint = { lng: number; lat: number }
 
@@ -28,11 +42,28 @@ let maskUpdateFrame = 0
 let maskOverlays: BMapGLPolygon[] = []
 let boundaryBounds: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null = null
 let isAdjustingBounds = false
+const landmarkLocation = ref<Location | null>(null)
+const landmarkPixel = ref<{ x: number; y: number } | null>(null)
 
 function clearMaskOverlays(instance: BMapGLMap) {
   if (maskOverlays.length === 0) return
   maskOverlays.forEach((overlay) => instance.removeOverlay(overlay))
   maskOverlays = []
+}
+
+function clearLandmark() {
+  landmarkLocation.value = null
+  landmarkPixel.value = null
+}
+
+function updateLandmarkPixel() {
+  if (!map || !mapApi || !landmarkLocation.value) return
+
+  const pixel = map.pointToPixel(new mapApi.Point(landmarkLocation.value.lng, landmarkLocation.value.lat))
+  landmarkPixel.value = {
+    x: pixel.x,
+    y: pixel.y,
+  }
 }
 
 function renderRectMaskFallback(instance: BMapGLMap, api: BMapGLNamespace, points: BoundaryPoint[]) {
@@ -212,6 +243,39 @@ async function loadBoundaryAndMask() {
   map.addEventListener('moveend', enforceDragBounds)
 }
 
+async function loadFirstLandmark() {
+  if (!map || !mapApi) return
+
+  const locationList = await fetchLocationList()
+  if (locationList.length === 0) {
+    return
+  }
+
+  const inBoundsLocation = boundaryBounds
+    ? locationList.find(
+        (location) =>
+          location.lng >= boundaryBounds!.minLng &&
+          location.lng <= boundaryBounds!.maxLng &&
+          location.lat >= boundaryBounds!.minLat &&
+          location.lat <= boundaryBounds!.maxLat,
+      )
+    : null
+
+  const firstLocation = (inBoundsLocation || locationList[0]) as Location
+  if (!Number.isFinite(firstLocation.lng) || !Number.isFinite(firstLocation.lat)) {
+    throw new Error('地点坐标格式无效，无法渲染地标。')
+  }
+
+  landmarkLocation.value = firstLocation
+  updateLandmarkPixel()
+
+  map.addEventListener('zooming', updateLandmarkPixel)
+  map.addEventListener('zoomend', updateLandmarkPixel)
+  map.addEventListener('moving', updateLandmarkPixel)
+  map.addEventListener('moveend', updateLandmarkPixel)
+  map.addEventListener('resize', updateLandmarkPixel)
+}
+
 onMounted(() => {
   if (!mapContainer.value) {
     loadError.value = '地图容器初始化失败，请刷新页面重试。'
@@ -241,11 +305,12 @@ onMounted(() => {
   map = instance
 
   loadBoundaryAndMask()
+    .then(() => loadFirstLandmark())
     .then(() => {
       loadError.value = ''
     })
     .catch((error) => {
-      loadError.value = error instanceof Error ? error.message : '边界加载失败，请检查 JSON 格式。'
+      loadError.value = error instanceof Error ? error.message : '地图数据加载失败，请稍后重试。'
     })
 })
 
@@ -261,7 +326,13 @@ onBeforeUnmount(() => {
   map.removeEventListener('moveend', updateSvgMask)
   map.removeEventListener('resize', updateSvgMask)
   map.removeEventListener('moveend', enforceDragBounds)
+  map.removeEventListener('zooming', updateLandmarkPixel)
+  map.removeEventListener('zoomend', updateLandmarkPixel)
+  map.removeEventListener('moving', updateLandmarkPixel)
+  map.removeEventListener('moveend', updateLandmarkPixel)
+  map.removeEventListener('resize', updateLandmarkPixel)
 
+  clearLandmark()
   map.clearOverlays()
   maskOverlays = []
   boundaryBounds = null
@@ -282,6 +353,19 @@ onBeforeUnmount(() => {
   z-index: 1;
   width: 100%;
   height: 100%;
+}
+
+.landmark-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+
+.landmark-anchor {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  pointer-events: auto;
 }
 
 .map-error {
