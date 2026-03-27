@@ -25,12 +25,30 @@ export interface EmotionTag {
   sortNum: number
 }
 
+export interface ReactionSummary {
+  support: number
+  relax: number
+  anxious: number
+}
+
 export interface PostItem {
   id: number
   locationId: number
+  locationName?: string
   emotionTagId: number
+  emotionTagName?: string
+  emotionTagColor?: string
   content: string
   userId: number
   likeCount: number
   createTime: string
+  imageUrls?: string[]
+  reactionSummary?: ReactionSummary
+}
+
+export interface PagedResult<T> {
+  total: number
+  pageNum: number
+  pageSize: number
+  records: T[]
 }
