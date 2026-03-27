@@ -9,13 +9,18 @@
           top: `${landmarkPixel.y}px`,
         }"
       >
-        <LandmarkCard :location="landmarkLocation" />
+        <LandmarkCard :location="landmarkLocation" @click="handleLandmarkClick" />
       </div>
     </div>
     <svg v-if="svgMaskPath" class="dom-mask" xmlns="http://www.w3.org/2000/svg">
       <path :d="svgMaskPath" fill="#ffffff" fill-rule="evenodd" />
     </svg>
     <div v-if="loadError" class="map-error">{{ loadError }}</div>
+
+    <LandmarkDetailPanel
+      v-model="isDetailPanelVisible"
+      :landmark="selectedLandmark"
+    />
   </main>
 </template>
 
@@ -23,6 +28,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { fetchLocationList } from '@/api/location'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
+import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
 import type { Location } from '@/types/models'
 
 type BoundaryPoint = { lng: number; lat: number }
@@ -44,6 +50,14 @@ let boundaryBounds: { minLng: number; maxLng: number; minLat: number; maxLat: nu
 let isAdjustingBounds = false
 const landmarkLocation = ref<Location | null>(null)
 const landmarkPixel = ref<{ x: number; y: number } | null>(null)
+
+const isDetailPanelVisible = ref(false)
+const selectedLandmark = ref<Location | null>(null)
+
+function handleLandmarkClick(loc: Location) {
+  selectedLandmark.value = loc
+  isDetailPanelVisible.value = true
+}
 
 function clearMaskOverlays(instance: BMapGLMap) {
   if (maskOverlays.length === 0) return

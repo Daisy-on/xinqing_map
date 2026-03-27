@@ -1,5 +1,5 @@
 <template>
-  <article class="landmark-card" aria-label="landmark-card">
+  <article class="landmark-card" aria-label="landmark-card" @click="$emit('click', location)">
     <div class="landmark-icon">{{ iconText }}</div>
     <div class="landmark-body">
       <h3 class="landmark-name">{{ location.name }}</h3>
@@ -15,6 +15,10 @@ import type { Location } from '@/types/models'
 
 const props = defineProps<{
   location: Location
+}>()
+
+defineEmits<{
+  (e: 'click', value: Location): void
 }>()
 
 const iconText = computed(() => props.location.icon.slice(0, 4).toUpperCase())
@@ -39,8 +43,15 @@ const iconText = computed(() => props.location.icon.slice(0, 4).toUpperCase())
   box-shadow: 0 10px 24px rgba(2, 46, 74, 0.2);
   pointer-events: auto;
   user-select: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   transform-origin: bottom center;
   animation: card-in 260ms ease-out;
+}
+
+.landmark-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 28px rgba(2, 46, 74, 0.25);
 }
 
 .landmark-icon {
