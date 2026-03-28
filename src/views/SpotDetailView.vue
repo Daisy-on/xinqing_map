@@ -21,7 +21,7 @@
         class="post-bubble"
         :class="bubbleClassByIndex(index)"
         :style="bubbleStyleByIndex(index)"
-        @click="openPost(post)"
+        @click="openPost(post, $event)"
       >
         <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
           {{ post.emotionTagName || '心情' }}
@@ -32,7 +32,12 @@
 
     <transition name="veil-fade">
       <div v-if="selectedPost" class="detail-veil" @click.self="closePost">
-        <article class="detail-card">
+        <article
+          ref="detailCardRef"
+          class="detail-card"
+          :class="{ 'shared-animating': isSharedAnimating }"
+          :style="sharedCardStyle"
+        >
           <button type="button" class="detail-close" @click="closePost" aria-label="关闭详情">
             <el-icon><CloseBold /></el-icon>
           </button>
@@ -112,15 +117,25 @@ const isLoadingPosts = ref(false)
 const selectedPost = ref<PostItem | null>(null)
 const reactionDeltaMap = ref<Record<number, ReactionSummary>>({})
 const likeDeltaMap = ref<Record<number, number>>({})
+const detailCardRef = ref<HTMLElement | null>(null)
+const isSharedAnimating = ref(false)
+const sharedCardStyle = ref<Record<string, string>>({})
+const lastBubbleRect = ref<DOMRect | null>(null)
 
 const rainCanvas = ref<HTMLCanvasElement | null>(null)
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 let rafId = 0
 let resizeTimer = 0
+let cardAnimation: Animation | null = null
 let ctx: CanvasRenderingContext2D | null = null
 let drops: RainDrop[] = []
 let lightning = 0
+
+const ENTER_DURATION = 460
+const EXIT_DURATION = 280
+const ENTER_EASING = 'cubic-bezier(0.16, 1, 0.3, 1)'
+const EXIT_EASING = 'cubic-bezier(0.7, 0, 0.84, 0)'
 
 const isRainy = computed(() => {
   const loc = currentLocation.value
@@ -152,12 +167,136 @@ const goBack = () => {
   router.push('/')
 }
 
-const openPost = (post: PostItem) => {
-  selectedPost.value = post
+const cancelCardAnimation = () => {
+  if (!cardAnimation) return
+  cardAnimation.cancel()
+  cardAnimation = null
 }
 
-const closePost = () => {
+const resetSharedCardState = () => {
+  sharedCardStyle.value = {}
+  isSharedAnimating.value = false
+}
+
+const runCardAnimation = async (
+  card: HTMLElement,
+  keyframes: Keyframe[],
+  options: KeyframeAnimationOptions,
+) => {
+  cancelCardAnimation()
+  cardAnimation = card.animate(keyframes, {
+    fill: 'forwards',
+    ...options,
+  })
+
+  try {
+    await cardAnimation.finished
+  } catch {
+    // Ignore aborted animation errors.
+  }
+
+  cardAnimation = null
+}
+
+const openPost = async (post: PostItem, event: MouseEvent) => {
+  const target = event.currentTarget as HTMLElement | null
+  lastBubbleRect.value = target?.getBoundingClientRect() || null
+
+  selectedPost.value = post
+
+  if (reducedMotion || !lastBubbleRect.value) {
+    resetSharedCardState()
+    return
+  }
+
+  await nextTick()
+  const card = detailCardRef.value
+  if (!card) return
+
+  const from = lastBubbleRect.value
+  const to = card.getBoundingClientRect()
+  const dx = from.left - to.left
+  const dy = from.top - to.top
+  const sx = Math.max(0.22, from.width / to.width)
+  const sy = Math.max(0.2, from.height / to.height)
+
+  isSharedAnimating.value = true
+  sharedCardStyle.value = {
+    transformOrigin: 'top left',
+  }
+
+  await runCardAnimation(
+    card,
+    [
+      {
+        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        opacity: 0.58,
+        filter: 'blur(4px)',
+      },
+      {
+        transform: 'translate(0px, 0px) scale(1.012, 1.012)',
+        opacity: 1,
+        filter: 'blur(0px)',
+        offset: 0.78,
+      },
+      {
+        transform: 'translate(0px, 0px) scale(1, 1)',
+        opacity: 1,
+        filter: 'blur(0px)',
+      },
+    ],
+    {
+      duration: ENTER_DURATION,
+      easing: ENTER_EASING,
+    },
+  )
+
+  resetSharedCardState()
+}
+
+const closePost = async () => {
+  const card = detailCardRef.value
+  const target = lastBubbleRect.value
+
+  if (reducedMotion || !card || !target) {
+    selectedPost.value = null
+    resetSharedCardState()
+    return
+  }
+
+  const from = card.getBoundingClientRect()
+  const dx = target.left - from.left
+  const dy = target.top - from.top
+  const sx = Math.max(0.22, target.width / from.width)
+  const sy = Math.max(0.2, target.height / from.height)
+
+  isSharedAnimating.value = true
+  sharedCardStyle.value = {
+    transformOrigin: 'top left',
+  }
+
+  await runCardAnimation(
+    card,
+    [
+      {
+        transform: 'translate(0px, 0px) scale(1, 1)',
+        opacity: 1,
+        filter: 'blur(0px)',
+      },
+      {
+        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        opacity: 0.18,
+        filter: 'blur(2px)',
+      },
+    ],
+    {
+      duration: EXIT_DURATION,
+      easing: EXIT_EASING,
+    },
+  )
+
   selectedPost.value = null
+  resetSharedCardState()
 }
 
 const likeSelected = () => {
@@ -337,6 +476,7 @@ onBeforeUnmount(() => {
   stopRain()
   window.removeEventListener('resize', handleResize)
   window.clearTimeout(resizeTimer)
+  cancelCardAnimation()
 })
 </script>
 
@@ -506,6 +646,13 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(12px);
   box-shadow: 0 26px 46px rgba(7, 16, 30, 0.34);
   padding: 20px;
+  transform-origin: top left;
+  will-change: transform, opacity;
+  transition: box-shadow 240ms ease;
+}
+
+.detail-card.shared-animating {
+  pointer-events: none;
 }
 
 .detail-close {
@@ -603,7 +750,7 @@ onBeforeUnmount(() => {
 
 .veil-fade-enter-active,
 .veil-fade-leave-active {
-  transition: opacity 220ms ease;
+  transition: opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .veil-fade-enter-from,
