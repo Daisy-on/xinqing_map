@@ -14,20 +14,42 @@
       <div v-if="isLoadingPosts" class="state-card">正在加载帖子...</div>
       <div v-else-if="posts.length === 0" class="state-card">这里还没有留言，发一条成为第一位吧。</div>
 
-      <button
-        v-for="(post, index) in posts"
-        :key="post.id"
-        type="button"
-        class="post-bubble"
-        :class="bubbleClassByIndex(index)"
-        :style="bubbleStyleByIndex(index)"
-        @click="openPost(post, $event)"
-      >
-        <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
-          {{ post.emotionTagName || '心情' }}
-        </span>
-        <p class="bubble-content">{{ post.content }}</p>
-      </button>
+      <transition :name="slideDirection">
+        <div v-if="posts.length > 0" class="bubbles-layer" :key="currentPage">
+          <button
+            v-for="(post, index) in posts"
+            :key="post.id"
+            type="button"
+            class="post-bubble"
+            :class="bubbleClassByIndex(index)"
+            :style="bubbleStyleByIndex(index)"
+            @click="openPost(post, $event)"
+          >
+            <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
+              {{ post.emotionTagName || '心情' }}
+            </span>
+            <p class="bubble-content">{{ post.content }}</p>
+          </button>
+        </div>
+      </transition>
+      
+      <div v-if="totalPosts > 10" class="pagination-controls">
+        <el-button 
+          :disabled="currentPage === 1" 
+          @click="prevPage" 
+          round
+        >
+          上一页
+        </el-button>
+        <span class="page-indicator">{{ currentPage }} / {{ Math.ceil(totalPosts / 10) }}</span>
+        <el-button 
+          :disabled="currentPage * 10 >= totalPosts" 
+          @click="nextPage" 
+          round
+        >
+          下一页
+        </el-button>
+      </div>
     </div>
 
     <transition name="veil-fade">
@@ -114,6 +136,9 @@ const spotId = computed(() => Number(route.params.spotId))
 const currentLocation = ref<Location | null>(null)
 const posts = ref<PostItem[]>([])
 const isLoadingPosts = ref(false)
+const currentPage = ref(1)
+const totalPosts = ref(0)
+const slideDirection = ref('slide-left')
 const selectedPost = ref<PostItem | null>(null)
 const reactionDeltaMap = ref<Record<number, ReactionSummary>>({})
 const likeDeltaMap = ref<Record<number, number>>({})
@@ -316,19 +341,28 @@ const react = (type: ReactionKey) => {
 }
 
 const bubbleStyleByIndex = (index: number) => {
+  // 妙招 1: 提供足够多的预设点位(大于等于 pageSize 10)，彻底消灭百分百同位置覆盖
+  // 并采用左右错落的黄金分布规律
   const presets = [
-    { top: '26%', left: '10%' },
-    { top: '48%', left: '62%' },
-    { top: '62%', left: '24%' },
-    { top: '35%', left: '54%' },
-    { top: '72%', left: '58%' },
-    { top: '18%', left: '38%' },
+    { top: '14%', left: '4%' },
+    { top: '18%', left: '56%' },
+    { top: '34%', left: '14%' },
+    { top: '38%', left: '62%' },
+    { top: '50%', left: '6%' },
+    { top: '56%', left: '52%' },
+    { top: '70%', left: '20%' },
+    { top: '74%', left: '58%' },
+    { top: '86%', left: '10%' },
+    { top: '86%', left: '60%' },
   ]
 
   const value = presets[index % presets.length] ?? { top: '26%', left: '10%' }
   return {
     top: value.top,
     left: value.left,
+    // 注入随机偏移量给 CSS 计算使用
+    '--tx': `${Math.sin(index * 13) * 12}px`,
+    '--ty': `${Math.cos(index * 17) * 12}px`,
   }
 }
 
@@ -440,17 +474,36 @@ const loadLocation = async () => {
   currentLocation.value = locations.find((item) => item.id === spotId.value) ?? null
 }
 
-const loadPosts = async () => {
-  isLoadingPosts.value = true
+const loadPosts = async (pageArg?: number) => {
+  const targetPage = pageArg ?? currentPage.value
+  if (posts.value.length === 0) {
+    isLoadingPosts.value = true
+  }
   try {
     const result = await fetchPostList({
       locationId: spotId.value,
-      pageNum: 1,
-      pageSize: 12,
+      pageNum: targetPage,
+      pageSize: 10,
     })
     posts.value = result.records
+    totalPosts.value = result.total
+    currentPage.value = targetPage
   } finally {
     isLoadingPosts.value = false
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value * 10 < totalPosts.value) {
+    slideDirection.value = 'slide-left'
+    loadPosts(currentPage.value + 1)
+  }
+}
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    slideDirection.value = 'slide-right'
+    loadPosts(currentPage.value - 1)
   }
 }
 
@@ -561,6 +614,62 @@ onBeforeUnmount(() => {
   transform: scale(0.985);
 }
 
+.pagination-controls {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  padding: 8px 24px;
+  border-radius: 30px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.page-indicator {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.bubbles-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform, opacity;
+}
+
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.65s cubic-bezier(0.25, 1, 0.3, 1), opacity 0.65s cubic-bezier(0.25, 1, 0.3, 1);
+}
+
+.slide-left-enter-from {
+  transform: translateX(40px) scale(0.96);
+  opacity: 0;
+}
+.slide-left-leave-to {
+  transform: translateX(-40px) scale(0.96);
+  opacity: 0;
+}
+
+.slide-right-enter-from {
+  transform: translateX(-40px) scale(0.96);
+  opacity: 0;
+}
+.slide-right-leave-to {
+  transform: translateX(40px) scale(0.96);
+  opacity: 0;
+}
+
 .state-card {
   position: absolute;
   left: 50%;
@@ -585,24 +694,34 @@ onBeforeUnmount(() => {
   text-align: left;
   padding: 12px 14px;
   cursor: pointer;
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  z-index: 5;
+  transition: transform 220ms ease, box-shadow 220ms ease, z-index 0ms;
 }
 
 .post-bubble:hover {
-  transform: translateY(-4px);
+  z-index: 50; /* 妙招 3：hover 时将层级提到最高，即使有交叠遮挡，也能看清被压在下面的卡片 */
   box-shadow: 0 16px 30px rgba(9, 19, 34, 0.3);
 }
 
 .bubble-a {
-  transform: rotate(-2deg);
+  transform: translate(var(--tx, 0), var(--ty, 0)) rotate(-2deg);
+}
+.bubble-a:hover {
+  transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)) rotate(-2deg) scale(1.02);
 }
 
 .bubble-b {
-  transform: rotate(1.2deg);
+  transform: translate(var(--tx, 0), var(--ty, 0)) rotate(1.2deg);
+}
+.bubble-b:hover {
+  transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)) rotate(1.2deg) scale(1.02);
 }
 
 .bubble-c {
-  transform: rotate(-0.6deg);
+  transform: translate(var(--tx, 0), var(--ty, 0)) rotate(-0.6deg);
+}
+.bubble-c:hover {
+  transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)) rotate(-0.6deg) scale(1.02);
 }
 
 .bubble-tag {

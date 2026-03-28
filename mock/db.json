@@ -33,18 +33,14 @@
       "emotionTagId": 2,
       "emotionTagName": "开心",
       "emotionTagColor": "#F6BD16",
-      "content": "窗边的位置今天刚好空着，雨声像白噪音，终于把拖了两周的报告写完了，整个人从紧绷慢慢变得松弛。",
+      "content": "窗边的位置今天刚好空着，雨声像白噪音，终于把拖了两周的报告写完了。",
       "userId": 1,
       "likeCount": 19,
       "createTime": "2026-03-27 20:15:00",
       "imageUrls": [
         "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": {
-        "support": 9,
-        "relax": 7,
-        "anxious": 1
-      }
+      "reactionSummary": { "support": 9, "relax": 7, "anxious": 1 }
     },
     {
       "id": 102,
@@ -53,16 +49,12 @@
       "emotionTagId": 1,
       "emotionTagName": "焦虑",
       "emotionTagColor": "#5B8FF9",
-      "content": "临近答辩总觉得还有很多漏洞，越看文献越慌，不过至少今天列出了修订清单，准备明天逐条解决。",
+      "content": "临近答辩总觉得还有很多漏洞，越看文献越慌，不过至少今天列出了修订清单。",
       "userId": 2,
       "likeCount": 13,
-      "createTime": "2026-03-27 18:40:00",
+      "createTime": "2026-03-27 19:40:00",
       "imageUrls": [],
-      "reactionSummary": {
-        "support": 6,
-        "relax": 2,
-        "anxious": 8
-      }
+      "reactionSummary": { "support": 6, "relax": 2, "anxious": 8 }
     },
     {
       "id": 103,
@@ -71,79 +63,175 @@
       "emotionTagId": 3,
       "emotionTagName": "平静",
       "emotionTagColor": "#5AD8A6",
-      "content": "下雨天配耳机真的太适合复习了，效率出奇地高，心也慢慢静下来。今天背完了三章重点，终于有点掌控感。",
+      "content": "下雨天配耳机真的太适合复习了，效率出奇地高，心也慢慢静下来。",
       "userId": 3,
       "likeCount": 22,
-      "createTime": "2026-03-27 16:05:00",
+      "createTime": "2026-03-27 18:50:00",
       "imageUrls": [
         "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": {
-        "support": 11,
-        "relax": 13,
-        "anxious": 0
-      }
+      "reactionSummary": { "support": 11, "relax": 13, "anxious": 0 }
     },
     {
       "id": 104,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 2,
+      "emotionTagName": "开心",
+      "emotionTagColor": "#F6BD16",
+      "content": "今天在阅览区遇到一个同专业同学，互相分享资料之后感觉轻松了很多。",
+      "userId": 6,
+      "likeCount": 15,
+      "createTime": "2026-03-27 17:25:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 8, "relax": 6, "anxious": 1 }
+    },
+    {
+      "id": 105,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 1,
+      "emotionTagName": "焦虑",
+      "emotionTagColor": "#5B8FF9",
+      "content": "自习室空调有点冷，效率一般，复习进度慢了一点，但还是坚持看完了章节。",
+      "userId": 7,
+      "likeCount": 9,
+      "createTime": "2026-03-27 16:40:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 5, "relax": 1, "anxious": 6 }
+    },
+    {
+      "id": 106,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 3,
+      "emotionTagName": "平静",
+      "emotionTagColor": "#5AD8A6",
+      "content": "看着窗外雨线，突然有种节奏被找回来的感觉，专注了将近两个小时。",
+      "userId": 8,
+      "likeCount": 18,
+      "createTime": "2026-03-27 15:55:00",
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "reactionSummary": { "support": 9, "relax": 10, "anxious": 0 }
+    },
+    {
+      "id": 107,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 2,
+      "emotionTagName": "开心",
+      "emotionTagColor": "#F6BD16",
+      "content": "一口气完成了实验报告图表，打卡成功，奖励自己一杯热可可。",
+      "userId": 9,
+      "likeCount": 24,
+      "createTime": "2026-03-27 15:20:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 14, "relax": 8, "anxious": 0 }
+    },
+    {
+      "id": 108,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 1,
+      "emotionTagName": "焦虑",
+      "emotionTagColor": "#5B8FF9",
+      "content": "代码一直报错，改了三次还是不对，最后重新梳理流程才找到原因。",
+      "userId": 10,
+      "likeCount": 12,
+      "createTime": "2026-03-27 14:35:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 7, "relax": 2, "anxious": 7 }
+    },
+    {
+      "id": 109,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 3,
+      "emotionTagName": "平静",
+      "emotionTagColor": "#5AD8A6",
+      "content": "今天目标不大，只求把错题再过一遍。结果意外地顺利。",
+      "userId": 11,
+      "likeCount": 10,
+      "createTime": "2026-03-27 13:50:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 5, "relax": 6, "anxious": 1 }
+    },
+    {
+      "id": 110,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 2,
+      "emotionTagName": "开心",
+      "emotionTagColor": "#F6BD16",
+      "content": "借到了一本一直想看的专业书，翻到关键章节直接豁然开朗。",
+      "userId": 12,
+      "likeCount": 16,
+      "createTime": "2026-03-27 12:30:00",
+      "imageUrls": [
+        "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "reactionSummary": { "support": 9, "relax": 4, "anxious": 1 }
+    },
+    {
+      "id": 111,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 4,
+      "emotionTagName": "低落",
+      "emotionTagColor": "#8C8C8C",
+      "content": "今天状态有点下滑，只完成了计划的一半，希望明天能补回来。",
+      "userId": 13,
+      "likeCount": 6,
+      "createTime": "2026-03-27 11:40:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 4, "relax": 1, "anxious": 3 }
+    },
+    {
+      "id": 112,
       "locationId": 2,
       "locationName": "操场",
       "emotionTagId": 2,
       "emotionTagName": "开心",
       "emotionTagColor": "#F6BD16",
-      "content": "晚霞刚好压在看台上方，跑了三圈后整个人像被重启了一样，呼吸也顺了。",
+      "content": "晚霞刚好压在看台上方，跑了三圈后整个人像被重启了一样。",
       "userId": 4,
       "likeCount": 17,
       "createTime": "2026-03-27 19:10:00",
       "imageUrls": [],
-      "reactionSummary": {
-        "support": 7,
-        "relax": 6,
-        "anxious": 1
-      }
+      "reactionSummary": { "support": 7, "relax": 6, "anxious": 1 }
     },
     {
-      "id": 105,
+      "id": 113,
       "locationId": 2,
       "locationName": "操场",
       "emotionTagId": 4,
       "emotionTagName": "低落",
       "emotionTagColor": "#8C8C8C",
-      "content": "今天状态一般，只想慢慢走几圈。风很大，但也算是把心事吹散了一点。",
+      "content": "今天状态一般，只想慢慢走几圈。风很大，但也算把心事吹散了一点。",
       "userId": 5,
       "likeCount": 8,
       "createTime": "2026-03-26 21:25:00",
       "imageUrls": [
         "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": {
-        "support": 3,
-        "relax": 2,
-        "anxious": 4
-      }
+      "reactionSummary": { "support": 3, "relax": 2, "anxious": 4 }
     },
     {
-    "id": 106,
-    "locationId": 1,
-    "locationName": "图书馆",
-    "emotionTagId": 3,
-    "emotionTagName": "平静",
-    "emotionTagColor": "#5AD8A6",
-    "content": "下雨天配耳机真的太适合复习了，效率出奇地高，心也慢慢静下来。今天背完了三章重点，终于有点掌控感。",
-    "userId": 3,
-    "likeCount": 22,
-    "createTime": "2026-03-27 16:05:00",
-    "imageUrls": [
-      "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80"
-    ],
-    "reactionSummary": {
-      "support": 11,
-      "relax": 13,
-      "anxious": 0
+      "id": 114,
+      "locationId": 2,
+      "locationName": "操场",
+      "emotionTagId": 3,
+      "emotionTagName": "平静",
+      "emotionTagColor": "#5AD8A6",
+      "content": "夜跑完坐在看台，风很舒服，整个人慢慢放空。",
+      "userId": 14,
+      "likeCount": 11,
+      "createTime": "2026-03-26 20:20:00",
+      "imageUrls": [],
+      "reactionSummary": { "support": 5, "relax": 7, "anxious": 0 }
     }
-  }
-    
   ]
 }
