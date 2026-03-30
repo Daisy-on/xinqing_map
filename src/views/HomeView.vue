@@ -17,6 +17,16 @@
     </svg>
     <div v-if="loadError" class="map-error">{{ loadError }}</div>
 
+    <div class="user-actions">
+      <el-button
+        circle
+        class="profile-btn"
+        @click="router.push('/profile')"
+      >
+        <el-icon><User /></el-icon>
+      </el-button>
+    </div>
+
     <LandmarkDetailPanel
       v-model="isDetailPanelVisible"
       :landmark="selectedLandmark"
@@ -26,12 +36,16 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { fetchLocationList } from '@/api/location'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
+import { User } from '@element-plus/icons-vue'
 import type { Location } from '@/types/models'
 
 type BoundaryPoint = { lng: number; lat: number }
+
+const router = useRouter()
 
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
@@ -400,7 +414,40 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 900;
+}
+
+.user-actions {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 950;
+
+  .profile-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: var(--el-text-color-primary);
+
+    &:hover {
+      background-color: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .user-actions {
+    top: 16px;
+    right: 16px;
+    
+    .profile-btn {
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+    }
+  }
 }
 
 </style>

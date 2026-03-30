@@ -22,7 +22,6 @@ export interface EmotionTag {
   id: number
   name: string
   color: string
-  sortNum: number
 }
 
 export interface ReactionSummary {
