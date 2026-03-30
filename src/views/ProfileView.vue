@@ -390,39 +390,50 @@ const getMockColor = (index: number) => {
     height: 150px;
   }
   
+  .user-container {
+    padding: 0 16px;
+  }
+
   .user-profile-header {
     margin-top: -46px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
-  }
-
-  .user-info-row {
-    flex-direction: column;
     gap: 0;
   }
 
-  .info-area {
-    padding-top: 4px;
-  }
-  
-  .actions-area {
+  .user-info-row {
+    display: flex;
+    flex-direction: row; /* 强制改回横向排列 */
+    align-items: flex-end;
+    gap: 12px;
     width: 100%;
-    justify-content: flex-start;
-    padding-top: 8px;
+  }
+
+  .avatar-area {
+    cursor: pointer;
+    transform: translate(-4px, -8px); /* 保持微调即可，因为横向布局已经让它靠左了 */
+    flex-shrink: 0;
   }
 
   :deep(.el-avatar) {
-    width: 80px !important;
-    height: 80px !important;
+    width: 84px !important;
+    height: 84px !important;
   }
-  
-  .avatar-area {
-    transform: translate(-12px, -12px);
+
+  .info-area {
+    padding-top: 40px; /* 增加顶部内边距，让昵称下沉到头像右侧 */
+    flex: 1;
   }
   
   .nickname {
-    font-size: 22px;
+    font-size: 20px;
+    white-space: nowrap;
+  }
+
+  .actions-area {
+    width: 100%;
+    justify-content: flex-end; /* 按钮放右边 */
+    margin-top: -30px; /* 向上提一点 */
   }
   
   .grid-list {
