@@ -27,11 +27,19 @@
           
           <div class="info-area">
             <div class="title-row">
-              <h1 class="nickname">{{ isLoggedIn ? (userInfo?.nickname || '心晴用户') : '点击登录' }}</h1>
+              <h1 v-if="isLoggedIn" class="nickname">{{ userInfo?.nickname || '心晴用户' }}</h1>
+              <button
+                v-else
+                type="button"
+                class="login-entry"
+                @click="router.push('/auth')"
+              >
+                点击登录
+              </button>
               <span class="uid" v-if="isLoggedIn">UID: {{ userInfo?.account || '-' }}</span>
             </div>
             
-            <p class="bio-text" v-if="!isLoggedIn">登录后体验更多功能，记录心情地图。</p>
+            <p class="bio-text" v-if="!isLoggedIn">登录后体验更多功能，记录你的心情地图。</p>
           </div>
         </div>
 
@@ -50,7 +58,7 @@
           :class="{ active: activeTab === 'posts' }"
           @click="activeTab = 'posts'"
         >
-          作品 3
+          动态 3
         </div>
         <div 
           class="tab-item" 
@@ -248,6 +256,29 @@ const getMockColor = (index: number) => {
   line-height: 1.2;
 }
 
+.login-entry {
+  border: none;
+  background: transparent;
+  margin: 0;
+  padding: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--el-text-color-primary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.login-entry:hover {
+  color: var(--el-color-primary);
+}
+
+.login-entry:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
 .uid {
   font-size: 13px;
   color: var(--el-text-color-secondary);
@@ -426,6 +457,11 @@ const getMockColor = (index: number) => {
   }
   
   .nickname {
+    font-size: 20px;
+    white-space: nowrap;
+  }
+
+  .login-entry {
     font-size: 20px;
     white-space: nowrap;
   }

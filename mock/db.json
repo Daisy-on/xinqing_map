@@ -1,4 +1,27 @@
 {
+  "users": [
+    {
+      "id": 1,
+      "account": "test001",
+      "nickname": "测试用户",
+      "password": "123456",
+      "avatar": ""
+    },
+    {
+      "id": 2,
+      "account": "daisy",
+      "nickname": "Daisy",
+      "password": "123456",
+      "avatar": ""
+    },
+    {
+      "id": 3,
+      "account": "newuser01",
+      "nickname": "???",
+      "password": "123456",
+      "avatar": ""
+    }
+  ],
   "locations": [
     {
       "id": 1,
@@ -40,7 +63,11 @@
       "imageUrls": [
         "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": { "support": 9, "relax": 7, "anxious": 1 }
+      "reactionSummary": {
+        "support": 9,
+        "relax": 7,
+        "anxious": 1
+      }
     },
     {
       "id": 102,
@@ -54,7 +81,11 @@
       "likeCount": 13,
       "createTime": "2026-03-27 19:40:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 6, "relax": 2, "anxious": 8 }
+      "reactionSummary": {
+        "support": 6,
+        "relax": 2,
+        "anxious": 8
+      }
     },
     {
       "id": 103,
@@ -71,7 +102,11 @@
         "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1200&q=80",
         "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": { "support": 11, "relax": 13, "anxious": 0 }
+      "reactionSummary": {
+        "support": 11,
+        "relax": 13,
+        "anxious": 0
+      }
     },
     {
       "id": 104,
@@ -85,7 +120,11 @@
       "likeCount": 15,
       "createTime": "2026-03-27 17:25:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 8, "relax": 6, "anxious": 1 }
+      "reactionSummary": {
+        "support": 8,
+        "relax": 6,
+        "anxious": 1
+      }
     },
     {
       "id": 105,
@@ -99,7 +138,11 @@
       "likeCount": 9,
       "createTime": "2026-03-27 16:40:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 5, "relax": 1, "anxious": 6 }
+      "reactionSummary": {
+        "support": 5,
+        "relax": 1,
+        "anxious": 6
+      }
     },
     {
       "id": 106,
@@ -115,7 +158,11 @@
       "imageUrls": [
         "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": { "support": 9, "relax": 10, "anxious": 0 }
+      "reactionSummary": {
+        "support": 9,
+        "relax": 10,
+        "anxious": 0
+      }
     },
     {
       "id": 107,
@@ -129,7 +176,11 @@
       "likeCount": 24,
       "createTime": "2026-03-27 15:20:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 14, "relax": 8, "anxious": 0 }
+      "reactionSummary": {
+        "support": 14,
+        "relax": 8,
+        "anxious": 0
+      }
     },
     {
       "id": 108,
@@ -143,7 +194,11 @@
       "likeCount": 12,
       "createTime": "2026-03-27 14:35:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 7, "relax": 2, "anxious": 7 }
+      "reactionSummary": {
+        "support": 7,
+        "relax": 2,
+        "anxious": 7
+      }
     },
     {
       "id": 109,
@@ -157,7 +212,11 @@
       "likeCount": 10,
       "createTime": "2026-03-27 13:50:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 5, "relax": 6, "anxious": 1 }
+      "reactionSummary": {
+        "support": 5,
+        "relax": 6,
+        "anxious": 1
+      }
     },
     {
       "id": 110,
@@ -173,7 +232,11 @@
       "imageUrls": [
         "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": { "support": 9, "relax": 4, "anxious": 1 }
+      "reactionSummary": {
+        "support": 9,
+        "relax": 4,
+        "anxious": 1
+      }
     },
     {
       "id": 111,
@@ -187,7 +250,11 @@
       "likeCount": 6,
       "createTime": "2026-03-27 11:40:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 4, "relax": 1, "anxious": 3 }
+      "reactionSummary": {
+        "support": 4,
+        "relax": 1,
+        "anxious": 3
+      }
     },
     {
       "id": 112,
@@ -201,7 +268,11 @@
       "likeCount": 17,
       "createTime": "2026-03-27 19:10:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 7, "relax": 6, "anxious": 1 }
+      "reactionSummary": {
+        "support": 7,
+        "relax": 6,
+        "anxious": 1
+      }
     },
     {
       "id": 113,
@@ -217,7 +288,11 @@
       "imageUrls": [
         "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80"
       ],
-      "reactionSummary": { "support": 3, "relax": 2, "anxious": 4 }
+      "reactionSummary": {
+        "support": 3,
+        "relax": 2,
+        "anxious": 4
+      }
     },
     {
       "id": 114,
@@ -231,7 +306,11 @@
       "likeCount": 11,
       "createTime": "2026-03-26 20:20:00",
       "imageUrls": [],
-      "reactionSummary": { "support": 5, "relax": 7, "anxious": 0 }
+      "reactionSummary": {
+        "support": 5,
+        "relax": 7,
+        "anxious": 0
+      }
     }
   ]
 }
