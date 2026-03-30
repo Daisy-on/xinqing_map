@@ -22,6 +22,28 @@
       "avatar": ""
     }
   ],
+  "emotionTags": [
+    {
+      "id": 1,
+      "name": "焦虑",
+      "color": "#5B8FF9"
+    },
+    {
+      "id": 2,
+      "name": "开心",
+      "color": "#F6BD16"
+    },
+    {
+      "id": 3,
+      "name": "平静",
+      "color": "#5AD8A6"
+    },
+    {
+      "id": 4,
+      "name": "低落",
+      "color": "#8C8C8C"
+    }
+  ],
   "locations": [
     {
       "id": 1,

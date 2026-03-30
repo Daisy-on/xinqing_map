@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
@@ -124,6 +124,7 @@ import { loginUser, registerUser } from '@/api/user'
 type AuthMode = 'login' | 'register'
 
 const router = useRouter()
+const route = useRoute()
 const mode = ref<AuthMode>('login')
 const submitting = ref(false)
 
@@ -159,6 +160,14 @@ function switchMode(nextMode: AuthMode) {
   mode.value = nextMode
 }
 
+const resolveRedirect = () => {
+  const redirect = route.query.redirect
+  if (typeof redirect === 'string' && redirect.startsWith('/')) {
+    return redirect
+  }
+  return '/profile'
+}
+
 async function handleLogin() {
   const valid = await loginFormRef.value?.validate().catch(() => false)
   if (!valid) return
@@ -173,7 +182,7 @@ async function handleLogin() {
     localStorage.setItem('token', data.token)
     localStorage.setItem('userInfo', JSON.stringify(data.userInfo))
     ElMessage.success('登录成功')
-    router.push('/profile')
+    router.push(resolveRedirect())
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || '登录失败，请检查账号密码')
   } finally {

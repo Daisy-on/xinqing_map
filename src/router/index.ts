@@ -36,4 +36,22 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach((to) => {
+  if (to.name !== 'compose') {
+    return true
+  }
+
+  const token = localStorage.getItem('token')
+  if (token) {
+    return true
+  }
+
+  return {
+    name: 'auth',
+    query: {
+      redirect: to.fullPath,
+    },
+  }
+})
+
 export default router

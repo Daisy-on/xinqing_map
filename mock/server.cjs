@@ -17,6 +17,11 @@ const parseTime = (text) => {
   return new Date(String(text).replace(/-/g, '/')).getTime()
 }
 
+const formatDateTime = (date) => {
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
 const ok = (res, data) => {
   res.jsonp({
     code: 200,
@@ -140,6 +145,82 @@ server.get('/user/me', (req, res) => {
 server.get('/location/list', (req, res) => {
   const locations = router.db.get('locations').value() || []
   ok(res, locations)
+})
+
+server.get('/emotion-tag/list', (req, res) => {
+  const tags = router.db.get('emotionTags').value() || []
+  ok(res, tags)
+})
+
+server.post('/post/publish', (req, res) => {
+  const token = getBearerToken(req)
+  const matched = /^mock-token-(\d+)$/.exec(token)
+  if (!matched) {
+    fail(res, 401, 'unauthorized')
+    return
+  }
+
+  const userId = Number.parseInt(matched[1], 10)
+  const user = router.db.get('users').find({ id: userId }).value()
+  if (!user) {
+    fail(res, 401, 'unauthorized')
+    return
+  }
+
+  const locationId = toInt(req.body?.locationId, Number.NaN)
+  const emotionTagId = toInt(req.body?.emotionTagId, Number.NaN)
+  const content = String(req.body?.content || '').trim()
+
+  if (Number.isNaN(locationId) || Number.isNaN(emotionTagId) || !content) {
+    fail(res, 400, 'locationId, emotionTagId and content are required')
+    return
+  }
+
+  if (content.length > 500) {
+    fail(res, 400, 'content too long')
+    return
+  }
+
+  const location = router.db.get('locations').find({ id: locationId }).value()
+  if (!location) {
+    fail(res, 404, 'location not found')
+    return
+  }
+
+  const tag = router.db.get('emotionTags').find({ id: emotionTagId }).value()
+  if (!tag) {
+    fail(res, 404, 'emotion tag not found')
+    return
+  }
+
+  const posts = router.db.get('posts')
+  const postList = posts.value() || []
+  const nextId = postList.length ? Math.max(...postList.map((item) => item.id)) + 1 : 1
+
+  posts
+    .push({
+      id: nextId,
+      locationId,
+      locationName: location.name,
+      emotionTagId,
+      emotionTagName: tag.name,
+      emotionTagColor: tag.color,
+      content,
+      userId,
+      likeCount: 0,
+      createTime: formatDateTime(new Date()),
+      imageUrls: [],
+      reactionSummary: {
+        support: 0,
+        relax: 0,
+        anxious: 0,
+      },
+    })
+    .write()
+
+  ok(res, {
+    postId: nextId,
+  })
 })
 
 server.get('/post/list', (req, res) => {

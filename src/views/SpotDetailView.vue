@@ -8,6 +8,7 @@
       <span class="page-title">
         {{ currentLocation?.name || '地点详情' }} · {{ currentLocation?.weatherText || '天气加载中' }}
       </span>
+      <el-button class="compose-btn" @click="goCompose">记录心声</el-button>
     </div>
 
     <div class="scatter-container" :class="{ blurred: !!selectedPost }">
@@ -190,6 +191,21 @@ const selectedReactions = computed<ReactionSummary>(() => {
 
 const goBack = () => {
   router.push('/')
+}
+
+const goCompose = () => {
+  if (!Number.isFinite(spotId.value)) {
+    router.push('/compose')
+    return
+  }
+
+  router.push({
+    path: '/compose',
+    query: {
+      spotId: String(spotId.value),
+      from: 'spot-detail',
+    },
+  })
 }
 
 const cancelCardAnimation = () => {
@@ -601,6 +617,21 @@ onBeforeUnmount(() => {
   text-shadow: 0 2px 8px rgba(9, 16, 26, 0.45);
 }
 
+.compose-btn {
+  margin-left: auto;
+  pointer-events: auto;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  background: rgba(240, 248, 255, 0.18);
+  color: #f2f8ff;
+  box-shadow: 0 10px 24px rgba(15, 29, 47, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.compose-btn:hover {
+  background: rgba(240, 248, 255, 0.28);
+  color: #ffffff;
+}
+
 .scatter-container {
   position: relative;
   width: 100%;
@@ -880,10 +911,17 @@ onBeforeUnmount(() => {
 @media (max-width: 767px) {
   .page-title {
     font-size: 16px;
-    max-width: 70vw;
+    max-width: 44vw;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .compose-btn {
+    padding: 0 12px;
+    height: 34px;
+    border-radius: 999px;
+    font-size: 13px;
   }
 
   .post-bubble {
