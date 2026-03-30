@@ -55,9 +55,26 @@
           />
         </el-form-item>
 
+        <el-form-item label="上传封面图（可选）" class="cover-item">
+          <el-upload
+            class="cover-uploader"
+            action="#"
+            :auto-upload="false"
+            list-type="picture-card"
+            disabled
+          >
+            <el-icon><Plus /></el-icon>
+            <template #tip>
+              <div class="el-upload__tip">
+                暂不支持图片上传，功能开发中...
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+
         <div class="actions">
           <el-button class="cancel-btn" @click="handleBack">取消</el-button>
-          <el-button type="primary" :loading="publishing" @click="handlePublish">发布</el-button>
+          <el-button class="publish-btn" type="primary" :loading="publishing" @click="handlePublish">发布</el-button>
         </div>
       </el-form>
     </section>
@@ -69,6 +86,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
 import { fetchEmotionTagList, publishPost } from '@/api/post'
 import type { EmotionTag, Location } from '@/types/models'
@@ -167,49 +185,181 @@ onMounted(async () => {
 <style scoped>
 .compose-page {
   min-height: 100vh;
-  background:
-    radial-gradient(120% 120% at 0% 0%, rgba(189, 226, 255, 0.55), transparent 55%),
-    linear-gradient(170deg, #f4f9ff 0%, #edf5ff 52%, #f7fbff 100%);
-  padding: 28px 16px;
+  position: relative;
+  overflow: hidden;
+  padding: 40px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: 
+    radial-gradient(circle at 15% 50%, rgba(200, 225, 255, 0.6), transparent 45%),
+    radial-gradient(circle at 85% 30%, rgba(225, 200, 255, 0.4), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(190, 240, 230, 0.5), transparent 50%),
+    linear-gradient(135deg, #f4f8fc 0%, #eef3fb 100%);
+}
+
+.compose-page::before {
+  content: '';
+  position: absolute;
+  top: -15%; left: -10%;
+  width: 50vw; height: 50vw;
+  background: rgba(135, 206, 250, 0.35);
+  filter: blur(100px);
+  border-radius: 50%;
+  z-index: 0;
+  animation: floatBlobs 12s ease-in-out infinite alternate;
+}
+
+.compose-page::after {
+  content: '';
+  position: absolute;
+  bottom: -15%; right: -5%;
+  width: 45vw; height: 45vw;
+  background: rgba(216, 175, 240, 0.25);
+  filter: blur(90px);
+  border-radius: 50%;
+  z-index: 0;
+  animation: floatBlobs 15s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes floatBlobs {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, 60px) scale(1.1); }
 }
 
 .compose-card {
-  max-width: 760px;
-  margin: 0 auto;
-  border-radius: 20px;
-  border: 1px solid rgba(151, 178, 209, 0.26);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 48px rgba(90, 124, 169, 0.14);
-  padding: 20px;
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 680px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 
+    0 24px 60px rgba(45, 65, 95, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  padding: 36px 40px;
+  animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .compose-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
 }
 
 .compose-head h1 {
   margin: 0;
   color: #1b2a40;
-  font-size: 28px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
 }
 
 .back-btn {
-  color: #4d6a8d;
+  color: #5c7289;
+  font-weight: 500;
+  font-size: 15px;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.back-btn:hover {
+  color: #1b2a40;
+  transform: translateX(-2px);
+  background: transparent;
 }
 
 .source-tip {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background: rgba(235, 246, 255, 0.65);
+  border: 1px solid rgba(180, 215, 255, 0.4);
+  color: #2b5585;
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+}
+
+.source-tip :deep(.el-alert__title) {
+  color: #1a4270;
+  font-weight: 500;
+}
+.source-tip :deep(.el-alert__icon) {
+  color: #6aa6ff;
 }
 
 .compose-form {
   margin-top: 10px;
 }
 
+/* 依次加载表单项动效 */
+.compose-form :deep(.el-form-item) {
+  opacity: 0;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.compose-form :deep(.el-form-item:nth-child(1)) { animation-delay: 0.2s; }
+.compose-form :deep(.el-form-item:nth-child(2)) { animation-delay: 0.25s; }
+.compose-form :deep(.el-form-item:nth-child(3)) { animation-delay: 0.3s; }
+.compose-form :deep(.el-form-item:nth-child(4)) { animation-delay: 0.35s; }
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 36px;
+  opacity: 0;
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #2c3e50;
+  padding-bottom: 8px;
+  font-size: 15px;
+}
+
 .full-width {
   width: 100%;
+}
+
+:deep(.el-input__wrapper),
+:deep(.el-textarea__inner) {
+  background: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(180, 200, 220, 0.4) !important;
+  transition: all 0.3s ease;
+  color: #1b2a40;
+}
+
+:deep(.el-input__wrapper.is-focus),
+:deep(.el-textarea__inner:focus) {
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: inset 0 0 0 2px #7aa6d3 !important;
+}
+
+:deep(.el-textarea__inner) {
+  padding: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+:deep(.el-select .el-input__wrapper) {
+  padding: 6px 16px;
 }
 
 .tag-option {
@@ -224,31 +374,89 @@ onMounted(async () => {
   border-radius: 50%;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+.cover-item {
+  margin-top: 10px;
+}
+
+.cover-uploader :deep(.el-upload--picture-card) {
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px dashed rgba(160, 180, 200, 0.6);
+  border-radius: 14px;
+  transition: all 0.3s;
+}
+
+.cover-uploader :deep(.el-upload--picture-card:hover) {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #7aa6d3;
+}
+
+.cover-uploader :deep(.el-icon) {
+  font-size: 24px;
+  color: #8c939d;
+}
+
+.el-upload__tip {
+  color: #7a8b9e;
+  font-size: 13px;
   margin-top: 10px;
 }
 
 .cancel-btn {
-  border-color: #d1dded;
-  color: #4d6a8d;
+  border-radius: 20px;
+  padding: 10px 24px;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid rgba(130, 150, 170, 0.4);
+  color: #5c7289;
+  transition: all 0.2s;
+  height: auto;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(130, 150, 170, 0.8);
+  color: #1b2a40;
+}
+
+.publish-btn {
+  border-radius: 20px;
+  padding: 10px 28px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #5b9bf8, #3b7ced) !important;
+  border: none !important;
+  color: #fff !important;
+  box-shadow: 0 8px 16px rgba(59, 124, 237, 0.25);
+  transition: all 0.2s;
+  height: auto;
+}
+
+.publish-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 20px rgba(59, 124, 237, 0.35);
+  background: linear-gradient(135deg, #6aa6ff, #4788f8) !important;
+}
+
+.publish-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 8px rgba(59, 124, 237, 0.2);
 }
 
 @media (max-width: 767px) {
   .compose-page {
     padding: 0;
   }
-
+  
   .compose-card {
+    padding: 24px 20px;
     border-radius: 0;
     border: none;
     min-height: 100vh;
-    padding: 16px;
     box-shadow: none;
+    background: rgba(255, 255, 255, 0.7);
   }
-
+  
   .compose-head h1 {
     font-size: 22px;
   }
