@@ -88,14 +88,29 @@
               <el-skeleton animated :rows="3" />
             </div>
             <div v-else class="content-card" v-for="post in userPosts" :key="'post-'+post.id" @click="router.push('/post/' + post.id)">
-              <div class="card-cover" :style="{ backgroundColor: post.emotionTagColor ? post.emotionTagColor + '20' : getMockColor(post.id) }">
-                <p class="post-preview">{{ post.content || '...' }}</p>
-              </div>
-              <div class="card-info">
-                <h3 class="card-title">{{ post.locationName || '未知地点' }}</h3>
-                <div class="card-meta">
+              <div class="card-header">
+                <div class="header-left">
                   <span class="date">{{ post.createTime.slice(5, 10).replace('-', '月') }}日</span>
-                  <span class="likes"><el-icon><Star /></el-icon> {{ post.likeCount || 0 }}</span>
+                  <span class="time">{{ post.createTime.slice(11, 16) }}</span>
+                  <span class="privacy-tag"><el-icon><Lock /></el-icon> 仅自己可见</span>
+                </div>
+                <div class="header-right" @click.stop>
+                  <el-icon><MoreFilled /></el-icon>
+                </div>
+              </div>
+              <div class="card-body">
+                <h3 class="card-title"><el-icon style="margin-right:4px;vertical-align:-2px"><Location /></el-icon>{{ post.locationName || '分享瞬间' }}</h3>
+                <p class="card-desc">{{ post.content || '...' }}</p>
+                <div class="card-media" v-if="post.imageUrls && post.imageUrls.length > 0">
+                  <img :src="post.imageUrls[0]" class="post-img" alt="post cover" />
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="action-btn">
+                  <el-icon><Star /></el-icon> <span>{{ post.likeCount || 0 }}</span>
+                </div>
+                <div class="action-btn">
+                  <el-icon><ChatRound /></el-icon> <span>0</span>
                 </div>
               </div>
             </div>
@@ -121,7 +136,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, UserFilled, Message, Lock, Star } from '@element-plus/icons-vue'
+import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location } from '@element-plus/icons-vue'
 import { fetchPostList } from '@/api/post'
 import { fetchCurrentUser } from '@/api/user'
 import { fetchLocationList } from '@/api/location'
@@ -433,7 +448,7 @@ const getMockColor = (index: number) => {
 
 .grid-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
   padding-bottom: 40px;
 }
@@ -442,9 +457,13 @@ const getMockColor = (index: number) => {
   background: var(--el-bg-color);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .content-card:hover {
@@ -452,44 +471,103 @@ const getMockColor = (index: number) => {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-.card-cover {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-}
-
-.card-info {
-  padding: 16px;
-}
-
-.card-title {
-  margin: 0 0 12px 0;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-}
-
-.card-meta {
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.date {
-  font-size: 12px;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 
-.likes {
+.privacy-tag {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--el-fill-color-light);
+  padding: 2px 6px;
+  border-radius: 4px;
   font-size: 12px;
+}
+
+.header-right {
   color: var(--el-text-color-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+.header-right:hover {
+  color: var(--el-text-color-primary);
+  background: var(--el-fill-color-light);
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.card-media {
+  margin-top: 4px;
+  width: 100%;
+}
+
+.post-img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.action-btn {
   display: flex;
   align-items: center;
   gap: 4px;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.action-btn:hover {
+  color: var(--el-color-primary);
 }
 
 .empty-state-wrapper {
@@ -553,16 +631,8 @@ const getMockColor = (index: number) => {
   }
   
   .grid-list {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-
-  .card-info {
-    padding: 12px;
-  }
-  
-  .card-title {
-    font-size: 14px;
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 </style>
