@@ -58,7 +58,7 @@
           :class="{ active: activeTab === 'posts' }"
           @click="activeTab = 'posts'"
         >
-          动态 3
+          动态 {{ userPosts.length }}
         </div>
         <div 
           class="tab-item" 
@@ -81,13 +81,21 @@
         <Transition name="el-fade-in-linear" mode="out-in">
           <!-- 动态（作品） -->
           <div v-if="activeTab === 'posts'" class="grid-list">
-            <div class="content-card" v-for="i in 3" :key="'post-'+i">
-              <div class="card-cover" :style="{ backgroundColor: getMockColor(i) }"></div>
+            <div v-if="!userPosts.length && !loadingPosts" class="empty-state-wrapper">
+              <el-empty description="暂无动态" />
+            </div>
+            <div v-else-if="loadingPosts" class="empty-state-wrapper">
+              <el-skeleton animated :rows="3" />
+            </div>
+            <div v-else class="content-card" v-for="post in userPosts" :key="'post-'+post.id" @click="router.push('/post/' + post.id)">
+              <div class="card-cover" :style="{ backgroundColor: post.emotionTagColor ? post.emotionTagColor + '20' : getMockColor(post.id) }">
+                <p class="post-preview">{{ post.content || '...' }}</p>
+              </div>
               <div class="card-info">
-                <h3 class="card-title">用脚步丈量城市，用心晴记录生活~</h3>
+                <h3 class="card-title">{{ post.locationName || '未知地点' }}</h3>
                 <div class="card-meta">
-                  <span class="date">3月{{ i + 10 }}日</span>
-                  <span class="likes"><el-icon><Star /></el-icon> {{ 10 * i }}</span>
+                  <span class="date">{{ post.createTime.slice(5, 10).replace('-', '月') }}日</span>
+                  <span class="likes"><el-icon><Star /></el-icon> {{ post.likeCount || 0 }}</span>
                 </div>
               </div>
             </div>
@@ -114,12 +122,61 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, UserFilled, Message, Lock, Star } from '@element-plus/icons-vue'
+import { fetchPostList } from '@/api/post'
+import { fetchCurrentUser } from '@/api/user'
+import { fetchLocationList } from '@/api/location'
+import type { PostItem } from '@/types/models'
 
 const router = useRouter()
 
 const isLoggedIn = ref(false)
 const userInfo = ref<any>(null)
 const activeTab = ref('posts')
+
+const userPosts = ref<PostItem[]>([])
+const loadingPosts = ref(false)
+
+const sortPostsByTimeDesc = (posts: PostItem[]) => {
+  return [...posts].sort((left, right) => {
+    return new Date(right.createTime).getTime() - new Date(left.createTime).getTime()
+  })
+}
+
+const loadPostsByLocations = async (userId: number) => {
+  const locations = await fetchLocationList()
+  const allPostLists = await Promise.all(
+    locations.map(async (location) => {
+      const result = await fetchPostList({ locationId: location.id, pageSize: 100 })
+      return result.records
+    }),
+  )
+
+  return sortPostsByTimeDesc(allPostLists.flat().filter((post) => post.userId === userId))
+}
+
+const loadUserPosts = async () => {
+  if (!userInfo.value?.id) return
+  loadingPosts.value = true
+  try {
+    const res = await fetchPostList({ userId: userInfo.value.id })
+    if (res.records.length > 0) {
+      userPosts.value = sortPostsByTimeDesc(res.records)
+      return
+    }
+
+    userPosts.value = await loadPostsByLocations(userInfo.value.id)
+  } catch (error) {
+    console.warn('Direct userId post query failed, falling back to location-based aggregation', error)
+    try {
+      userPosts.value = await loadPostsByLocations(userInfo.value.id)
+    } catch (fallbackError) {
+      console.error('Failed to fetch user posts by fallback path', fallbackError)
+      userPosts.value = []
+    }
+  } finally {
+    loadingPosts.value = false
+  }
+}
 
 onMounted(() => {
   const token = localStorage.getItem('token')
@@ -129,6 +186,29 @@ onMounted(() => {
       const storedUser = localStorage.getItem('userInfo')
       if (storedUser) {
         userInfo.value = JSON.parse(storedUser)
+        if (userInfo.value?.id) {
+          loadUserPosts()
+        } else {
+          fetchCurrentUser()
+            .then((currentUser) => {
+              userInfo.value = currentUser
+              localStorage.setItem('userInfo', JSON.stringify(currentUser))
+              return loadUserPosts()
+            })
+            .catch((error) => {
+              console.error('Failed to fetch current user', error)
+            })
+        }
+      } else {
+        fetchCurrentUser()
+          .then((currentUser) => {
+            userInfo.value = currentUser
+            localStorage.setItem('userInfo', JSON.stringify(currentUser))
+            return loadUserPosts()
+          })
+          .catch((error) => {
+            console.error('Failed to fetch current user', error)
+          })
       }
     } catch (e) {
       console.error('Failed to parse userInfo from localStorage')
@@ -486,3 +566,5 @@ const getMockColor = (index: number) => {
   }
 }
 </style>
+
+

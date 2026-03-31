@@ -1,4 +1,4 @@
-const jsonServer = require('json-server')
+﻿const jsonServer = require('json-server')
 
 const server = jsonServer.create()
 const router = jsonServer.router('mock/db.json')
@@ -225,10 +225,11 @@ server.post('/post/publish', (req, res) => {
 
 server.get('/post/list', (req, res) => {
   const locationId = toInt(req.query.locationId, Number.NaN)
-  if (Number.isNaN(locationId)) {
+  const userId = toInt(req.query.userId, Number.NaN)
+  if (Number.isNaN(locationId) && Number.isNaN(userId)) {
     res.status(400).jsonp({
       code: 400,
-      message: 'locationId is required',
+      message: 'locationId or userId is required',
       data: null,
     })
     return
@@ -238,11 +239,15 @@ server.get('/post/list', (req, res) => {
   const pageNum = Math.max(1, toInt(req.query.pageNum, 1))
   const pageSize = Math.max(1, toInt(req.query.pageSize, 10))
 
-  let posts =
-    router.db
-      .get('posts')
-      .filter((item) => item.locationId === locationId)
-      .value() || []
+  let posts = router.db.get('posts').value() || []
+
+  if (!Number.isNaN(locationId)) {
+    posts = posts.filter((item) => item.locationId === locationId)
+  }
+
+  if (!Number.isNaN(userId)) {
+    posts = posts.filter((item) => item.userId === userId)
+  }
 
   if (!Number.isNaN(emotionTagId)) {
     posts = posts.filter((item) => item.emotionTagId === emotionTagId)
@@ -292,3 +297,4 @@ server.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`[mock] server is running at http://localhost:${port}`)
 })
+

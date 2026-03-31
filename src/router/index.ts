@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import AuthView from '../views/AuthView.vue'
 import SpotDetailView from '../views/SpotDetailView.vue'
@@ -55,3 +55,4 @@ router.beforeEach((to) => {
 })
 
 export default router
+

@@ -1,4 +1,4 @@
-import http from './http'
+﻿import http from './http'
 import type { EmotionTag, PagedResult, PostItem } from '@/types/models'
 
 interface ApiResponse<T> {
@@ -8,7 +8,8 @@ interface ApiResponse<T> {
 }
 
 export async function fetchPostList(params: {
-  locationId: number
+  locationId?: number
+  userId?: number
   emotionTagId?: number
   pageNum?: number
   pageSize?: number
@@ -53,3 +54,9 @@ export async function publishPost(params: PublishPostParams): Promise<PublishPos
   const response = await http.post<ApiResponse<PublishPostResult>>('/post/publish', params)
   return response.data.data
 }
+
+export async function fetchPostDetail(postId: number): Promise<PostItem> {
+  const response = await http.get<ApiResponse<PostItem>>('/post/' + postId)
+  return response.data.data
+}
+
