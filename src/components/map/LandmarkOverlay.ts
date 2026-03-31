@@ -45,11 +45,11 @@ export function createLandmarkOverlayClass(api: BMapGLNamespace): OverlayCtor {
     draw(): void {
       if (!this.map || !this.node) return
       const pixel = this.map.pointToOverlayPixel(this.point)
-      const cardWidth = this.node.offsetWidth || 212
-      const cardHeight = this.node.offsetHeight || 84
+      const cardWidth = this.node.offsetWidth || 110
+      const cardHeight = this.node.offsetHeight || 40
 
       this.node.style.left = `${pixel.x - cardWidth / 2}px`
-      this.node.style.top = `${pixel.y - cardHeight - 14}px`
+      this.node.style.top = `${pixel.y - cardHeight - 8}px`
     }
 
     destroy(): void {
