@@ -1,5 +1,17 @@
 <template>
   <main class="home-view">
+    <header class="top-nav-bar">
+      <div class="project-title">心晴地图</div>
+      <el-button
+        circle
+        class="profile-btn"
+        aria-label="个人中心"
+        @click="router.push('/profile')"
+      >
+        <el-icon><User /></el-icon>
+      </el-button>
+    </header>
+
     <div ref="mapContainer" class="map-container"></div>
     <div v-if="landmarkLocation && landmarkPixel" class="landmark-layer">
       <div
@@ -16,16 +28,6 @@
       <path :d="svgMaskPath" fill="#ffffff" fill-rule="evenodd" />
     </svg>
     <div v-if="loadError" class="map-error">{{ loadError }}</div>
-
-    <div class="user-actions">
-      <el-button
-        circle
-        class="profile-btn"
-        @click="router.push('/profile')"
-      >
-        <el-icon><User /></el-icon>
-      </el-button>
-    </div>
 
     <LandmarkDetailPanel
       v-model="isDetailPanelVisible"
@@ -417,37 +419,60 @@ onBeforeUnmount(() => {
   z-index: 900;
 }
 
-.user-actions {
+.top-nav-bar {
   position: absolute;
-  top: 24px;
-  right: 24px;
-  z-index: 950;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 60%, transparent 100%);
+  backdrop-filter: blur(2px);
+  pointer-events: none; /* 让背景点击穿透到地图 */
+}
 
-  .profile-btn {
-    width: 48px;
-    height: 48px;
-    font-size: 24px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    color: var(--el-text-color-primary);
+.project-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1b2a40;
+  pointer-events: auto;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+  letter-spacing: -0.5px;
+}
 
-    &:hover {
-      background-color: var(--el-color-primary-light-9);
-      color: var(--el-color-primary);
-    }
+.profile-btn {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(15, 29, 47, 0.15);
+  color: #2c3e50;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.85);
+
+  &:hover {
+    background-color: #ffffff;
+    color: #409eff;
+    transform: scale(1.05);
   }
 }
 
 @media (max-width: 768px) {
-  .user-actions {
-    top: 16px;
-    right: 16px;
-    
-    .profile-btn {
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
-    }
+  .top-nav-bar {
+    padding: 12px 16px;
+  }
+  
+  .project-title {
+    font-size: 20px;
+  }
+  
+  .profile-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
   }
 }
-
 </style>
