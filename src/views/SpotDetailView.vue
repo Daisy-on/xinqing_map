@@ -1,6 +1,17 @@
 <template>
-  <main class="scatter-page" :class="{ rainy: isRainy }">
+  <main class="scatter-page" :class="{ rainy: isRainy, sunny: isSunny, severe: isSevere }">
     <canvas ref="rainCanvas" class="rain-canvas" aria-hidden="true"></canvas>
+    <div class="sunny-layer" aria-hidden="true">
+      <span class="sun-core"></span>
+      <span class="sun-halo"></span>
+      <span class="fair-cloud cloud-a"></span>
+      <span class="fair-cloud cloud-b"></span>
+    </div>
+    <div class="severe-layer" aria-hidden="true">
+      <span class="storm-ring ring-a"></span>
+      <span class="storm-ring ring-b"></span>
+      <span class="storm-flash"></span>
+    </div>
     <div class="weather-fog" aria-hidden="true"></div>
 
     <div class="header-nav">
@@ -129,6 +140,7 @@ type RainDrop = {
 }
 
 type ReactionKey = keyof ReactionSummary
+type WeatherCategory = 'fair' | 'precipitation' | 'severe'
 
 const route = useRoute()
 const router = useRouter()
@@ -163,11 +175,49 @@ const EXIT_DURATION = 280
 const ENTER_EASING = 'cubic-bezier(0.16, 1, 0.3, 1)'
 const EXIT_EASING = 'cubic-bezier(0.7, 0, 0.84, 0)'
 
-const isRainy = computed(() => {
+const classifyWeatherCategory = (weatherCode: string, weatherText: string): WeatherCategory => {
+  const code = weatherCode.toUpperCase()
+  const text = weatherText
+
+  const severeCodeKeywords = ['THUNDERSTORM', 'TYPHOON', 'HAIL', 'TORNADO', 'HURRICANE']
+  const severeTextKeywords = ['雷暴', '台风', '冰雹', '龙卷', '飓风', '暴风', '强对流']
+
+  const precipitationCodeKeywords = ['RAIN', 'SHOWER', 'DRIZZLE', 'DOWNPOUR', 'SLEET', 'SNOW']
+  const precipitationTextKeywords = ['雨', '雷阵雨', '阵雨', '小雨', '中雨', '大雨', '暴雨', '雪']
+
+  const fairCodeKeywords = ['SUNNY', 'CLEAR', 'CLOUD', 'OVERCAST', 'CALM']
+  const fairTextKeywords = ['晴', '多云', '阴', '放晴', '转晴']
+
+  if (severeCodeKeywords.some((keyword) => code.includes(keyword)) || severeTextKeywords.some((keyword) => text.includes(keyword))) {
+    return 'severe'
+  }
+
+  if (
+    precipitationCodeKeywords.some((keyword) => code.includes(keyword)) ||
+    precipitationTextKeywords.some((keyword) => text.includes(keyword))
+  ) {
+    return 'precipitation'
+  }
+
+  if (fairCodeKeywords.some((keyword) => code.includes(keyword)) || fairTextKeywords.some((keyword) => text.includes(keyword))) {
+    return 'fair'
+  }
+
+  return 'fair'
+}
+
+const weatherCategory = computed<WeatherCategory>(() => {
   const loc = currentLocation.value
-  if (!loc) return false
-  return loc.weatherCode.includes('RAIN') || loc.weatherText.includes('雨')
+  if (!loc) return 'fair'
+  return classifyWeatherCategory(loc.weatherCode || '', loc.weatherText || '')
 })
+
+const isRainy = computed(() => {
+  return weatherCategory.value === 'precipitation'
+})
+
+const isSunny = computed(() => weatherCategory.value === 'fair')
+const isSevere = computed(() => weatherCategory.value === 'severe')
 
 const selectedLikeCount = computed(() => {
   if (!selectedPost.value) return 0
@@ -562,6 +612,14 @@ onBeforeUnmount(() => {
   background: radial-gradient(130% 120% at 50% 0%, #9fb3c9 0%, #5c7289 42%, #2f3f52 100%);
 }
 
+.scatter-page.sunny {
+  background: radial-gradient(130% 110% at 50% 0%, #fff2b8 0%, #ffc971 45%, #e4a95a 100%);
+}
+
+.scatter-page.severe {
+  background: radial-gradient(130% 120% at 50% 0%, #6b7685 0%, #3d4958 42%, #202a37 100%);
+}
+
 .rain-canvas {
   position: absolute;
   inset: 0;
@@ -575,6 +633,99 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
+.sunny-layer,
+.severe-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.scatter-page.sunny .sunny-layer {
+  opacity: 1;
+}
+
+.scatter-page.severe .severe-layer {
+  opacity: 1;
+}
+
+.sun-core {
+  position: absolute;
+  top: 10%;
+  right: 12%;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 244, 181, 0.95) 0%, rgba(255, 214, 126, 0.85) 65%, rgba(255, 214, 126, 0) 100%);
+  animation: sunny-breathe 4.2s ease-in-out infinite;
+}
+
+.sun-halo {
+  position: absolute;
+  top: 6%;
+  right: 8%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 236, 165, 0.32) 0%, rgba(255, 236, 165, 0) 72%);
+  animation: halo-drift 6s ease-in-out infinite;
+}
+
+.fair-cloud {
+  position: absolute;
+  width: 220px;
+  height: 62px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.12));
+  filter: blur(0.5px);
+}
+
+.cloud-a {
+  top: 20%;
+  left: -8%;
+  animation: cloud-move-a 18s linear infinite;
+}
+
+.cloud-b {
+  top: 33%;
+  left: -15%;
+  opacity: 0.72;
+  animation: cloud-move-b 23s linear infinite;
+}
+
+.storm-ring {
+  position: absolute;
+  width: 44vw;
+  height: 44vw;
+  max-width: 460px;
+  max-height: 460px;
+  border-radius: 50%;
+  border: 1px solid rgba(199, 219, 255, 0.18);
+  filter: blur(0.2px);
+}
+
+.ring-a {
+  top: -8%;
+  right: -8%;
+  animation: storm-spin-a 13s linear infinite;
+}
+
+.ring-b {
+  top: -4%;
+  right: -2%;
+  border-color: rgba(168, 192, 232, 0.12);
+  animation: storm-spin-b 9s linear infinite reverse;
+}
+
+.storm-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 45% at 75% 10%, rgba(214, 229, 255, 0.12), rgba(214, 229, 255, 0));
+  animation: storm-flash 2.4s ease-in-out infinite;
+}
+
 .weather-fog {
   position: absolute;
   inset: 0;
@@ -584,6 +735,102 @@ onBeforeUnmount(() => {
     radial-gradient(100% 70% at 50% 15%, rgba(233, 242, 250, 0.12) 0%, rgba(233, 242, 250, 0) 70%),
     linear-gradient(to bottom, rgba(14, 23, 37, 0.04), rgba(14, 23, 37, 0.14));
   backdrop-filter: blur(1px);
+}
+
+.scatter-page.sunny .weather-fog {
+  background:
+    radial-gradient(100% 70% at 50% 15%, rgba(255, 248, 214, 0.18) 0%, rgba(255, 248, 214, 0) 70%),
+    linear-gradient(to bottom, rgba(124, 90, 25, 0.04), rgba(124, 90, 25, 0.12));
+}
+
+.scatter-page.severe .weather-fog {
+  background:
+    radial-gradient(100% 70% at 50% 10%, rgba(205, 220, 245, 0.12) 0%, rgba(205, 220, 245, 0) 70%),
+    linear-gradient(to bottom, rgba(12, 19, 31, 0.1), rgba(12, 19, 31, 0.28));
+}
+
+@keyframes sunny-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes halo-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-8px, 6px);
+  }
+}
+
+@keyframes cloud-move-a {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(122vw);
+  }
+}
+
+@keyframes cloud-move-b {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(132vw);
+  }
+}
+
+@keyframes storm-spin-a {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.28;
+  }
+}
+
+@keyframes storm-spin-b {
+  0% {
+    transform: rotate(0deg) scale(0.94);
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.44;
+  }
+  100% {
+    transform: rotate(360deg) scale(1.04);
+    opacity: 0.2;
+  }
+}
+
+@keyframes storm-flash {
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+  46% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.34;
+  }
+  56% {
+    opacity: 0.1;
+  }
 }
 
 .header-nav {
@@ -951,6 +1198,11 @@ onBeforeUnmount(() => {
   .scatter-container,
   .action-btn {
     transition: none;
+  }
+
+  .sunny-layer *,
+  .severe-layer * {
+    animation: none !important;
   }
 }
 </style>
