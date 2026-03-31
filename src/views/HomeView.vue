@@ -13,15 +13,14 @@
     </header>
 
     <div ref="mapContainer" class="map-container"></div>
-    <div v-if="landmarkLocation && landmarkPixel" class="landmark-layer">
+    <div v-if="landmarkLocations.length > 0" class="landmark-layer">
       <div
+        v-for="location in landmarkLocations"
+        :key="location.id"
         class="landmark-anchor"
-        :style="{
-          left: `${landmarkPixel.x}px`,
-          top: `${landmarkPixel.y}px`,
-        }"
+        :style="getLandmarkStyle(location.id)"
       >
-        <LandmarkCard :location="landmarkLocation" @click="handleLandmarkClick" />
+        <LandmarkCard :location="location" @click="handleLandmarkClick" />
       </div>
     </div>
     <svg v-if="svgMaskPath" class="dom-mask" xmlns="http://www.w3.org/2000/svg">
@@ -64,8 +63,8 @@ let maskUpdateFrame = 0
 let maskOverlays: BMapGLPolygon[] = []
 let boundaryBounds: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null = null
 let isAdjustingBounds = false
-const landmarkLocation = ref<Location | null>(null)
-const landmarkPixel = ref<{ x: number; y: number } | null>(null)
+const landmarkLocations = ref<Location[]>([])
+const landmarkPixels = ref<Record<number, { x: number; y: number }>>({})
 
 const isDetailPanelVisible = ref(false)
 const selectedLandmark = ref<Location | null>(null)
@@ -81,18 +80,37 @@ function clearMaskOverlays(instance: BMapGLMap) {
   maskOverlays = []
 }
 
-function clearLandmark() {
-  landmarkLocation.value = null
-  landmarkPixel.value = null
+function clearLandmarks() {
+  landmarkLocations.value = []
+  landmarkPixels.value = {}
 }
 
-function updateLandmarkPixel() {
-  if (!map || !mapApi || !landmarkLocation.value) return
+function updateLandmarkPixels() {
+  if (!map || !mapApi || landmarkLocations.value.length === 0) return
 
-  const pixel = map.pointToPixel(new mapApi.Point(landmarkLocation.value.lng, landmarkLocation.value.lat))
-  landmarkPixel.value = {
-    x: pixel.x,
-    y: pixel.y,
+  const nextPixels: Record<number, { x: number; y: number }> = {}
+  landmarkLocations.value.forEach((location) => {
+    const pixel = map!.pointToPixel(new mapApi!.Point(location.lng, location.lat))
+    nextPixels[location.id] = {
+      x: pixel.x,
+      y: pixel.y,
+    }
+  })
+
+  landmarkPixels.value = nextPixels
+}
+
+function getLandmarkStyle(locationId: number) {
+  const pixel = landmarkPixels.value[locationId]
+  if (!pixel) {
+    return {
+      display: 'none',
+    }
+  }
+
+  return {
+    left: `${pixel.x}px`,
+    top: `${pixel.y}px`,
   }
 }
 
@@ -273,7 +291,7 @@ async function loadBoundaryAndMask() {
   map.addEventListener('moveend', enforceDragBounds)
 }
 
-async function loadFirstLandmark() {
+async function loadLandmarks() {
   if (!map || !mapApi) return
 
   const locationList = await fetchLocationList()
@@ -281,29 +299,32 @@ async function loadFirstLandmark() {
     return
   }
 
-  const inBoundsLocation = boundaryBounds
-    ? locationList.find(
+  const allValidLocations = locationList.filter(
+    (location) => Number.isFinite(location.lng) && Number.isFinite(location.lat),
+  )
+
+  const visibleLocations = boundaryBounds
+    ? allValidLocations.filter(
         (location) =>
           location.lng >= boundaryBounds!.minLng &&
           location.lng <= boundaryBounds!.maxLng &&
           location.lat >= boundaryBounds!.minLat &&
           location.lat <= boundaryBounds!.maxLat,
       )
-    : null
+    : allValidLocations
 
-  const firstLocation = (inBoundsLocation || locationList[0]) as Location
-  if (!Number.isFinite(firstLocation.lng) || !Number.isFinite(firstLocation.lat)) {
+  if (visibleLocations.length === 0) {
     throw new Error('地点坐标格式无效，无法渲染地标。')
   }
 
-  landmarkLocation.value = firstLocation
-  updateLandmarkPixel()
+  landmarkLocations.value = visibleLocations
+  updateLandmarkPixels()
 
-  map.addEventListener('zooming', updateLandmarkPixel)
-  map.addEventListener('zoomend', updateLandmarkPixel)
-  map.addEventListener('moving', updateLandmarkPixel)
-  map.addEventListener('moveend', updateLandmarkPixel)
-  map.addEventListener('resize', updateLandmarkPixel)
+  map.addEventListener('zooming', updateLandmarkPixels)
+  map.addEventListener('zoomend', updateLandmarkPixels)
+  map.addEventListener('moving', updateLandmarkPixels)
+  map.addEventListener('moveend', updateLandmarkPixels)
+  map.addEventListener('resize', updateLandmarkPixels)
 }
 
 onMounted(() => {
@@ -334,7 +355,7 @@ onMounted(() => {
   map = instance
 
   loadBoundaryAndMask()
-    .then(() => loadFirstLandmark())
+    .then(() => loadLandmarks())
     .then(() => {
       loadError.value = ''
     })
@@ -355,13 +376,13 @@ onBeforeUnmount(() => {
   map.removeEventListener('moveend', updateSvgMask)
   map.removeEventListener('resize', updateSvgMask)
   map.removeEventListener('moveend', enforceDragBounds)
-  map.removeEventListener('zooming', updateLandmarkPixel)
-  map.removeEventListener('zoomend', updateLandmarkPixel)
-  map.removeEventListener('moving', updateLandmarkPixel)
-  map.removeEventListener('moveend', updateLandmarkPixel)
-  map.removeEventListener('resize', updateLandmarkPixel)
+  map.removeEventListener('zooming', updateLandmarkPixels)
+  map.removeEventListener('zoomend', updateLandmarkPixels)
+  map.removeEventListener('moving', updateLandmarkPixels)
+  map.removeEventListener('moveend', updateLandmarkPixels)
+  map.removeEventListener('resize', updateLandmarkPixels)
 
-  clearLandmark()
+  clearLandmarks()
   map.clearOverlays()
   maskOverlays = []
   boundaryBounds = null
