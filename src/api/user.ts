@@ -36,3 +36,8 @@ export async function fetchCurrentUser(): Promise<User & { status?: number }> {
   const response = await http.get<ApiResponse<User & { status?: number }>>('/user/me')
   return response.data.data
 }
+
+export async function fetchUserInfo(userId: number): Promise<User> {
+  const response = await http.get<User>('/users/' + userId)
+  return response.data
+}

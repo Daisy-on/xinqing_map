@@ -60,3 +60,7 @@ export async function fetchPostDetail(postId: number): Promise<PostItem> {
   return response.data.data
 }
 
+export async function deletePost(postId: number): Promise<void> {
+  await http.delete<ApiResponse<null>>('/post/' + postId)
+}
+

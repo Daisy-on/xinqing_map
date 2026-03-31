@@ -94,9 +94,26 @@
                   <span class="time">{{ post.createTime.slice(11, 16) }}</span>
                   <span class="privacy-tag"><el-icon><Lock /></el-icon> 仅自己可见</span>
                 </div>
-                <div class="header-right" @click.stop>
-                  <el-icon><MoreFilled /></el-icon>
-                </div>
+                <el-dropdown
+                  trigger="click"
+                  @command="onPostDropdownCommand($event, post)"
+                  @click.stop
+                >
+                  <div class="header-right" @click.stop>
+                    <el-icon><MoreFilled /></el-icon>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item
+                        command="delete"
+                        :disabled="isPostDeleting(post.id)"
+                        class="danger-dropdown-item"
+                      >
+                        删除
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
               </div>
               <div class="card-body">
                 <h3 class="card-title"><el-icon style="margin-right:4px;vertical-align:-2px"><Location /></el-icon>{{ post.locationName || '分享瞬间' }}</h3>
@@ -135,9 +152,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location } from '@element-plus/icons-vue'
-import { fetchPostList } from '@/api/post'
+import { deletePost, fetchPostList } from '@/api/post'
 import { fetchCurrentUser } from '@/api/user'
 import { fetchLocationList } from '@/api/location'
 import type { PostItem } from '@/types/models'
@@ -150,6 +167,7 @@ const activeTab = ref('posts')
 
 const userPosts = ref<PostItem[]>([])
 const loadingPosts = ref(false)
+const deletingPostIds = ref<number[]>([])
 
 const sortPostsByTimeDesc = (posts: PostItem[]) => {
   return [...posts].sort((left, right) => {
@@ -239,6 +257,45 @@ const handleAvatarClick = () => {
 
 const handleInbox = () => {
   ElMessage.info('消息通知功能开发中')
+}
+
+const isPostDeleting = (postId: number) => deletingPostIds.value.includes(postId)
+
+const handlePostMenuCommand = async (command: string, post: PostItem) => {
+  if (command !== 'delete') {
+    return
+  }
+
+  if (isPostDeleting(post.id)) {
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm('删除后不可恢复，确认删除这条动态吗？', '删除动态', {
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      distinguishCancelAndClose: true,
+    })
+  } catch {
+    return
+  }
+
+  deletingPostIds.value = [...deletingPostIds.value, post.id]
+  try {
+    await deletePost(post.id)
+    userPosts.value = userPosts.value.filter((item) => item.id !== post.id)
+    ElMessage.success('删除成功')
+  } catch (error) {
+    console.error('Failed to delete post', error)
+    ElMessage.error('删除失败，请稍后重试')
+  } finally {
+    deletingPostIds.value = deletingPostIds.value.filter((id) => id !== post.id)
+  }
+}
+
+const onPostDropdownCommand = (command: string | number | Record<string, unknown>, post: PostItem) => {
+  return handlePostMenuCommand(String(command), post)
 }
 
 const getMockColor = (index: number) => {
@@ -500,10 +557,17 @@ const getMockColor = (index: number) => {
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .header-right:hover {
   color: var(--el-text-color-primary);
   background: var(--el-fill-color-light);
+}
+
+:deep(.danger-dropdown-item) {
+  color: var(--el-color-danger);
 }
 
 .card-body {

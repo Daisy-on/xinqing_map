@@ -405,6 +405,44 @@
         "relax": 0,
         "anxious": 0
       }
+    },
+    {
+      "id": 119,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 2,
+      "emotionTagName": "开心",
+      "emotionTagColor": "#F6BD16",
+      "content": "delete-flow-smoke-test",
+      "userId": 1,
+      "likeCount": 0,
+      "createTime": "2026-03-31 22:21:57",
+      "imageUrls": [],
+      "reactionSummary": {
+        "support": 0,
+        "relax": 0,
+        "anxious": 0
+      },
+      "status": 0
+    },
+    {
+      "id": 120,
+      "locationId": 1,
+      "locationName": "图书馆",
+      "emotionTagId": 2,
+      "emotionTagName": "开心",
+      "emotionTagColor": "#F6BD16",
+      "content": "delete-flow-smoke-test",
+      "userId": 1,
+      "likeCount": 0,
+      "status": 0,
+      "createTime": "2026-03-31 22:24:55",
+      "imageUrls": [],
+      "reactionSummary": {
+        "support": 0,
+        "relax": 0,
+        "anxious": 0
+      }
     }
   ]
 }

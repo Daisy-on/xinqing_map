@@ -208,6 +208,7 @@ server.post('/post/publish', (req, res) => {
       content,
       userId,
       likeCount: 0,
+      status: 1,
       createTime: formatDateTime(new Date()),
       imageUrls: [],
       reactionSummary: {
@@ -240,6 +241,7 @@ server.get('/post/list', (req, res) => {
   const pageSize = Math.max(1, toInt(req.query.pageSize, 10))
 
   let posts = router.db.get('posts').value() || []
+  posts = posts.filter((item) => item.status !== 0)
 
   if (!Number.isNaN(locationId)) {
     posts = posts.filter((item) => item.locationId === locationId)
@@ -279,6 +281,15 @@ server.get('/post/:id', (req, res) => {
   }
 
   const post = router.db.get('posts').find({ id }).value()
+  if (post && post.status === 0) {
+    res.status(404).jsonp({
+      code: 404,
+      message: 'post not found',
+      data: null,
+    })
+    return
+  }
+
   if (!post) {
     res.status(404).jsonp({
       code: 404,
@@ -289,6 +300,42 @@ server.get('/post/:id', (req, res) => {
   }
 
   ok(res, post)
+})
+
+server.delete('/post/:id', (req, res) => {
+  const token = getBearerToken(req)
+  const matched = /^mock-token-(\d+)$/.exec(token)
+  if (!matched) {
+    fail(res, 401, 'unauthorized')
+    return
+  }
+
+  const userId = Number.parseInt(matched[1], 10)
+  const user = router.db.get('users').find({ id: userId }).value()
+  if (!user) {
+    fail(res, 401, 'unauthorized')
+    return
+  }
+
+  const id = toInt(req.params.id, Number.NaN)
+  if (Number.isNaN(id)) {
+    fail(res, 400, 'invalid id')
+    return
+  }
+
+  const post = router.db.get('posts').find({ id }).value()
+  if (!post || post.status === 0) {
+    fail(res, 404, 'post not found')
+    return
+  }
+
+  if (post.userId !== userId) {
+    fail(res, 403, 'forbidden')
+    return
+  }
+
+  router.db.get('posts').find({ id }).assign({ status: 0 }).write()
+  ok(res, null)
 })
 
 server.use(router)
