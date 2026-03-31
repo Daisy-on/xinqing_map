@@ -318,7 +318,7 @@ onMounted(() => {
   }
 
   mapApi = window.BMapGL
-  const { Map, Point, NavigationControl, ScaleControl } = mapApi
+  const { Map, Point, ScaleControl } = mapApi
   const center = new Point(106.796971, 29.719559)
   const instance = new Map(mapContainer.value, {
     minZoom: MAP_MIN_ZOOM,
@@ -329,7 +329,6 @@ onMounted(() => {
   instance.enableScrollWheelZoom(true)
   instance.setMinZoom(MAP_MIN_ZOOM)
   instance.setMaxZoom(MAP_MAX_ZOOM)
-  instance.addControl(new NavigationControl())
   instance.addControl(new ScaleControl())
 
   map = instance
