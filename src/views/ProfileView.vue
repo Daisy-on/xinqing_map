@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="profile-layout">
     <!-- Banner Area -->
     <div class="banner-area">
@@ -14,17 +14,17 @@
     <!-- User Information Section 交叠层 -->
     <div class="user-container">
       <div class="user-profile-header">
-        <div class="user-info-row">
-          <div class="avatar-area" @click="handleAvatarClick">
-            <el-avatar 
-              :size="112" 
-              :src="userInfo?.avatar" 
-              class="avatar-img"
-            >
-              <el-icon v-if="!userInfo?.avatar" :size="50"><UserFilled /></el-icon>
-            </el-avatar>
-          </div>
-          
+        <div class="avatar-area" @click="handleAvatarClick">
+          <el-avatar 
+            :size="112" 
+            :src="userInfo?.avatar" 
+            class="avatar-img"
+          >
+            <el-icon v-if="!userInfo?.avatar" :size="50"><UserFilled /></el-icon>
+          </el-avatar>
+        </div>
+        
+        <div class="user-info-actions-wrap">
           <div class="info-area">
             <div class="title-row">
               <h1 v-if="isLoggedIn" class="nickname">{{ userInfo?.nickname || '心晴用户' }}</h1>
@@ -41,13 +41,13 @@
             
             <p class="bio-text" v-if="!isLoggedIn">登录后体验更多功能，记录你的心情地图。</p>
           </div>
-        </div>
 
-        <div class="actions-area" v-if="isLoggedIn">
-          <el-button class="edit-btn" round>编辑资料</el-button>
-          <el-button class="icon-btn" circle @click="handleInbox">
-            <el-icon><Message /></el-icon>
-          </el-button>
+          <div class="actions-area" v-if="isLoggedIn">
+            <el-button class="edit-btn" round>编辑资料</el-button>
+            <el-button class="icon-btn" circle @click="handleInbox">
+              <el-icon><Message /></el-icon>
+            </el-button>
+          </div>
         </div>
       </div>
 
@@ -303,25 +303,18 @@ const getMockColor = (index: number) => {
 }
 
 .user-profile-header {
-  margin-top: -56px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 32px;
+  align-items: flex-start;
+  gap: 24px;
   position: relative;
   z-index: 5;
-}
-
-.user-info-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 24px;
-  padding-bottom: 8px;
+  margin-bottom: 24px;
 }
 
 .avatar-area {
+  margin-top: -56px;
   cursor: pointer;
-  transform: translate(-8px, -16px);
+  flex-shrink: 0;
 }
 
 .avatar-img {
@@ -330,11 +323,18 @@ const getMockColor = (index: number) => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.user-info-actions-wrap {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-top: 12px;
+}
+
 .info-area {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-bottom: 4px;
 }
 
 .title-row {
@@ -392,7 +392,7 @@ const getMockColor = (index: number) => {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding-bottom: 8px;
+  margin-top: 4px; /* Added slight top margin instead of padding-bottom for better alignment with text */
 }
 
 .edit-btn {
@@ -584,24 +584,14 @@ const getMockColor = (index: number) => {
   }
 
   .user-profile-header {
-    margin-top: -46px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0;
-  }
-
-  .user-info-row {
-    display: flex;
-    flex-direction: row; /* 强制改回横向排列 */
-    align-items: flex-end;
     gap: 12px;
-    width: 100%;
+    margin-bottom: 24px;
   }
 
   .avatar-area {
-    cursor: pointer;
-    transform: translate(-4px, -8px); /* 保持微调即可，因为横向布局已经让它靠左了 */
-    flex-shrink: 0;
+    margin-top: -42px;
   }
 
   :deep(.el-avatar) {
@@ -609,9 +599,30 @@ const getMockColor = (index: number) => {
     height: 84px !important;
   }
 
+  .user-info-actions-wrap {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 0;
+    gap: 16px;
+  }
+
   .info-area {
-    padding-top: 40px; /* 增加顶部内边距，让昵称下沉到头像右侧 */
-    flex: 1;
+    flex: none;
+    width: 100%;
+  }
+
+  .actions-area {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* Or position actions next to avatar */
+  .actions-area {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin-top: 12px;
   }
   
   .nickname {
@@ -622,12 +633,6 @@ const getMockColor = (index: number) => {
   .login-entry {
     font-size: 20px;
     white-space: nowrap;
-  }
-
-  .actions-area {
-    width: 100%;
-    justify-content: flex-end; /* 按钮放右边 */
-    margin-top: -30px; /* 向上提一点 */
   }
   
   .grid-list {
