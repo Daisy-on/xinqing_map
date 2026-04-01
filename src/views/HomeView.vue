@@ -246,15 +246,12 @@ function enforceDragBounds() {
   }
 }
 
+import boundaryData from '../../public/data/campus-boundary.json'
+
 async function loadBoundaryAndMask() {
   if (!map || !mapApi) return
 
-  const response = await fetch('/data/campus-boundary.json')
-  if (!response.ok) {
-    throw new Error('读取边界文件失败')
-  }
-
-  const data = (await response.json()) as Array<{ lng: unknown; lat: unknown }>
+  const data = boundaryData as Array<{ lng: unknown; lat: unknown }>
   const parsed = data
     .map((point) => ({ lng: Number(point.lng), lat: Number(point.lat) }))
     .filter((point) => Number.isFinite(point.lng) && Number.isFinite(point.lat))
