@@ -37,7 +37,10 @@ export async function fetchCurrentUser(): Promise<User & { status?: number }> {
   return response.data.data
 }
 
-export async function fetchUserInfo(userId: number): Promise<User> {
+// 保留给后续查看他人资料使用。
+export async function fetchUserDetailById(userId: number): Promise<User> {
   const response = await http.get<User>('/users/' + userId)
   return response.data
 }
+
+export const fetchUserInfo = fetchUserDetailById
