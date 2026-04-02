@@ -23,9 +23,6 @@
           <el-tag size="small" type="info" effect="plain" round>
             {{ landmark.weatherText }}
           </el-tag>
-          <el-tag size="small" type="primary" effect="plain" round>
-            {{ landmark.moodText }}
-          </el-tag>
         </div>
         <p class="description">{{ landmark.description || '暂无详细介绍' }}</p>
       </div>

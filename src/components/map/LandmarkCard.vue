@@ -3,7 +3,7 @@
     <div class="landmark-icon">{{ iconText }}</div>
     <div class="text-content">
       <span class="landmark-name">{{ location.name || '未命名地点' }}</span>
-      <span class="landmark-meta">{{ location.moodText || '未知心情' }} | {{ location.weatherText || '未知天气' }}</span>
+      <span class="landmark-meta">{{ location.weatherText || '未知天气' }}</span>
     </div>
   </article>
 </template>
