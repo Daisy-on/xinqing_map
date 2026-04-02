@@ -16,6 +16,31 @@ export interface Location {
   moodText: string
   description?: string
   locationImage?: string
+  postCount?: number
+}
+
+export interface WeatherVO {
+  code?: string | null
+  name?: string | null
+  icon?: string | null
+  description?: string | null
+}
+
+export interface BackendLocationItem {
+  id: number
+  name: string
+  description?: string | null
+  longitude?: number | null
+  latitude?: number | null
+  lng?: number | null
+  lat?: number | null
+  icon?: string | null
+  weatherVO?: WeatherVO | null
+  weatherCode?: string | null
+  weatherText?: string | null
+  moodText?: string | null
+  locationImage?: string | null
+  postCount?: number | null
 }
 
 export interface EmotionTag {
