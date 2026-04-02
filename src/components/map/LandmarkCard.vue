@@ -2,8 +2,8 @@
   <article class="landmark-card" aria-label="landmark-card" @click="$emit('click', location)">
     <div class="landmark-icon">{{ iconText }}</div>
     <div class="text-content">
-      <span class="landmark-name">{{ location.name }}</span>
-      <span class="landmark-meta">{{ location.moodText }} | {{ location.weatherText }}</span>
+      <span class="landmark-name">{{ location.name || '未命名地点' }}</span>
+      <span class="landmark-meta">{{ location.moodText || '未知心情' }} | {{ location.weatherText || '未知天气' }}</span>
     </div>
   </article>
 </template>
@@ -20,7 +20,10 @@ defineEmits<{
   (e: 'click', value: Location): void
 }>()
 
-const iconText = computed(() => props.location.icon.slice(0, 4).toUpperCase())
+const iconText = computed(() => {
+  if (!props.location.icon) return '📍'
+  return String(props.location.icon).slice(0, 4).toUpperCase()
+})
 </script>
 
 <style scoped>
