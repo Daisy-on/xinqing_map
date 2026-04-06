@@ -66,6 +66,7 @@ export interface PostItem {
   userId: number
   likeCount: number
   createTime: string
+  image?: string
   imageUrls?: string[]
   reactionSummary?: ReactionSummary
 }

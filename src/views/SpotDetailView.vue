@@ -127,7 +127,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, CloseBold, Lightning, Moon, Pointer, Star } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
-import { fetchPostList } from '@/api/post'
+import { fetchPostDetail, fetchPostList } from '@/api/post'
 import type { Location, PostItem, ReactionSummary } from '@/types/models'
 
 type RainDrop = {
@@ -159,6 +159,7 @@ const detailCardRef = ref<HTMLElement | null>(null)
 const isSharedAnimating = ref(false)
 const sharedCardStyle = ref<Record<string, string>>({})
 const lastBubbleRect = ref<DOMRect | null>(null)
+const postDetailCache = ref<Record<number, PostItem>>({})
 
 const rainCanvas = ref<HTMLCanvasElement | null>(null)
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -289,11 +290,32 @@ const runCardAnimation = async (
   cardAnimation = null
 }
 
+const loadPostDetailById = async (postId: number) => {
+  const cached = postDetailCache.value[postId]
+  if (cached) {
+    if (selectedPost.value?.id === postId) {
+      selectedPost.value = cached
+    }
+    return
+  }
+
+  try {
+    const detail = await fetchPostDetail(postId)
+    postDetailCache.value[postId] = detail
+    if (selectedPost.value?.id === postId) {
+      selectedPost.value = detail
+    }
+  } catch (error) {
+    console.warn('Failed to load post detail by id', error)
+  }
+}
+
 const openPost = async (post: PostItem, event: MouseEvent) => {
   const target = event.currentTarget as HTMLElement | null
   lastBubbleRect.value = target?.getBoundingClientRect() || null
 
-  selectedPost.value = post
+  selectedPost.value = postDetailCache.value[post.id] || post
+  void loadPostDetailById(post.id)
 
   if (reducedMotion || !lastBubbleRect.value) {
     resetSharedCardState()

@@ -58,18 +58,39 @@
         <el-form-item label="上传封面图（可选）" class="cover-item">
           <el-upload
             class="cover-uploader"
-            action="#"
-            :auto-upload="false"
+            action="/"
+            accept=".jpg,.jpeg,.png,.webp"
+            :show-file-list="false"
+            :limit="1"
+            :disabled="uploadingImage || publishing"
+            :before-upload="beforeImageSelect"
+            :on-exceed="handleImageExceed"
+            :http-request="handleImageUpload"
             list-type="picture-card"
-            disabled
           >
-            <el-icon><Plus /></el-icon>
+            <el-icon v-if="!uploadingImage"><Plus /></el-icon>
+            <el-icon v-else class="is-loading"><Loading /></el-icon>
             <template #tip>
               <div class="el-upload__tip">
-                暂不支持图片上传，功能开发中...
+                支持 JPG、PNG、WEBP，最多 1 张，大小不超过 5MB
               </div>
             </template>
           </el-upload>
+
+          <div v-if="selectedImagePreviewUrl || selectedImageUrl" class="uploaded-preview">
+            <img :src="selectedImagePreviewUrl || selectedImageUrl" alt="已上传封面图" class="uploaded-preview-img" />
+            <div class="uploaded-preview-footer">
+              <span class="uploaded-preview-name">{{ selectedImageName || '已上传图片' }}</span>
+              <el-button
+                text
+                type="danger"
+                :disabled="uploadingImage || publishing"
+                @click="clearSelectedImage"
+              >
+                删除图片
+              </el-button>
+            </div>
+          </div>
         </el-form-item>
 
         <div class="actions">
@@ -82,13 +103,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules, UploadProps, UploadRequestOptions } from 'element-plus'
+import { Loading, Plus } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
-import { fetchEmotionTagList, publishPost } from '@/api/post'
+import { fetchEmotionTagList, publishPost, uploadPostImage } from '@/api/post'
 import type { EmotionTag, Location } from '@/types/models'
 
 const route = useRoute()
@@ -96,8 +117,15 @@ const router = useRouter()
 
 const formRef = ref<FormInstance>()
 const publishing = ref(false)
+const uploadingImage = ref(false)
 const locationOptions = ref<Location[]>([])
 const tagOptions = ref<EmotionTag[]>([])
+const selectedImagePreviewUrl = ref('')
+const selectedImageUrl = ref('')
+const selectedImageName = ref('')
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
 const form = reactive({
   locationId: undefined as number | undefined,
@@ -152,7 +180,66 @@ const handleBack = () => {
   router.push('/')
 }
 
+const resetPreviewBlob = () => {
+  if (selectedImagePreviewUrl.value) {
+    URL.revokeObjectURL(selectedImagePreviewUrl.value)
+    selectedImagePreviewUrl.value = ''
+  }
+}
+
+const clearSelectedImage = () => {
+  resetPreviewBlob()
+  selectedImageUrl.value = ''
+  selectedImageName.value = ''
+}
+
+const beforeImageSelect: UploadProps['beforeUpload'] = (rawFile) => {
+  if (!ALLOWED_IMAGE_TYPES.includes(rawFile.type)) {
+    ElMessage.error('仅支持 JPG、PNG、WEBP 格式图片')
+    return false
+  }
+
+  if (rawFile.size > MAX_IMAGE_SIZE) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+
+  return true
+}
+
+const handleImageExceed: UploadProps['onExceed'] = () => {
+  ElMessage.warning('当前仅支持上传 1 张图片，请先删除已上传图片')
+}
+
+const handleImageUpload = async (options: UploadRequestOptions) => {
+  uploadingImage.value = true
+  const file = options.file as File
+  try {
+    resetPreviewBlob()
+    selectedImagePreviewUrl.value = URL.createObjectURL(file)
+
+    const imageUrl = await uploadPostImage(file)
+    selectedImageUrl.value = imageUrl
+    selectedImageName.value = file.name
+    options.onSuccess?.({ imageUrl })
+    ElMessage.success('图片上传成功')
+  } catch (error: any) {
+    selectedImageUrl.value = ''
+    selectedImageName.value = ''
+    resetPreviewBlob()
+    options.onError?.(error)
+    ElMessage.error(error?.response?.data?.message || error?.message || '图片上传失败，请稍后重试')
+  } finally {
+    uploadingImage.value = false
+  }
+}
+
 const handlePublish = async () => {
+  if (uploadingImage.value) {
+    ElMessage.warning('图片上传中，请稍后发布')
+    return
+  }
+
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid || !form.locationId || !form.emotionTagId) return
 
@@ -162,6 +249,7 @@ const handlePublish = async () => {
       locationId: form.locationId,
       emotionTagId: form.emotionTagId,
       content: form.content.trim(),
+      image: selectedImageUrl.value || undefined,
     })
 
     ElMessage.success('发布成功')
@@ -179,6 +267,10 @@ onMounted(async () => {
   } catch {
     ElMessage.error('加载发布表单失败，请刷新后重试')
   }
+})
+
+onBeforeUnmount(() => {
+  resetPreviewBlob()
 })
 </script>
 
@@ -401,6 +493,41 @@ onMounted(async () => {
   color: #7a8b9e;
   font-size: 13px;
   margin-top: 10px;
+}
+
+.uploaded-preview {
+  margin-top: 14px;
+  width: 100%;
+  max-width: 340px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(160, 180, 200, 0.45);
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 22px rgba(45, 65, 95, 0.08);
+}
+
+.uploaded-preview-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.uploaded-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.uploaded-preview-name {
+  color: #41566f;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cancel-btn {
