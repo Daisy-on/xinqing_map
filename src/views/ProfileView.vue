@@ -180,11 +180,11 @@ const deletingPostIds = ref<number[]>([])
 
 const handleEditSuccess = (updatedUser: User) => {
   if (userInfo.value) {
-    userInfo.value.nickname = updatedUser.nickname
-    userInfo.value.avatar = updatedUser.avatar
-    if (updatedUser.gender !== undefined) {
-      userInfo.value.gender = updatedUser.gender
+    userInfo.value = {
+      ...userInfo.value,
+      ...updatedUser,
     }
+    localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
   }
 }
 
@@ -236,32 +236,24 @@ onMounted(() => {
     isLoggedIn.value = true
     try {
       const storedUser = localStorage.getItem('userInfo')
-      if (storedUser) {
-        userInfo.value = JSON.parse(storedUser)
-        if (userInfo.value?.id) {
-          loadUserPosts()
-        } else {
-          fetchCurrentUser()
-            .then((currentUser) => {
-              userInfo.value = currentUser
-              localStorage.setItem('userInfo', JSON.stringify(currentUser))
-              return loadUserPosts()
-            })
-            .catch((error) => {
-              console.error('Failed to fetch current user', error)
-            })
-        }
-      } else {
-        fetchCurrentUser()
-          .then((currentUser) => {
-            userInfo.value = currentUser
-            localStorage.setItem('userInfo', JSON.stringify(currentUser))
+      const cachedUser = storedUser ? JSON.parse(storedUser) : null
+
+      fetchCurrentUser()
+        .then((currentUser) => {
+          userInfo.value = {
+            ...(cachedUser || {}),
+            ...currentUser,
+          }
+          localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
+          return loadUserPosts()
+        })
+        .catch((error) => {
+          console.error('Failed to fetch current user', error)
+          if (cachedUser?.id) {
+            userInfo.value = cachedUser
             return loadUserPosts()
-          })
-          .catch((error) => {
-            console.error('Failed to fetch current user', error)
-          })
-      }
+          }
+        })
     } catch (e) {
       console.error('Failed to parse userInfo from localStorage')
     }
