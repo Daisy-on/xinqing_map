@@ -3,6 +3,7 @@ export interface User {
   account: string
   nickname: string
   avatar?: string
+  gender?: number
 }
 
 export interface Location {

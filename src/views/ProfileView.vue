@@ -43,13 +43,20 @@
           </div>
 
           <div class="actions-area" v-if="isLoggedIn">
-            <el-button class="edit-btn" round>编辑资料</el-button>
+            <el-button class="edit-btn" round @click="showEditModal = true">编辑资料</el-button>
             <el-button class="icon-btn" circle @click="handleInbox">
               <el-icon><Message /></el-icon>
             </el-button>
           </div>
         </div>
       </div>
+
+      <!-- 编辑资料弹窗 (TikTok 风格沉浸卡片) -->
+      <EditProfileModal 
+        v-model:visible="showEditModal"
+        :user-info="userInfo"
+        @success="handleEditSuccess"
+      />
 
       <!-- 纯净风格导航 Tabs -->
       <div class="custom-tabs">
@@ -157,17 +164,29 @@ import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Loca
 import { deletePost, fetchPostList } from '@/api/post'
 import { fetchCurrentUser } from '@/api/user'
 import { fetchLocationList } from '@/api/location'
-import type { PostItem } from '@/types/models'
+import type { PostItem, User } from '@/types/models'
+import EditProfileModal from '@/components/profile/EditProfileModal.vue'
 
 const router = useRouter()
 
 const isLoggedIn = ref(false)
-const userInfo = ref<any>(null)
+const userInfo = ref<User | null>(null)
 const activeTab = ref('posts')
+const showEditModal = ref(false)
 
 const userPosts = ref<PostItem[]>([])
 const loadingPosts = ref(false)
 const deletingPostIds = ref<number[]>([])
+
+const handleEditSuccess = (updatedUser: User) => {
+  if (userInfo.value) {
+    userInfo.value.nickname = updatedUser.nickname
+    userInfo.value.avatar = updatedUser.avatar
+    if (updatedUser.gender !== undefined) {
+      userInfo.value.gender = updatedUser.gender
+    }
+  }
+}
 
 const sortPostsByTimeDesc = (posts: PostItem[]) => {
   return [...posts].sort((left, right) => {

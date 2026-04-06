@@ -37,6 +37,17 @@ export async function fetchCurrentUser(): Promise<User & { status?: number }> {
   return response.data.data
 }
 
+export interface UserUpdateParams {
+  nickname?: string
+  avatar?: string
+  gender?: number
+}
+
+export async function updateUserInfo(params: UserUpdateParams): Promise<User> {
+  const response = await http.put<ApiResponse<User>>('/user/update', params)
+  return response.data.data
+}
+
 // 保留给后续查看他人资料使用。
 export async function fetchUserDetailById(userId: number): Promise<User> {
   const response = await http.get<User>('/users/' + userId)
