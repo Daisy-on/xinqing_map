@@ -65,9 +65,12 @@ export interface PostItem {
   emotionTagColor?: string
   content: string
   userId: number
+  nickname?: string
+  avatar?: string
   likeCount: number
   liked?: boolean
   createTime: string
+  updateTime?: string
   image?: string
   imageUrls?: string[]
   reactionSummary?: ReactionSummary
