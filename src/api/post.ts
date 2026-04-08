@@ -114,6 +114,12 @@ export interface PublishPostResult {
   postId: number
 }
 
+export interface PostLikeResult {
+  postId: number
+  liked: boolean
+  likeCount: number
+}
+
 export async function uploadPostImage(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
@@ -150,5 +156,12 @@ export async function fetchPostDetail(postId: number): Promise<PostItem> {
 
 export async function deletePost(postId: number): Promise<void> {
   await http.delete<ApiResponse<null>>('/post/' + postId)
+}
+
+export async function togglePostLike(postId: number): Promise<PostLikeResult> {
+  const response = await http.post<ApiResponse<PostLikeResult>>('/post/like', null, {
+    params: { postId },
+  })
+  return response.data.data
 }
 

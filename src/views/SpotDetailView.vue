@@ -96,24 +96,16 @@
           </div>
 
           <footer class="detail-actions">
-            <button type="button" class="action-btn like" @click="likeSelected" aria-label="点赞">
-              <el-icon><Star /></el-icon>
+            <button
+              type="button"
+              class="action-btn like"
+              :class="{ liked: selectedPost?.liked }"
+              :disabled="isLiking"
+              @click="likeSelected"
+              aria-label="点赞"
+            >
+              <span class="heart-icon" aria-hidden="true">❤</span>
               <span>{{ selectedLikeCount }}</span>
-            </button>
-
-            <button type="button" class="action-btn" @click="react('support')" aria-label="支持">
-              <el-icon><Pointer /></el-icon>
-              <span>{{ selectedReactions.support }}</span>
-            </button>
-
-            <button type="button" class="action-btn" @click="react('relax')" aria-label="放松">
-              <el-icon><Moon /></el-icon>
-              <span>{{ selectedReactions.relax }}</span>
-            </button>
-
-            <button type="button" class="action-btn" @click="react('anxious')" aria-label="焦虑共鸣">
-              <el-icon><Lightning /></el-icon>
-              <span>{{ selectedReactions.anxious }}</span>
             </button>
           </footer>
         </article>
@@ -125,10 +117,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, CloseBold, Lightning, Moon, Pointer, Star } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { ArrowLeft, CloseBold } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
-import { fetchPostDetail, fetchPostList } from '@/api/post'
-import type { Location, PostItem, ReactionSummary } from '@/types/models'
+import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
+import type { Location, PostItem } from '@/types/models'
 
 type RainDrop = {
   x: number
@@ -139,7 +132,6 @@ type RainDrop = {
   thickness: number
 }
 
-type ReactionKey = keyof ReactionSummary
 type WeatherCategory = 'fair' | 'precipitation' | 'severe'
 
 const route = useRoute()
@@ -153,8 +145,7 @@ const currentPage = ref(1)
 const totalPosts = ref(0)
 const slideDirection = ref('slide-left')
 const selectedPost = ref<PostItem | null>(null)
-const reactionDeltaMap = ref<Record<number, ReactionSummary>>({})
-const likeDeltaMap = ref<Record<number, number>>({})
+const isLiking = ref(false)
 const detailCardRef = ref<HTMLElement | null>(null)
 const isSharedAnimating = ref(false)
 const sharedCardStyle = ref<Record<string, string>>({})
@@ -222,22 +213,7 @@ const isSevere = computed(() => weatherCategory.value === 'severe')
 
 const selectedLikeCount = computed(() => {
   if (!selectedPost.value) return 0
-  const id = selectedPost.value.id
-  return selectedPost.value.likeCount + (likeDeltaMap.value[id] || 0)
-})
-
-const selectedReactions = computed<ReactionSummary>(() => {
-  if (!selectedPost.value) {
-    return { support: 0, relax: 0, anxious: 0 }
-  }
-  const id = selectedPost.value.id
-  const base = selectedPost.value.reactionSummary || { support: 0, relax: 0, anxious: 0 }
-  const delta = reactionDeltaMap.value[id] || { support: 0, relax: 0, anxious: 0 }
-  return {
-    support: base.support + delta.support,
-    relax: base.relax + delta.relax,
-    anxious: base.anxious + delta.anxious,
-  }
+  return selectedPost.value.likeCount ?? 0
 })
 
 const goBack = () => {
@@ -412,19 +388,51 @@ const closePost = async () => {
   resetSharedCardState()
 }
 
-const likeSelected = () => {
-  if (!selectedPost.value) return
-  const id = selectedPost.value.id
-  likeDeltaMap.value[id] = (likeDeltaMap.value[id] || 0) + 1
+const applyLikeResult = (postId: number, likeCount: number, liked: boolean) => {
+  posts.value = posts.value.map((post) => {
+    if (post.id !== postId) return post
+    return {
+      ...post,
+      likeCount,
+      liked,
+    }
+  })
+
+  const cached = postDetailCache.value[postId]
+  if (cached) {
+    postDetailCache.value[postId] = {
+      ...cached,
+      likeCount,
+      liked,
+    }
+  }
+
+  if (selectedPost.value?.id === postId) {
+    selectedPost.value = {
+      ...selectedPost.value,
+      likeCount,
+      liked,
+    }
+  }
 }
 
-const react = (type: ReactionKey) => {
-  if (!selectedPost.value) return
-  const id = selectedPost.value.id
-  const current = reactionDeltaMap.value[id] || { support: 0, relax: 0, anxious: 0 }
-  reactionDeltaMap.value[id] = {
-    ...current,
-    [type]: current[type] + 1,
+const likeSelected = async () => {
+  if (!selectedPost.value || isLiking.value) return
+
+  isLiking.value = true
+  try {
+    const result = await togglePostLike(selectedPost.value.id)
+    applyLikeResult(result.postId, result.likeCount, result.liked)
+  } catch (error: any) {
+    const status = error?.response?.status
+    if (status === 401) {
+      ElMessage.warning('请先登录后再点赞')
+      return
+    }
+    ElMessage.error('点赞失败，请稍后重试')
+    console.error('Failed to like post', error)
+  } finally {
+    isLiking.value = false
   }
 }
 
@@ -1139,8 +1147,7 @@ onBeforeUnmount(() => {
 .detail-actions {
   margin-top: 18px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
 }
 
 .action-btn {
@@ -1165,6 +1172,22 @@ onBeforeUnmount(() => {
 .action-btn.like {
   background: rgba(255, 238, 198, 0.94);
   border-color: rgba(233, 180, 67, 0.36);
+}
+
+.action-btn.like:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.action-btn.like.liked {
+  background: rgba(255, 224, 230, 0.95);
+  border-color: rgba(235, 112, 137, 0.4);
+  color: #b73557;
+}
+
+.heart-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .veil-fade-enter-active,

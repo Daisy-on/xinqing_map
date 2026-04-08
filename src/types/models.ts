@@ -66,6 +66,7 @@ export interface PostItem {
   content: string
   userId: number
   likeCount: number
+  liked?: boolean
   createTime: string
   image?: string
   imageUrls?: string[]
