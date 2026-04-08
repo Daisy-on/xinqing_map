@@ -137,6 +137,7 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { loginUser, registerUser } from '@/api/user'
+import { setAuthSession } from '@/utils/auth'
 
 type AuthMode = 'login' | 'register'
 
@@ -196,8 +197,7 @@ async function handleLogin() {
       password: loginForm.password,
     })
 
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('userInfo', JSON.stringify(data.userInfo))
+    setAuthSession(data.token, data.userInfo)
     ElMessage.success('登录成功')
     router.push(resolveRedirect())
   } catch (error: any) {

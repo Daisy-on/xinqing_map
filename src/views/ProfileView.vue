@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location } from '@element-plus/icons-vue'
@@ -166,6 +166,14 @@ import { fetchCurrentUser } from '@/api/user'
 import { fetchLocationList } from '@/api/location'
 import type { PostItem, User } from '@/types/models'
 import EditProfileModal from '@/components/profile/EditProfileModal.vue'
+import {
+  AUTH_STORAGE_CHANGED_EVENT,
+  clearAuthSession,
+  getStoredUserInfo,
+  getToken,
+  setStoredUserInfo,
+  syncAuthStorageState,
+} from '@/utils/auth'
 
 const router = useRouter()
 
@@ -178,13 +186,20 @@ const userPosts = ref<PostItem[]>([])
 const loadingPosts = ref(false)
 const deletingPostIds = ref<number[]>([])
 
+const resetProfileState = () => {
+  isLoggedIn.value = false
+  userInfo.value = null
+  userPosts.value = []
+  showEditModal.value = false
+}
+
 const handleEditSuccess = (updatedUser: User) => {
-  if (userInfo.value) {
+  if (userInfo.value && getToken()) {
     userInfo.value = {
       ...userInfo.value,
       ...updatedUser,
     }
-    localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
+    setStoredUserInfo(userInfo.value)
   }
 }
 
@@ -230,34 +245,76 @@ const loadUserPosts = async () => {
   }
 }
 
-onMounted(() => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    isLoggedIn.value = true
-    try {
-      const storedUser = localStorage.getItem('userInfo')
-      const cachedUser = storedUser ? JSON.parse(storedUser) : null
-
-      fetchCurrentUser()
-        .then((currentUser) => {
-          userInfo.value = {
-            ...(cachedUser || {}),
-            ...currentUser,
-          }
-          localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
-          return loadUserPosts()
-        })
-        .catch((error) => {
-          console.error('Failed to fetch current user', error)
-          if (cachedUser?.id) {
-            userInfo.value = cachedUser
-            return loadUserPosts()
-          }
-        })
-    } catch (e) {
-      console.error('Failed to parse userInfo from localStorage')
-    }
+const bootstrapProfile = async () => {
+  if (!syncAuthStorageState()) {
+    resetProfileState()
+    return
   }
+
+  isLoggedIn.value = true
+  const cachedUser = getStoredUserInfo()
+  if (cachedUser?.id) {
+    userInfo.value = cachedUser
+  }
+
+  try {
+    const currentUser = await fetchCurrentUser()
+    userInfo.value = {
+      ...(cachedUser || {}),
+      ...currentUser,
+    }
+    setStoredUserInfo(userInfo.value)
+    await loadUserPosts()
+  } catch (error: any) {
+    console.error('Failed to fetch current user', error)
+    const status = error?.response?.status
+    const code = error?.response?.data?.code
+
+    if (status === 401 || code === 401) {
+      clearAuthSession()
+      resetProfileState()
+      return
+    }
+
+    if (cachedUser?.id) {
+      userInfo.value = cachedUser
+      await loadUserPosts()
+      return
+    }
+
+    resetProfileState()
+  }
+}
+
+const syncProfileAuthState = () => {
+  if (!getToken()) {
+    syncAuthStorageState()
+    resetProfileState()
+    return
+  }
+
+  if (!isLoggedIn.value) {
+    void bootstrapProfile()
+  }
+}
+
+const handleStorageEvent = (event: StorageEvent) => {
+  if (event.storageArea !== localStorage) return
+  if (event.key !== 'token' && event.key !== 'userInfo') return
+  syncProfileAuthState()
+}
+
+onMounted(() => {
+  void bootstrapProfile()
+  window.addEventListener('storage', handleStorageEvent)
+  window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, syncProfileAuthState)
+  window.addEventListener('focus', syncProfileAuthState)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('storage', handleStorageEvent)
+  window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, syncProfileAuthState)
+  window.removeEventListener('focus', syncProfileAuthState)
 })
 
 const handleAvatarClick = () => {
