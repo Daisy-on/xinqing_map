@@ -77,10 +77,15 @@
           </button>
 
           <header class="detail-header">
+            <div class="publisher-info">
+              <el-avatar :size="36" :src="selectedPost.avatar" class="publisher-avatar">
+                <el-icon v-if="!selectedPost.avatar"><UserFilled /></el-icon>
+              </el-avatar>
+              <span class="publisher-nickname">{{ selectedPost.nickname || '心晴用户' }}</span>
+            </div>
             <span class="detail-tag" :style="{ backgroundColor: selectedPost.emotionTagColor || '#6AA6FF' }">
               {{ selectedPost.emotionTagName || '心情' }}
             </span>
-            <time class="detail-time">{{ selectedPost.createTime }}</time>
           </header>
 
           <p class="detail-content">{{ selectedPost.content }}</p>
@@ -107,6 +112,8 @@
               <span class="heart-icon" aria-hidden="true">❤</span>
               <span>{{ selectedLikeCount }}</span>
             </button>
+
+            <time class="detail-time">最后更新 {{ formatPostTime(selectedPost.updateTime || selectedPost.createTime) }}</time>
           </footer>
         </article>
       </div>
@@ -118,7 +125,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, CloseBold } from '@element-plus/icons-vue'
+import { ArrowLeft, CloseBold, UserFilled } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
@@ -210,6 +217,22 @@ const isRainy = computed(() => {
 
 const isSunny = computed(() => weatherCategory.value === 'fair')
 const isSevere = computed(() => weatherCategory.value === 'severe')
+
+const formatPostTime = (timeStr: string | undefined) => {
+  if (!timeStr) return ''
+  try {
+    const date = new Date(timeStr)
+    if (isNaN(date.getTime())) return timeStr
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    const hh = String(date.getHours()).padStart(2, '0')
+    const mm = String(date.getMinutes()).padStart(2, '0')
+    return `${y}-${m}-${d} ${hh}:${mm}`
+  } catch {
+    return timeStr
+  }
+}
 
 const selectedLikeCount = computed(() => {
   if (!selectedPost.value) return 0
@@ -1091,8 +1114,22 @@ onBeforeUnmount(() => {
   border: none;
   border-radius: 999px;
   color: #2c4763;
-  background: rgba(218, 232, 248, 0.92);
+  background: transparent;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.detail-close:hover {
+  background: rgba(218, 232, 248, 0.4);
+  transform: rotate(90deg);
+}
+
+.detail-close:focus {
+  outline: none;
 }
 
 .detail-header {
@@ -1100,21 +1137,42 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
-  padding-right: 42px;
+  margin-bottom: 16px;
+  padding-right: 36px;
+}
+
+.publisher-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.publisher-avatar {
+  background-color: #f0f4f8;
+  color: #7189a1;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 6px rgba(11, 23, 39, 0.08);
+}
+
+.publisher-nickname {
+  font-size: 15px;
+  font-weight: 500;
+  color: #24374a;
 }
 
 .detail-tag {
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .detail-time {
-  color: #54708c;
-  font-size: 12px;
+  color: #7a8f9c;
+  font-size: 13px;
 }
 
 .detail-content {
@@ -1148,6 +1206,7 @@ onBeforeUnmount(() => {
   margin-top: 18px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
 .action-btn {
