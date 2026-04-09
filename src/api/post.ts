@@ -105,7 +105,10 @@ export async function fetchEmotionTagList(): Promise<EmotionTag[]> {
 
 export interface PublishPostParams {
   locationId: number
+  locationName: string
   emotionTagId: number
+  emotionTagName: string
+  emotionTagColor: string
   content: string
   image?: string
 }

@@ -243,11 +243,22 @@ const handlePublish = async () => {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid || !form.locationId || !form.emotionTagId) return
 
+  const selectedLocation = locationOptions.value.find((item) => item.id === form.locationId)
+  const selectedTag = tagOptions.value.find((item) => item.id === form.emotionTagId)
+
+  if (!selectedLocation || !selectedTag) {
+    ElMessage.error('请选择有效的地点和情绪标签后再发布')
+    return
+  }
+
   publishing.value = true
   try {
     await publishPost({
       locationId: form.locationId,
+      locationName: selectedLocation.name,
       emotionTagId: form.emotionTagId,
+      emotionTagName: selectedTag.name,
+      emotionTagColor: selectedTag.color,
       content: form.content.trim(),
       image: selectedImageUrl.value || undefined,
     })
