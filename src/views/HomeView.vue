@@ -324,8 +324,9 @@ async function loadBoundaryAndMask() {
   const maxLng = Math.max(...lngValues)
   const minLat = Math.min(...latValues)
   const maxLat = Math.max(...latValues)
-  const lngBuffer = (maxLng - minLng) * 0.05
-  const latBuffer = (maxLat - minLat) * 0.05
+  const boundaryPaddingRate = 0.0075
+  const lngBuffer = (maxLng - minLng) * boundaryPaddingRate
+  const latBuffer = (maxLat - minLat) * boundaryPaddingRate
 
   boundaryBounds = {
     minLng: minLng - lngBuffer,
