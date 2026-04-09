@@ -1,15 +1,32 @@
 <template>
   <main class="home-view">
     <header class="top-nav-bar">
-      <div class="project-title">心晴地图</div>
-      <el-button
-        circle
-        class="profile-btn"
-        aria-label="个人中心"
-        @click="router.push('/profile')"
-      >
-        <el-icon><User /></el-icon>
-      </el-button>
+      <button class="project-brand" type="button" @click="router.push('/')">
+        <span class="brand-mark" aria-hidden="true">
+          <span class="brand-core"></span>
+        </span>
+        <span class="brand-text-wrap">
+          <span class="brand-title">心晴地图</span>
+          <span class="brand-subtitle">XINQING MAP</span>
+        </span>
+      </button>
+
+      <div class="nav-right-actions">
+        <button class="feature-link firefly-link" type="button" @click="handleFireflyClick">
+          萤火虫
+        </button>
+
+        <button class="feature-link xiaoban-link" type="button" @click="handleXiaobanClick">
+          <el-icon :size="18"><ChatDotRound /></el-icon>
+          <span>小伴</span>
+        </button>
+
+        <button class="avatar-entry" type="button" aria-label="个人中心" @click="handleProfileEntry">
+          <el-avatar :size="42" :src="currentUser?.avatar || ''" class="profile-avatar">
+            <el-icon :size="22"><UserFilled /></el-icon>
+          </el-avatar>
+        </button>
+      </div>
     </header>
 
     <div ref="mapContainer" class="map-container"></div>
@@ -38,11 +55,13 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { fetchLocationList } from '@/api/location'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
-import { User } from '@element-plus/icons-vue'
-import type { Location } from '@/types/models'
+import { ChatDotRound, UserFilled } from '@element-plus/icons-vue'
+import type { Location, User } from '@/types/models'
+import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
 
 type BoundaryPoint = { lng: number; lat: number }
 
@@ -68,6 +87,42 @@ const landmarkPixels = ref<Record<number, { x: number; y: number }>>({})
 
 const isDetailPanelVisible = ref(false)
 const selectedLandmark = ref<Location | null>(null)
+const currentUser = ref<User | null>(null)
+
+function syncTopBarUser() {
+  if (!getToken()) {
+    currentUser.value = null
+    return
+  }
+
+  currentUser.value = getStoredUserInfo()
+}
+
+function handleProfileEntry() {
+  if (getToken()) {
+    router.push('/profile')
+    return
+  }
+
+  router.push('/auth')
+}
+
+function handleFireflyClick() {
+  ElMessage.info('萤火虫功能正在准备中，敬请期待')
+}
+
+function handleXiaobanClick() {
+  ElMessage.info('“小伴”匿名聊天功能即将上线')
+}
+
+function handleAuthStorageChanged(event: Event) {
+  if (event instanceof StorageEvent) {
+    if (event.storageArea !== localStorage) return
+    if (event.key !== 'token' && event.key !== 'userInfo') return
+  }
+
+  syncTopBarUser()
+}
 
 function handleLandmarkClick(loc: Location) {
   selectedLandmark.value = loc
@@ -325,6 +380,11 @@ async function loadLandmarks() {
 }
 
 onMounted(() => {
+  syncTopBarUser()
+  window.addEventListener('storage', handleAuthStorageChanged)
+  window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
+  window.addEventListener('focus', syncTopBarUser)
+
   if (!mapContainer.value) {
     loadError.value = '地图容器初始化失败，请刷新页面重试。'
     return
@@ -362,6 +422,10 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('storage', handleAuthStorageChanged)
+  window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
+  window.removeEventListener('focus', syncTopBarUser)
+
   if (!map) return
 
   cancelAnimationFrame(maskUpdateFrame)
@@ -441,55 +505,165 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 16px 24px;
+  padding: 12px 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   z-index: 1000;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 60%, transparent 100%);
-  backdrop-filter: blur(2px);
-  pointer-events: none; /* 让背景点击穿透到地图 */
+  background: #ffffff;
+  border-bottom: 1px solid rgba(20, 33, 53, 0.08);
+  box-shadow: 0 8px 24px rgba(16, 28, 44, 0.04);
 }
 
-.project-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #1b2a40;
-  pointer-events: auto;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
-  letter-spacing: -0.5px;
+.project-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 
-.profile-btn {
-  pointer-events: auto;
-  width: 44px;
-  height: 44px;
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  position: relative;
+  background: linear-gradient(145deg, #ff6f4a 0%, #ff9a44 60%, #ffd166 100%);
+  box-shadow: 0 6px 14px rgba(255, 111, 74, 0.35);
+}
+
+.brand-core {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, #fffad8 0%, #ffe27b 40%, #ffc145 100%);
+}
+
+.brand-text-wrap {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.brand-title {
   font-size: 20px;
-  box-shadow: 0 4px 12px rgba(15, 29, 47, 0.15);
-  color: #2c3e50;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #152844;
+}
 
-  &:hover {
-    background-color: #ffffff;
-    color: #409eff;
-    transform: scale(1.05);
-  }
+.brand-subtitle {
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: #6f7f93;
+}
+
+.nav-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.feature-link {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #172b45;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.feature-link:hover {
+  color: #3f66d5;
+}
+
+.feature-link:focus-visible,
+.project-brand:focus-visible,
+.avatar-entry:focus-visible {
+  outline: 2px solid rgba(63, 102, 213, 0.5);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+.firefly-link {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.xiaoban-link {
+  width: 44px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.xiaoban-link .el-icon {
+  color: #284e97;
+}
+
+.avatar-entry {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profile-avatar {
+  border: 2px solid rgba(18, 35, 56, 0.08);
+  box-shadow: 0 6px 16px rgba(15, 31, 52, 0.12);
+}
+
+.avatar-entry:hover {
+  transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
   .top-nav-bar {
-    padding: 12px 16px;
+    padding: 10px 14px;
   }
-  
-  .project-title {
-    font-size: 20px;
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
   }
-  
-  .profile-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
+
+  .brand-core {
+    top: 8px;
+    left: 8px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .brand-title {
+    font-size: 17px;
+  }
+
+  .brand-subtitle,
+  .firefly-link {
+    display: none;
+  }
+
+  .nav-right-actions {
+    gap: 10px;
+  }
+
+  .xiaoban-link {
+    width: 38px;
+    font-size: 10px;
+  }
+
+  :deep(.profile-avatar) {
+    width: 36px;
+    height: 36px;
   }
 }
 </style>
