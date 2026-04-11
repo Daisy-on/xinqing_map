@@ -38,9 +38,9 @@ const handleDraw = async () => {
   setTimeout(async () => {
     isDrawing.value = false
     try {
-      const res = await openCapsule()
-      if (res && res.data) {
-        capsuleResult.value = res.data
+      const capsule = await openCapsule()
+      if (capsule) {
+        capsuleResult.value = capsule
         currentView.value = 'result'
       } else {
         ElMessage.info('目前还没有漂流瓶哦，快去写一个吧！')

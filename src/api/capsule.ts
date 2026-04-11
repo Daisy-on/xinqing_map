@@ -4,14 +4,15 @@ import type { CapsuleVO, CapsuleDTO } from '../types/models'
 /**
  * 随机抽取情绪胶囊
  */
-export function openCapsule() {
-  return request.get<CapsuleVO>('/capsule/open')
+export async function openCapsule(): Promise<CapsuleVO | null> {
+  const response = await request.get<{ code: number; message: string; data: CapsuleVO | null }>('/capsule/open')
+  return response.data.data ?? null
 }
 
 /**
  * 发布情绪胶囊
  */
-export function publishCapsule(data: CapsuleDTO) {
-  // 返回值通常是一个通用的 string (Result<String>)
-  return request.post<string>('/capsule/publish', data)
+export async function publishCapsule(data: CapsuleDTO): Promise<string> {
+  const response = await request.post<{ code: number; message: string; data: string | null }>('/capsule/publish', data)
+  return response.data.data ?? ''
 }
