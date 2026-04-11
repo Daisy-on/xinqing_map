@@ -1,6 +1,7 @@
 import http from './http'
 import type { ApiResponse } from '@/types/api'
 import type { User } from '@/types/models'
+import type { PublishPostParams } from './post'
 
 export interface RegisterParams {
   account: string
@@ -71,6 +72,11 @@ export async function fetchUserPosts(): Promise<UserPostItem[]> {
   }
 
   return []
+}
+
+export async function updateUserPost(postId: number, params: PublishPostParams): Promise<string> {
+  const response = await http.put<ApiResponse<string>>(`/user/posts/${postId}`, params)
+  return response.data.data
 }
 
 // 保留给后续查看他人资料使用。

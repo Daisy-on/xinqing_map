@@ -2,18 +2,18 @@
   <main class="compose-page">
     <section class="compose-card">
       <header class="compose-head">
-        <el-button class="back-btn" text @click="handleBack">返回点位</el-button>
-        <h1>记录心声</h1>
+        <el-button class="back-btn" text @click="handleBack">{{ isEditMode ? '返回个人中心' : '返回点位' }}</el-button>
+        <h1>{{ isEditMode ? '编辑帖子' : '记录心声' }}</h1>
       </header>
 
       <el-alert
-        v-if="sourceLocationName"
+        v-if="editTip || sourceLocationName"
         class="source-tip"
         type="info"
         :closable="false"
         show-icon
       >
-        当前来自 {{ sourceLocationName }}，你也可以切换其他地图点位。
+        {{ editTip || `当前来自 ${sourceLocationName}，你也可以切换其他地图点位。` }}
       </el-alert>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="compose-form">
@@ -95,7 +95,9 @@
 
         <div class="actions">
           <el-button class="cancel-btn" @click="handleBack">取消</el-button>
-          <el-button class="publish-btn" type="primary" :loading="publishing" @click="handlePublish">发布</el-button>
+          <el-button class="publish-btn" type="primary" :loading="publishing" @click="handlePublish">
+            {{ isEditMode ? '保存修改' : '发布' }}
+          </el-button>
         </div>
       </el-form>
     </section>
@@ -109,8 +111,9 @@ import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules, UploadProps, UploadRequestOptions } from 'element-plus'
 import { Loading, Plus } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
-import { fetchEmotionTagList, publishPost, uploadPostImage } from '@/api/post'
+import { fetchEmotionTagList, fetchPostDetail, publishPost, uploadPostImage } from '@/api/post'
 import type { EmotionTag, Location } from '@/types/models'
+import { updateUserPost } from '@/api/user'
 
 const route = useRoute()
 const router = useRouter()
@@ -123,6 +126,9 @@ const tagOptions = ref<EmotionTag[]>([])
 const selectedImagePreviewUrl = ref('')
 const selectedImageUrl = ref('')
 const selectedImageName = ref('')
+const imageCleared = ref(false)
+const editTip = ref('')
+const editingPostId = ref<number | null>(null)
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -136,6 +142,20 @@ const form = reactive({
 const sourceSpotId = computed(() => {
   const queryId = Number(route.query.spotId)
   return Number.isFinite(queryId) ? queryId : null
+})
+
+const editPostId = computed(() => {
+  const queryId = Number(route.query.postId)
+  return Number.isFinite(queryId) && queryId > 0 ? queryId : null
+})
+
+const isEditMode = computed(() => editPostId.value !== null)
+
+const returnPath = computed(() => {
+  if (typeof route.query.from === 'string' && route.query.from.trim()) {
+    return route.query.from
+  }
+  return isEditMode.value ? '/profile' : '/'
 })
 
 const sourceLocationName = computed(() => {
@@ -159,7 +179,19 @@ const initForm = async () => {
   locationOptions.value = locations
   tagOptions.value = tags
 
-  if (sourceSpotId.value) {
+  if (isEditMode.value && editPostId.value) {
+    const postDetail = await fetchPostDetail(editPostId.value)
+    editingPostId.value = postDetail.id
+    form.locationId = postDetail.locationId || form.locationId
+    form.emotionTagId = postDetail.emotionTagId || form.emotionTagId
+    form.content = postDetail.content || ''
+    selectedImageUrl.value = postDetail.image || ''
+    selectedImageName.value = postDetail.image ? '已存在的封面图' : ''
+    imageCleared.value = false
+    editTip.value = `正在编辑“${postDetail.locationName || '分享瞬间'}”的帖子，修改后将保存到你的我的动态中。`
+  }
+
+  if (!isEditMode.value && sourceSpotId.value) {
     const hasSource = locations.some((item) => item.id === sourceSpotId.value)
     if (hasSource) {
       form.locationId = sourceSpotId.value
@@ -173,6 +205,11 @@ const initForm = async () => {
 }
 
 const handleBack = () => {
+  if (isEditMode.value) {
+    router.push(returnPath.value)
+    return
+  }
+
   if (sourceSpotId.value) {
     router.push(`/spots/${sourceSpotId.value}`)
     return
@@ -191,6 +228,7 @@ const clearSelectedImage = () => {
   resetPreviewBlob()
   selectedImageUrl.value = ''
   selectedImageName.value = ''
+  imageCleared.value = isEditMode.value
 }
 
 const beforeImageSelect: UploadProps['beforeUpload'] = (rawFile) => {
@@ -217,6 +255,7 @@ const handleImageUpload = async (options: UploadRequestOptions) => {
   try {
     resetPreviewBlob()
     selectedImagePreviewUrl.value = URL.createObjectURL(file)
+    imageCleared.value = false
 
     const imageUrl = await uploadPostImage(file)
     selectedImageUrl.value = imageUrl
@@ -253,20 +292,28 @@ const handlePublish = async () => {
 
   publishing.value = true
   try {
-    await publishPost({
+    const payload = {
       locationId: form.locationId,
       locationName: selectedLocation.name,
       emotionTagId: form.emotionTagId,
       emotionTagName: selectedTag.name,
       emotionTagColor: selectedTag.color,
       content: form.content.trim(),
-      image: selectedImageUrl.value || undefined,
-    })
+      image: isEditMode.value ? (imageCleared.value ? '' : (selectedImageUrl.value || undefined)) : (selectedImageUrl.value || undefined),
+    }
 
+    if (isEditMode.value && editingPostId.value) {
+      await updateUserPost(editingPostId.value, payload)
+      ElMessage.success('修改成功')
+      router.push(returnPath.value)
+      return
+    }
+
+    await publishPost(payload)
     ElMessage.success('发布成功')
     router.push(`/spots/${form.locationId}`)
   } catch (error: any) {
-    ElMessage.error(error?.response?.data?.message || '发布失败，请稍后重试')
+    ElMessage.error(error?.response?.data?.message || (isEditMode.value ? '修改失败，请稍后重试' : '发布失败，请稍后重试'))
   } finally {
     publishing.value = false
   }

@@ -79,26 +79,31 @@
                 <span class="time">{{ post.createTime.slice(11, 16) }}</span>
                 <span class="privacy-tag"><el-icon><Lock /></el-icon> 仅自己可见</span>
               </div>
-              <el-dropdown
-                trigger="click"
-                @command="onPostDropdownCommand($event, post)"
-                @click.stop
-              >
-                <div class="header-right" @click.stop>
-                  <el-icon><MoreFilled /></el-icon>
-                </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item
-                      command="delete"
-                      :disabled="isPostDeleting(post.id)"
-                      class="danger-dropdown-item"
-                    >
-                      删除
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
+              <div class="header-actions" @click.stop>
+                <button class="edit-post-btn" type="button" :aria-label="`编辑帖子 ${post.id}`" @click="handleEditPost(post)">
+                  <el-icon><EditPen /></el-icon>
+                </button>
+                <el-dropdown
+                  trigger="click"
+                  @command="onPostDropdownCommand($event, post)"
+                  @click.stop
+                >
+                  <div class="header-right" @click.stop>
+                    <el-icon><MoreFilled /></el-icon>
+                  </div>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item
+                        command="delete"
+                        :disabled="isPostDeleting(post.id)"
+                        class="danger-dropdown-item"
+                      >
+                        删除
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
             </div>
             <div class="card-body">
               <h3 class="card-title"><el-icon style="margin-right:4px;vertical-align:-2px"><Location /></el-icon>{{ post.locationName || '分享瞬间' }}</h3>
@@ -127,7 +132,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location } from '@element-plus/icons-vue'
+import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location, EditPen } from '@element-plus/icons-vue'
 import { deletePost } from '@/api/post'
 import { fetchCurrentUser, fetchUserPosts, type UserPostItem } from '@/api/user'
 import type { User } from '@/types/models'
@@ -270,6 +275,16 @@ const handleInbox = () => {
 }
 
 const isPostDeleting = (postId: number) => deletingPostIds.value.includes(postId)
+
+const handleEditPost = (post: UserPostItem) => {
+  router.push({
+    path: '/compose',
+    query: {
+      postId: String(post.id),
+      from: '/profile',
+    },
+  })
+}
 
 const handlePostMenuCommand = async (command: string, post: UserPostItem) => {
   if (command !== 'delete') {
@@ -531,6 +546,13 @@ const getMockColor = (index: number) => {
   align-items: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -561,6 +583,30 @@ const getMockColor = (index: number) => {
 .header-right:hover {
   color: var(--el-text-color-primary);
   background: var(--el-fill-color-light);
+}
+
+.edit-post-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.edit-post-btn:hover {
+  color: var(--el-color-primary);
+  background: var(--el-fill-color-light);
+}
+
+.edit-post-btn:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5);
+  outline-offset: 2px;
 }
 
 :deep(.danger-dropdown-item) {
@@ -600,10 +646,37 @@ const getMockColor = (index: number) => {
   width: 100%;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .post-img {
   width: 100%;
   max-height: 220px;
   object-fit: cover;
+.edit-post-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.edit-post-btn:hover {
+  color: var(--el-color-primary);
+  background: var(--el-fill-color-light);
+}
+.edit-post-btn:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5);
+  outline-offset: 2px;
+}
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
