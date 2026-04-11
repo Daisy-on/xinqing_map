@@ -26,6 +26,7 @@ declare global {
     getZoom(): number
     setMinZoom(zoom: number): void
     setMaxZoom(zoom: number): void
+    setMapStyleV2(config: { styleJson: Array<Record<string, unknown>> }): void
     addControl(control: unknown): void
     enableScrollWheelZoom(enabled: boolean): void
     addOverlay(overlay: unknown): void

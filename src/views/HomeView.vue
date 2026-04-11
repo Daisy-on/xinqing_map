@@ -410,6 +410,32 @@ onMounted(() => {
   instance.setMaxZoom(MAP_MAX_ZOOM)
   instance.addControl(new ScaleControl())
 
+  // 隐藏所有文字、POI图标（为了比赛隐藏真实校名和地标），保留地图底图几何轮廓
+  instance.setMapStyleV2({
+    styleJson: [
+      {
+        featureType: 'all',
+        elementType: 'labels',
+        stylers: { visibility: 'off' },
+      },
+      {
+        featureType: 'all',
+        elementType: 'icons',
+        stylers: { visibility: 'off' },
+      },
+      {
+        featureType: 'poi',
+        elementType: 'all',
+        stylers: { visibility: 'off' },
+      },
+      {
+        featureType: 'education',
+        elementType: 'all',
+        stylers: { visibility: 'off' },
+      },
+    ],
+  })
+
   map = instance
 
   loadBoundaryAndMask()
