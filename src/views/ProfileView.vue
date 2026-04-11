@@ -58,98 +58,65 @@
         @success="handleEditSuccess"
       />
 
-      <!-- 纯净风格导航 Tabs -->
-      <div class="custom-tabs">
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'posts' }"
-          @click="activeTab = 'posts'"
-        >
-          动态 {{ userPosts.length }}
-        </div>
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'likes' }"
-          @click="activeTab = 'likes'"
-        >
-          <el-icon class="tab-icon" v-if="activeTab !== 'likes'" style="margin-right: 4px"><Lock /></el-icon> 喜欢
-        </div>
-        <div 
-          class="tab-item" 
-          :class="{ active: activeTab === 'favorites' }"
-          @click="activeTab = 'favorites'"
-        >
-          收藏
-        </div>
-      </div>
-
       <!-- 网格瀑布流区 -->
       <div class="content-area">
-        <Transition name="el-fade-in-linear" mode="out-in">
-          <!-- 动态（作品） -->
-          <div v-if="activeTab === 'posts'" class="grid-list">
-            <div v-if="!userPosts.length && !loadingPosts" class="empty-state-wrapper">
-              <el-empty description="暂无动态" />
-            </div>
-            <div v-else-if="loadingPosts" class="empty-state-wrapper">
-              <el-skeleton animated :rows="3" />
-            </div>
-            <div v-else class="content-card" v-for="post in userPosts" :key="'post-'+post.id" @click="router.push('/post/' + post.id)">
-              <div class="card-header">
-                <div class="header-left">
-                  <span class="date">{{ post.createTime.slice(5, 10).replace('-', '月') }}日</span>
-                  <span class="time">{{ post.createTime.slice(11, 16) }}</span>
-                  <span class="privacy-tag"><el-icon><Lock /></el-icon> 仅自己可见</span>
-                </div>
-                <el-dropdown
-                  trigger="click"
-                  @command="onPostDropdownCommand($event, post)"
-                  @click.stop
-                >
-                  <div class="header-right" @click.stop>
-                    <el-icon><MoreFilled /></el-icon>
-                  </div>
-                  <template #dropdown>
-                    <el-dropdown-menu>
-                      <el-dropdown-item
-                        command="delete"
-                        :disabled="isPostDeleting(post.id)"
-                        class="danger-dropdown-item"
-                      >
-                        删除
-                      </el-dropdown-item>
-                    </el-dropdown-menu>
-                  </template>
-                </el-dropdown>
-              </div>
-              <div class="card-body">
-                <h3 class="card-title"><el-icon style="margin-right:4px;vertical-align:-2px"><Location /></el-icon>{{ post.locationName || '分享瞬间' }}</h3>
-                <p class="card-desc">{{ post.content || '...' }}</p>
-                <div class="card-media" v-if="post.imageUrls && post.imageUrls.length > 0">
-                  <img :src="post.imageUrls[0]" class="post-img" alt="post cover" />
-                </div>
-              </div>
-              <div class="card-footer">
-                <div class="action-btn">
-                  <el-icon><Star /></el-icon> <span>{{ post.likeCount || 0 }}</span>
-                </div>
-                <div class="action-btn">
-                  <el-icon><ChatRound /></el-icon> <span>0</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div class="section-title-row">
+          <h2 class="section-title">我的动态</h2>
+          <span class="section-count">{{ userPosts.length }}</span>
+        </div>
 
-          <!-- 喜欢 -->
-          <div v-else-if="activeTab === 'likes'" class="empty-state-wrapper">
-             <el-empty description="仅自己可见" />
+        <div class="grid-list">
+          <div v-if="!userPosts.length && !loadingPosts" class="empty-state-wrapper">
+            <el-empty description="暂无动态" />
           </div>
-
-          <!-- 收藏 -->
-          <div v-else-if="activeTab === 'favorites'" class="empty-state-wrapper">
-             <el-empty description="暂无收藏" />
+          <div v-else-if="loadingPosts" class="empty-state-wrapper">
+            <el-skeleton animated :rows="3" />
           </div>
-        </Transition>
+          <div v-else class="content-card" v-for="post in userPosts" :key="'post-'+post.id" @click="router.push('/post/' + post.id)">
+            <div class="card-header">
+              <div class="header-left">
+                <span class="date">{{ post.createTime.slice(5, 10).replace('-', '月') }}日</span>
+                <span class="time">{{ post.createTime.slice(11, 16) }}</span>
+                <span class="privacy-tag"><el-icon><Lock /></el-icon> 仅自己可见</span>
+              </div>
+              <el-dropdown
+                trigger="click"
+                @command="onPostDropdownCommand($event, post)"
+                @click.stop
+              >
+                <div class="header-right" @click.stop>
+                  <el-icon><MoreFilled /></el-icon>
+                </div>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item
+                      command="delete"
+                      :disabled="isPostDeleting(post.id)"
+                      class="danger-dropdown-item"
+                    >
+                      删除
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+            <div class="card-body">
+              <h3 class="card-title"><el-icon style="margin-right:4px;vertical-align:-2px"><Location /></el-icon>{{ post.locationName || '分享瞬间' }}</h3>
+              <p class="card-desc">{{ post.content || '...' }}</p>
+              <div class="card-media" v-if="post.imageUrls && post.imageUrls.length > 0">
+                <img :src="post.imageUrls[0]" class="post-img" alt="post cover" />
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="action-btn">
+                <el-icon><Star /></el-icon> <span>{{ post.likeCount || 0 }}</span>
+              </div>
+              <div class="action-btn">
+                <el-icon><ChatRound /></el-icon> <span>0</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -178,7 +145,6 @@ const router = useRouter()
 
 const isLoggedIn = ref(false)
 const userInfo = ref<User | null>(null)
-const activeTab = ref('posts')
 const showEditModal = ref(false)
 
 const userPosts = ref<UserPostItem[]>([])
@@ -500,47 +466,34 @@ const getMockColor = (index: number) => {
   font-weight: 500;
 }
 
-.custom-tabs {
-  display: flex;
-  gap: 32px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  margin-bottom: 24px;
-}
-
-.tab-item {
-  position: relative;
-  font-size: 16px;
-  color: var(--el-text-color-secondary);
-  padding: 12px 0;
-  cursor: pointer;
-  transition: all 0.3s;
+.section-title-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 2px 2px 0;
 }
 
-.tab-item:hover {
-  color: var(--el-text-color-primary);
-}
-
-.tab-item.active {
-  color: var(--el-text-color-primary);
+.section-title {
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
+  color: var(--el-text-color-primary);
+  letter-spacing: 0.02em;
 }
 
-.tab-item.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 3px;
-  border-radius: 2px;
-  background-color: var(--el-color-primary);
-}
-
-.tab-icon {
-  font-size: 14px;
+.section-count {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .content-area {
