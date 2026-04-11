@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { getStoredUserInfo, getToken as getAuthToken } from '@/utils/auth';
 
 // 消息结构定义
 export interface ChatMessage {
@@ -26,25 +27,11 @@ export const useChatStore = defineStore('chat', () => {
 
   // 从 localStorage 获取 Token
   function getToken() {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    try {
-      const user = JSON.parse(userStr);
-      return user.token;
-    } catch {
-      return null;
-    }
+    return getAuthToken();
   }
   
   function getMyUserId() {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    try {
-      const user = JSON.parse(userStr);
-      return user.id || null;
-    } catch {
-      return null;
-    }
+    return getStoredUserInfo()?.id || null;
   }
 
   // 初始化并连接 WebSocket
@@ -132,7 +119,7 @@ export const useChatStore = defineStore('chat', () => {
         messages.value.push({
           id: data.msgId || Date.now().toString(),
           senderId: data.fromUserId,
-          content: message,
+          content: data?.content || message || '',
           timestamp: timestamp
         });
         break;
@@ -180,7 +167,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function sendChatMessage(text: string) {
-    sendJson({ type: 'chat_msg', message: text });
+    sendJson({ type: 'chat_msg', content: text });
     // 乐观更新（或等服务器回退，后端实现会把自己的消息也推一份回来，这里依赖后端回推）
   }
 

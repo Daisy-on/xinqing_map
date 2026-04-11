@@ -7,6 +7,7 @@ import ProfileView from '../views/ProfileView.vue'
 import PostDetailView from '../views/PostDetailView.vue'
 import MatchView from '@/views/MatchView.vue'
 import ChatView from '@/views/ChatView.vue'
+import { getToken } from '@/utils/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,11 +58,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.name !== 'compose') {
+  if (!to.meta.requiresAuth && to.name !== 'compose') {
     return true
   }
 
-  const token = localStorage.getItem('token')
+  const token = getToken()
   if (token) {
     return true
   }
