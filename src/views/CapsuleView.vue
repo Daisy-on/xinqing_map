@@ -34,7 +34,7 @@ const handleDraw = async () => {
   capsuleResult.value = null
   currentView.value = 'drawing'
 
-  // 动画时长改为2.5s以配合摇晃和倒出小胶囊动画
+  // 动画时长改为4s以配合上移拔塞、摇晃、逆时针倒出并展示小胶囊的动效
   setTimeout(async () => {
     isDrawing.value = false
     try {
@@ -53,7 +53,7 @@ const handleDraw = async () => {
       currentView.value = 'main'
     }
     startCooldown()
-  }, 2500)
+  }, 4000)
 }
 
 const publishForm = reactive({
@@ -158,10 +158,7 @@ onUnmounted(() => {
           <div class="bottle-wrapper shaking-animation">
             <div class="glass-bottle dispensing">
               <div class="bottle-cork dispensing-cork"></div>
-              <div class="bottle-neck">
-                 <!-- 倒出的那一颗 -->
-                 <div class="capsule dropping-capsule"></div>
-              </div>
+              <div class="bottle-neck"></div>
               <div class="bottle-body">
                 <!-- 晃动中错乱的小胶囊 -->
                 <div class="capsule mini b-1"></div>
@@ -171,6 +168,10 @@ onUnmounted(() => {
                 <div class="capsule mini b-5"></div>
               </div>
               <div class="bottle-reflection"></div>
+            </div>
+            <!-- 倒出并在屏幕中间展示的这一颗 -->
+            <div class="dropped-capsule-wrapper">
+               <div class="capsule final-capsule"></div>
             </div>
           </div>
         </div>
@@ -460,44 +461,60 @@ onUnmounted(() => {
 
 /* === 摇晃及倒出动画 === */
 .shaking-animation .glass-bottle {
-  animation: pourSequence 2.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: pourSequence 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
 .shaking-animation .dispensing-cork {
-  animation: popCork 2.5s forwards;
+  animation: popCork 4s forwards;
 }
 
-/* 掉出的那颗胶囊预埋在颈部 */
-.dropping-capsule {
+.dropped-capsule-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  /* 防止遮挡瓶子 */
+  z-index: 10;
+}
+
+.final-capsule {
   opacity: 0;
-  top: 10px;
-  left: 12px;
   background: linear-gradient(180deg, #818cf8 50%, #fff 50%);
-  z-index: 5;
 }
-.shaking-animation .dropping-capsule {
-  animation: dropOut 2.5s ease-in forwards;
+.shaking-animation .final-capsule {
+  animation: dropOut 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* 玻璃瓶主体运动 */
+/* 玻璃瓶主体运动：上移 -> 拔瓶盖 -> 摇晃 -> 逆时针倒出 -> 缓慢淡出 */
 @keyframes pourSequence {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(-25deg); }
-  20% { transform: rotate(20deg); }
-  30% { transform: rotate(-15deg); }
-  45% { transform: rotate(10deg); }
-  55% { transform: rotate(-5deg); }
-  65% { transform: rotate(0deg); }
-  /* 准备倾倒(-130度)，因为它是以 bottom center 为轴转的 */
-  75% { transform: translateY(-40px) rotate(-135deg); }
-  90% { transform: translateY(-40px) rotate(-135deg); }
-  100% { transform: translateY(0) rotate(-135deg); opacity: 0; } 
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  8% { transform: translateY(-30px) rotate(0deg); opacity: 1; } 
+  14% { transform: translateY(-30px) rotate(20deg); opacity: 1; }
+  18% { transform: translateY(-30px) rotate(-15deg); opacity: 1; }
+  22% { transform: translateY(-30px) rotate(10deg); opacity: 1; }
+  26% { transform: translateY(-30px) rotate(-5deg); opacity: 1; }
+  32% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+  45% { transform: translateY(-20px) translateX(-50px) rotate(-130deg); opacity: 1; }
+  60% { transform: translateY(-20px) translateX(-50px) rotate(-130deg); opacity: 1; }
+  85% { transform: translateY(10px) translateX(-50px) rotate(-130deg); opacity: 0; }
+  100% { transform: translateY(10px) translateX(-50px) rotate(-130deg); opacity: 0; }
 }
 
 @keyframes popCork {
-  0%, 70% { transform: translateY(0); opacity: 1; }
-  75% { transform: translateY(-30px) translateX(-20px) rotate(-45deg); opacity: 0; }
-  100% { transform: translateY(-30px) translateX(-20px) rotate(-45deg); opacity: 0; }
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  6% { transform: translateY(-30px) translateX(20px) rotate(45deg); opacity: 1; } /* 提早拔开塞子 */
+  12% { transform: translateY(-20px) translateX(40px) rotate(90deg); opacity: 0; } /* 瓶盖飞走并隐藏 */
+  100% { transform: translateY(-20px) translateX(40px) rotate(90deg); opacity: 0; }
+}
+
+@keyframes dropOut {
+  0%, 42% { opacity: 0; transform: translate(-80px, -20px) rotate(-120deg) scale(0.5); }
+  45% { opacity: 1; transform: translate(-80px, -20px) rotate(-120deg) scale(0.8); } /* 飞出 */
+  55% { opacity: 1; transform: translate(0, 80px) rotate(-15deg) scale(1.5); } /* 落在正中间稍微偏下 */
+  60% { opacity: 1; transform: translate(0, 70px) rotate(5deg) scale(1.5); } /* 弹起回落 Q弹 */
+  65% { opacity: 1; transform: translate(0, 80px) rotate(0deg) scale(1.5); }
+  83% { opacity: 1; transform: translate(0, 80px) rotate(0deg) scale(1.5); }
+  100% { opacity: 0; transform: translate(0, 80px) rotate(0deg) scale(2.5); } /* 随瓶子隐去，此时胶囊放大准备打开内容卡片 */
 }
 
 @keyframes dropOut {
