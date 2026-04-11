@@ -51,12 +51,10 @@
     />
 
     <!-- 心情胶囊入口悬浮图标 -->
-    <button class="capsule-entry-btn" type="button" @click="isCapsuleModalVisible = true">
+    <button class="capsule-entry-btn" type="button" @click="router.push('/capsule')">
       <el-icon :size="24"><LocationInformation /></el-icon>
       <span class="capsule-text">心情胶囊</span>
     </button>
-
-    <CapsuleModal v-model:visible="isCapsuleModalVisible" />
   </main>
 </template>
 
@@ -67,7 +65,6 @@ import { ElMessage } from 'element-plus'
 import { fetchLocationList } from '@/api/location'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
-import CapsuleModal from '@/components/capsule/CapsuleModal.vue'
 import { ChatDotRound, UserFilled, LocationInformation } from '@element-plus/icons-vue'
 import type { Location, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
@@ -79,8 +76,6 @@ const router = useRouter()
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
 const MAP_INIT_ZOOM = 19
-
-const isCapsuleModalVisible = ref(false)
 
 const mapContainer = ref<HTMLElement | null>(null)
 const loadError = ref('')

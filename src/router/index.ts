@@ -8,6 +8,7 @@ import PostDetailView from '../views/PostDetailView.vue'
 import MatchView from '@/views/MatchView.vue'
 import ChatView from '@/views/ChatView.vue'
 import FireflyView from '@/views/FireflyView.vue'
+import CapsuleView from '@/views/CapsuleView.vue'
 import { getToken } from '@/utils/auth'
 
 const router = createRouter({
@@ -61,6 +62,12 @@ const router = createRouter({
       name: 'post-detail',
       component: PostDetailView,
     },
+    {
+      path: '/capsule',
+      name: 'capsule',
+      component: CapsuleView,
+      meta: { requiresAuth: true }
+    }
   ],
 })
 
