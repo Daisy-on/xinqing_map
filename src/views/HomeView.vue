@@ -112,7 +112,7 @@ function handleFireflyClick() {
 }
 
 function handleXiaobanClick() {
-  ElMessage.info('“小伴”匿名聊天功能即将上线')
+  router.push('/match')
 }
 
 function handleAuthStorageChanged(event: Event) {
