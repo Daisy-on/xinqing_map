@@ -49,6 +49,14 @@
       v-model="isDetailPanelVisible"
       :landmark="selectedLandmark"
     />
+
+    <!-- 心情胶囊入口悬浮图标 -->
+    <button class="capsule-entry-btn" type="button" @click="isCapsuleModalVisible = true">
+      <el-icon :size="24"><LocationInformation /></el-icon>
+      <span class="capsule-text">心情胶囊</span>
+    </button>
+
+    <CapsuleModal v-model:visible="isCapsuleModalVisible" />
   </main>
 </template>
 
@@ -59,7 +67,8 @@ import { ElMessage } from 'element-plus'
 import { fetchLocationList } from '@/api/location'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
-import { ChatDotRound, UserFilled } from '@element-plus/icons-vue'
+import CapsuleModal from '@/components/capsule/CapsuleModal.vue'
+import { ChatDotRound, UserFilled, LocationInformation } from '@element-plus/icons-vue'
 import type { Location, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
 
@@ -70,6 +79,8 @@ const router = useRouter()
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
 const MAP_INIT_ZOOM = 19
+
+const isCapsuleModalVisible = ref(false)
 
 const mapContainer = ref<HTMLElement | null>(null)
 const loadError = ref('')
@@ -692,5 +703,38 @@ onBeforeUnmount(() => {
     width: 36px;
     height: 36px;
   }
+}
+
+/* 心情胶囊悬浮按钮 */
+.capsule-entry-btn {
+  position: absolute;
+  right: 24px;
+  bottom: 80px; /* 避开可能有的底部控件或缩放尺 */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(116, 235, 213, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.capsule-entry-btn:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(116, 235, 213, 0.6);
+}
+
+.capsule-text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 </style>

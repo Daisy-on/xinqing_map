@@ -6,6 +6,18 @@ export interface User {
   gender?: number
 }
 
+export interface CapsuleDTO {
+  content: string
+  type: number
+}
+
+export interface CapsuleVO {
+  id: number
+  content: string
+  type: number
+  creatorName: string
+}
+
 export interface Location {
   id: number
   name: string
