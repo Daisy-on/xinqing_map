@@ -7,6 +7,7 @@ import ProfileView from '../views/ProfileView.vue'
 import PostDetailView from '../views/PostDetailView.vue'
 import MatchView from '@/views/MatchView.vue'
 import ChatView from '@/views/ChatView.vue'
+import FireflyView from '@/views/FireflyView.vue'
 import { getToken } from '@/utils/auth'
 
 const router = createRouter({
@@ -21,6 +22,12 @@ const router = createRouter({
       path: '/auth',
       name: 'auth',
       component: AuthView,
+    },
+    {
+      path: '/firefly',
+      name: 'firefly',
+      component: FireflyView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/match',

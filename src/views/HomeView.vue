@@ -108,7 +108,7 @@ function handleProfileEntry() {
 }
 
 function handleFireflyClick() {
-  ElMessage.info('萤火虫功能正在准备中，敬请期待')
+  router.push('/firefly')
 }
 
 function handleXiaobanClick() {
