@@ -161,10 +161,9 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location } from '@element-plus/icons-vue'
-import { deletePost, fetchPostList } from '@/api/post'
-import { fetchCurrentUser } from '@/api/user'
-import { fetchLocationList } from '@/api/location'
-import type { PostItem, User } from '@/types/models'
+import { deletePost } from '@/api/post'
+import { fetchCurrentUser, fetchUserPosts, type UserPostItem } from '@/api/user'
+import type { User } from '@/types/models'
 import EditProfileModal from '@/components/profile/EditProfileModal.vue'
 import {
   AUTH_STORAGE_CHANGED_EVENT,
@@ -182,7 +181,7 @@ const userInfo = ref<User | null>(null)
 const activeTab = ref('posts')
 const showEditModal = ref(false)
 
-const userPosts = ref<PostItem[]>([])
+const userPosts = ref<UserPostItem[]>([])
 const loadingPosts = ref(false)
 const deletingPostIds = ref<number[]>([])
 
@@ -203,43 +202,20 @@ const handleEditSuccess = (updatedUser: User) => {
   }
 }
 
-const sortPostsByTimeDesc = (posts: PostItem[]) => {
+const sortPostsByTimeDesc = (posts: UserPostItem[]) => {
   return [...posts].sort((left, right) => {
     return new Date(right.createTime).getTime() - new Date(left.createTime).getTime()
   })
 }
 
-const loadPostsByLocations = async (userId: number) => {
-  const locations = await fetchLocationList()
-  const allPostLists = await Promise.all(
-    locations.map(async (location) => {
-      const result = await fetchPostList({ locationId: location.id, pageSize: 100 })
-      return result.records
-    }),
-  )
-
-  return sortPostsByTimeDesc(allPostLists.flat().filter((post) => post.userId === userId))
-}
-
 const loadUserPosts = async () => {
-  if (!userInfo.value?.id) return
   loadingPosts.value = true
   try {
-    const res = await fetchPostList({ userId: userInfo.value.id })
-    if (res.records.length > 0) {
-      userPosts.value = sortPostsByTimeDesc(res.records)
-      return
-    }
-
-    userPosts.value = await loadPostsByLocations(userInfo.value.id)
+    const posts = await fetchUserPosts()
+    userPosts.value = sortPostsByTimeDesc(posts)
   } catch (error) {
-    console.warn('Direct userId post query failed, falling back to location-based aggregation', error)
-    try {
-      userPosts.value = await loadPostsByLocations(userInfo.value.id)
-    } catch (fallbackError) {
-      console.error('Failed to fetch user posts by fallback path', fallbackError)
-      userPosts.value = []
-    }
+    console.error('Failed to fetch user posts', error)
+    userPosts.value = []
   } finally {
     loadingPosts.value = false
   }
@@ -329,7 +305,7 @@ const handleInbox = () => {
 
 const isPostDeleting = (postId: number) => deletingPostIds.value.includes(postId)
 
-const handlePostMenuCommand = async (command: string, post: PostItem) => {
+const handlePostMenuCommand = async (command: string, post: UserPostItem) => {
   if (command !== 'delete') {
     return
   }
@@ -362,7 +338,7 @@ const handlePostMenuCommand = async (command: string, post: PostItem) => {
   }
 }
 
-const onPostDropdownCommand = (command: string | number | Record<string, unknown>, post: PostItem) => {
+const onPostDropdownCommand = (command: string | number | Record<string, unknown>, post: UserPostItem) => {
   return handlePostMenuCommand(String(command), post)
 }
 

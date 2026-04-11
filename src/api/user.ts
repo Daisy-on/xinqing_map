@@ -43,9 +43,34 @@ export interface UserUpdateParams {
   gender?: number
 }
 
+export interface UserPostItem {
+  id: number
+  locationId: number
+  locationName: string
+  emotionTagId: number
+  emotionTagName: string
+  emotionTagColor: string
+  content: string
+  likeCount: number
+  createTime: string
+  liked?: boolean
+  imageUrls?: string[]
+}
+
 export async function updateUserInfo(params: UserUpdateParams): Promise<User> {
   const response = await http.put<ApiResponse<User>>('/user/update', params)
   return response.data.data
+}
+
+export async function fetchUserPosts(): Promise<UserPostItem[]> {
+  const response = await http.get<ApiResponse<UserPostItem[]>>('/user/posts')
+  const payload = response.data
+
+  if (payload && Array.isArray(payload.data)) {
+    return payload.data
+  }
+
+  return []
 }
 
 // 保留给后续查看他人资料使用。
