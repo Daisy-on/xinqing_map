@@ -9,6 +9,8 @@ import MatchView from '@/views/MatchView.vue'
 import ChatView from '@/views/ChatView.vue'
 import FireflyView from '@/views/FireflyView.vue'
 import CapsuleView from '@/views/CapsuleView.vue'
+import MoodCalendarView from '@/views/MoodCalendarView.vue'
+import MoodEditView from '@/views/MoodEditView.vue'
 import { getToken } from '@/utils/auth'
 
 const router = createRouter({
@@ -56,6 +58,18 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+    },
+    {
+      path: '/mood/calendar',
+      name: 'mood-calendar',
+      component: MoodCalendarView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/mood/edit/:date',
+      name: 'mood-edit',
+      component: MoodEditView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/post/:id',

@@ -44,6 +44,7 @@
 
           <div class="actions-area" v-if="isLoggedIn">
             <el-button class="edit-btn" round @click="showEditModal = true">编辑资料</el-button>
+            <el-button class="edit-btn mood-btn" round @click="router.push('/mood/calendar')">心情打卡</el-button>
             <el-button class="icon-btn" circle @click="handleInbox">
               <el-icon><Message /></el-icon>
             </el-button>
