@@ -20,6 +20,7 @@ const selectedMoodId = ref<number | null>(null)
 const diaryNote = ref('')
 const hasOriginalRecord = ref(false)
 const isLoading = ref(false)
+const selectBackTarget = ref<'calendar' | 'write'>('calendar')
 
 const loadDetail = async () => {
   try {
@@ -41,27 +42,29 @@ const loadDetail = async () => {
 
 const selectMood = (id: number) => {
   selectedMoodId.value = id
+  selectBackTarget.value = 'calendar'
   step.value = 'write'
 }
 
 const reshowDial = () => {
+  selectBackTarget.value = 'write'
   step.value = 'select'
 }
 
 const handleBackFromWrite = () => {
   if (hasOriginalRecord.value) {
-    router.push('/mood/calendar')
+    router.replace('/mood/calendar')
   } else {
+    selectBackTarget.value = 'calendar'
     step.value = 'select'
   }
 }
 
 const handleBackFromSelect = () => {
-  if (selectedMoodId.value) {
-    // If a mood was already selected (e.g. going back from write to select and then back again)
+  if (selectBackTarget.value === 'write') {
     step.value = 'write'
   } else {
-    router.push('/mood/calendar')
+    router.replace('/mood/calendar')
   }
 }
 
@@ -86,7 +89,7 @@ const handleComplete = async () => {
       await backfillDiary({ diaryDate: rawDate, ...payload })
       ElMessage.success('补卡成功')
     }
-    router.push('/mood/calendar')
+    router.replace('/mood/calendar')
   } catch (error) {
     console.error('Failed to submit diary', error)
   } finally {
