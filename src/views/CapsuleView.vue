@@ -169,6 +169,7 @@ onUnmounted(() => {
               </div>
               <div class="bottle-reflection"></div>
             </div>
+            <div class="bottle-shadow"></div>
             <!-- 倒出并在屏幕中间展示的这一颗 -->
             <div class="dropped-capsule-wrapper">
                <div class="capsule final-capsule"></div>
@@ -464,6 +465,10 @@ onUnmounted(() => {
   animation: pourSequence 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
+.shaking-animation .bottle-shadow {
+  animation: shadowLift 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
 .shaking-animation .dispensing-cork {
   animation: popCork 4s forwards;
 }
@@ -488,16 +493,25 @@ onUnmounted(() => {
 /* 玻璃瓶主体运动：上移 -> 拔瓶盖 -> 摇晃 -> 逆时针倒出 -> 缓慢淡出 */
 @keyframes pourSequence {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  8% { transform: translateY(-30px) rotate(0deg); opacity: 1; } 
-  14% { transform: translateY(-30px) rotate(20deg); opacity: 1; }
-  18% { transform: translateY(-30px) rotate(-15deg); opacity: 1; }
-  22% { transform: translateY(-30px) rotate(10deg); opacity: 1; }
-  26% { transform: translateY(-30px) rotate(-5deg); opacity: 1; }
-  32% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
-  45% { transform: translateY(-20px) translateX(-50px) rotate(-130deg); opacity: 1; }
-  60% { transform: translateY(-20px) translateX(-50px) rotate(-130deg); opacity: 1; }
-  85% { transform: translateY(10px) translateX(-50px) rotate(-130deg); opacity: 0; }
-  100% { transform: translateY(10px) translateX(-50px) rotate(-130deg); opacity: 0; }
+  8% { transform: translateY(-60px) rotate(0deg); opacity: 1; } 
+  14% { transform: translateY(-60px) rotate(20deg); opacity: 1; }
+  18% { transform: translateY(-60px) rotate(-15deg); opacity: 1; }
+  22% { transform: translateY(-60px) rotate(10deg); opacity: 1; }
+  26% { transform: translateY(-60px) rotate(-5deg); opacity: 1; }
+  32% { transform: translateY(-60px) rotate(0deg); opacity: 1; }
+  45% { transform: translateY(-40px) translateX(-50px) rotate(-130deg); opacity: 1; }
+  60% { transform: translateY(-40px) translateX(-50px) rotate(-130deg); opacity: 1; }
+  85% { transform: translateY(20px) translateX(-50px) rotate(-130deg); opacity: 0; }
+  100% { transform: translateY(20px) translateX(-50px) rotate(-130deg); opacity: 0; }
+}
+
+@keyframes shadowLift {
+  0% { transform: translateX(-50%) scale(1); opacity: 1; }
+  8% { transform: translateX(-50%) scale(0.6); opacity: 0.3; } /* 阴影变小变淡，产生悬浮感 */
+  32% { transform: translateX(-50%) scale(0.6); opacity: 0.3; }
+  45% { transform: translateX(-20%) scale(0.3); opacity: 0.1; }
+  85% { transform: translateX(-20%) scale(0.3); opacity: 0; }
+  100% { transform: translateX(-20%) scale(0.3); opacity: 0; }
 }
 
 @keyframes popCork {
