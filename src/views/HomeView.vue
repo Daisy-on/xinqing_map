@@ -1,4 +1,5 @@
 <template>
+  <SplashAnimation v-if="isSplashVisible" :is-visible="!isSplashHiding" />
   <main class="home-view">
     <header class="top-nav-bar">
       <button class="project-brand" type="button" @click="router.push('/')">
@@ -63,6 +64,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchLocationList } from '@/api/location'
+import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
 import { ChatDotRound, UserFilled, LocationInformation } from '@element-plus/icons-vue'
@@ -76,6 +78,9 @@ const router = useRouter()
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
 const MAP_INIT_ZOOM = 19
+
+const isSplashVisible = ref(true)
+const isSplashHiding = ref(false)
 
 const mapContainer = ref<HTMLElement | null>(null)
 const loadError = ref('')
@@ -444,13 +449,25 @@ onMounted(() => {
 
   map = instance
 
-  loadBoundaryAndMask()
-    .then(() => loadLandmarks())
+  const splashTimer = new Promise((resolve) => setTimeout(resolve, 3800))
+
+  Promise.all([
+    loadBoundaryAndMask().then(() => loadLandmarks()),
+    splashTimer,
+  ])
     .then(() => {
       loadError.value = ''
+      isSplashHiding.value = true
+      setTimeout(() => {
+        isSplashVisible.value = false
+      }, 1200)
     })
     .catch((error) => {
       loadError.value = error instanceof Error ? error.message : '地图数据加载失败，请稍后重试。'
+      isSplashHiding.value = true
+      setTimeout(() => {
+        isSplashVisible.value = false
+      }, 1200)
     })
 })
 
