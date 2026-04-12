@@ -15,6 +15,7 @@ const isToday = dayjs(rawDate).isSame(dayjs(), 'day')
 const formattedDate = computed(() => dayjs(rawDate).format('MM月, YYYY-MM-DD').split('-'))
 
 const step = ref<'select' | 'write'>('select')
+const status = ref<'loading' | 'ready'>('loading')
 const selectedMoodId = ref<number | null>(null)
 const diaryNote = ref('')
 const hasOriginalRecord = ref(false)
@@ -28,9 +29,13 @@ const loadDetail = async () => {
       selectedMoodId.value = detail.emotionTagId
       diaryNote.value = detail.note || ''
       step.value = 'write'
+    } else {
+      step.value = 'select'
     }
   } catch (error) {
     console.error('Failed to load diary detail', error)
+  } finally {
+    status.value = 'ready'
   }
 }
 
@@ -41,6 +46,23 @@ const selectMood = (id: number) => {
 
 const reshowDial = () => {
   step.value = 'select'
+}
+
+const handleBackFromWrite = () => {
+  if (hasOriginalRecord.value) {
+    router.push('/mood/calendar')
+  } else {
+    step.value = 'select'
+  }
+}
+
+const handleBackFromSelect = () => {
+  if (selectedMoodId.value) {
+    // If a mood was already selected (e.g. going back from write to select and then back again)
+    step.value = 'write'
+  } else {
+    router.push('/mood/calendar')
+  }
 }
 
 const handleComplete = async () => {
@@ -79,19 +101,19 @@ onMounted(() => {
 
 <template>
   <div class="edit-page">
-    <div class="edit-container">
+    <div class="edit-container" v-if="status === 'ready'">
       <!-- SELECT STEP -->
       <transition name="fade" mode="out-in">
         <div v-if="step === 'select'" class="step-select">
           <div class="top-nav">
-            <button class="back-btn" @click="router.push('/mood/calendar')">
+            <button class="back-btn" @click="handleBackFromSelect">
               <el-icon><ArrowLeft /></el-icon>
             </button>
             <div class="date-title">
-              <div class="date-main">{{ dayjs(rawDate).date() }}月{{ dayjs(rawDate).format('DD日') }}</div>
+              <div class="date-main">{{ dayjs(rawDate).month() + 1 }}月{{ dayjs(rawDate).format('DD日') }}</div>
               <div class="date-sub">{{ dayjs(rawDate).format('dddd') }}</div>
             </div>
-            <button class="close-btn" @click="router.push('/mood/calendar')">×</button>
+            <button class="close-btn" @click="handleBackFromSelect">×</button>
           </div>
 
           <div class="dial-wrapper">
@@ -101,7 +123,7 @@ onMounted(() => {
                 v-for="(mood, index) in MOODS" 
                 :key="mood.id"
                 class="mood-item"
-                :style="`transform: rotate(${index * 45}deg) translateY(-120px) rotate(-${index * 45}deg)`"
+                :style="{ '--target-angle': `${index * (360 / MOODS.length)}deg`, '--delay': `${index * 0.05}s` } as any"
                 @click="selectMood(mood.id)"
               >
                 <div class="mood-box" :style="{ backgroundColor: mood.color }">
@@ -116,7 +138,7 @@ onMounted(() => {
         <!-- WRITE STEP -->
         <div v-else class="step-write">
           <div class="top-nav writing-nav">
-            <button class="back-btn" @click="reshowDial">
+            <button class="back-btn" @click="handleBackFromWrite">
               <el-icon><ArrowLeft /></el-icon>
             </button>
             <span class="nav-title">写日记</span>
@@ -247,11 +269,26 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  transition: transform 0.2s;
+  /* Animate outwards from center */
+  animation: bloomOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--delay);
+  opacity: 0; /* hidden before delay */
 }
 
-.mood-item:hover {
+@keyframes bloomOut {
+  0% {
+    transform: rotate(var(--target-angle)) translateY(0px) rotate(calc(-1 * var(--target-angle))) scale(0.2);
+    opacity: 0;
+  }
+  100% {
+    transform: rotate(var(--target-angle)) translateY(-135px) rotate(calc(-1 * var(--target-angle))) scale(1);
+    opacity: 1;
+  }
+}
+
+.mood-item:hover .mood-box {
   filter: brightness(0.95);
+  transform: scale(1.05);
 }
 
 .mood-box {
@@ -263,6 +300,7 @@ onMounted(() => {
   align-items: center;
   font-size: 32px;
   box-shadow: inset -2px -2px 6px rgba(0,0,0,0.05), inset 2px 2px 6px rgba(255,255,255,0.4);
+  transition: all 0.2s;
 }
 .mood-name {
   margin-top: 8px;
