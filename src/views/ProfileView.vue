@@ -43,14 +43,27 @@
           </div>
 
           <div class="actions-area" v-if="isLoggedIn">
-            <el-button class="edit-btn" round @click="showEditModal = true">编辑资料</el-button>
-            <el-button class="edit-btn mood-btn" round @click="router.push('/mood/calendar')">心情打卡</el-button>
-            <div class="firefly-icon-btn-wrapper">
-              <el-button class="icon-btn firefly-btn" circle @click="handleFireflyClick">
-                <el-icon><MagicStick /></el-icon>
-              </el-button>
-              <span v-if="letterStore.hasUnreadLetter" class="glowing-red-dot"></span>
+            <div class="primary-actions">
+              <el-button class="edit-btn mood-btn" round @click="router.push('/mood/calendar')">心情打卡</el-button>
+              <div class="firefly-icon-btn-wrapper">
+                <el-button class="icon-btn firefly-btn" circle @click="handleFireflyClick">
+                  <el-icon><MagicStick /></el-icon>
+                </el-button>
+                <span v-if="letterStore.hasUnreadLetter" class="glowing-red-dot"></span>
+              </div>
             </div>
+
+            <el-dropdown class="profile-more-dropdown" trigger="click" @command="onProfileActionCommand">
+              <button type="button" class="profile-more-trigger" aria-label="更多操作">
+                <el-icon><MoreFilled /></el-icon>
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="edit-profile">修改个人信息</el-dropdown-item>
+                  <el-dropdown-item command="logout" class="danger-dropdown-item">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
       </div>
@@ -157,6 +170,25 @@ const letterStore = useLetterStore()
 const handleFireflyClick = () => {
   letterStore.markAsRead()
   router.push('/firefly')
+}
+
+const handleFrontendLogout = () => {
+  clearAuthSession()
+  resetProfileState()
+  ElMessage.success('已退出登录')
+  router.push('/auth')
+}
+
+const onProfileActionCommand = (command: string | number | Record<string, unknown>) => {
+  const normalized = String(command)
+  if (normalized === 'edit-profile') {
+    showEditModal.value = true
+    return
+  }
+
+  if (normalized === 'logout') {
+    handleFrontendLogout()
+  }
 }
 
 const isLoggedIn = ref(false)
@@ -479,9 +511,40 @@ const getMockColor = (index: number) => {
 
 .actions-area {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
-  margin-top: 4px; /* Added slight top margin instead of padding-bottom for better alignment with text */
+  margin-top: 4px;
+}
+
+.primary-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-more-trigger {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--el-text-color-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-more-trigger:hover {
+  color: var(--el-text-color-primary);
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--el-border-color-dark);
+}
+
+.profile-more-trigger:focus-visible {
+  outline: 2px solid var(--el-color-primary-light-5);
+  outline-offset: 2px;
 }
 
 .edit-btn {
@@ -756,6 +819,10 @@ const getMockColor = (index: number) => {
   .actions-area {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .primary-actions {
+    gap: 8px;
   }
 
   /* Or position actions next to avatar */
