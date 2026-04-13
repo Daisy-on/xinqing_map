@@ -45,9 +45,12 @@
           <div class="actions-area" v-if="isLoggedIn">
             <el-button class="edit-btn" round @click="showEditModal = true">编辑资料</el-button>
             <el-button class="edit-btn mood-btn" round @click="router.push('/mood/calendar')">心情打卡</el-button>
-            <el-button class="icon-btn" circle @click="handleInbox">
-              <el-icon><Message /></el-icon>
-            </el-button>
+            <div class="firefly-icon-btn-wrapper">
+              <el-button class="icon-btn firefly-btn" circle @click="router.push('/firefly')">
+                <el-icon><MagicStick /></el-icon>
+              </el-button>
+              <span v-if="letterStore.hasUnreadLetter" class="glowing-red-dot"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -133,11 +136,12 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location, EditPen } from '@element-plus/icons-vue'
+import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Location, EditPen, MagicStick } from '@element-plus/icons-vue'
 import { deletePost } from '@/api/post'
 import { fetchCurrentUser, fetchUserPosts, type UserPostItem } from '@/api/user'
 import type { User } from '@/types/models'
 import EditProfileModal from '@/components/profile/EditProfileModal.vue'
+import { useLetterStore } from '@/stores/letter'
 import {
   AUTH_STORAGE_CHANGED_EVENT,
   clearAuthSession,
@@ -148,6 +152,7 @@ import {
 } from '@/utils/auth'
 
 const router = useRouter()
+const letterStore = useLetterStore()
 
 const isLoggedIn = ref(false)
 const userInfo = ref<User | null>(null)
@@ -269,10 +274,6 @@ const handleAvatarClick = () => {
   if (!isLoggedIn.value) {
     router.push('/auth')
   }
-}
-
-const handleInbox = () => {
-  ElMessage.info('消息通知功能开发中')
 }
 
 const isPostDeleting = (postId: number) => deletingPostIds.value.includes(postId)
@@ -774,6 +775,34 @@ const getMockColor = (index: number) => {
     grid-template-columns: 1fr;
     gap: 16px;
   }
+}
+
+.firefly-icon-btn-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.glowing-red-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background-color: #ff4757;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+  animation: red-pulse 1.5s infinite;
+  pointer-events: none;
+}
+
+.icon-btn.firefly-btn {
+  /* give it a slight glow if we want, or keep it standard */
+}
+
+@keyframes red-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 71, 87, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
 }
 </style>
 

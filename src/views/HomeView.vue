@@ -14,7 +14,11 @@
 
       <div class="nav-right-actions">
         <button class="feature-link firefly-link" type="button" @click="handleFireflyClick">
-          萤火虫
+          <div class="firefly-icon-wrapper">
+            <el-icon :size="18"><MagicStick /></el-icon>
+            <span>萤火虫</span>
+            <span v-if="letterStore.hasUnreadLetter" class="glowing-red-dot"></span>
+          </div>
         </button>
 
         <button class="feature-link xiaoban-link" type="button" @click="handleXiaobanClick">
@@ -71,13 +75,15 @@ import { fetchLocationDetail, fetchLocationList } from '@/api/location'
 import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
-import { ChatDotRound, UserFilled, LocationInformation } from '@element-plus/icons-vue'
+import { ChatDotRound, UserFilled, LocationInformation, MagicStick } from '@element-plus/icons-vue'
 import type { Location, LocationDetail, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
+import { useLetterStore } from '@/stores/letter'
 
 type BoundaryPoint = { lng: number; lat: number }
 
 const router = useRouter()
+const letterStore = useLetterStore()
 
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
@@ -866,5 +872,30 @@ onBeforeUnmount(() => {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.5px;
+}
+
+.firefly-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.glowing-red-dot {
+  position: absolute;
+  top: -2px;
+  right: -8px;
+  width: 8px;
+  height: 8px;
+  background-color: #ff4757;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+  animation: red-pulse 1.5s infinite;
+}
+
+@keyframes red-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(255, 71, 87, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
 }
 </style>
