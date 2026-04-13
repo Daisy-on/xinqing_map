@@ -35,14 +35,17 @@
 
       <transition :name="slideDirection">
         <div v-if="posts.length > 0" class="bubbles-layer" :key="currentPage">
-          <button
+          <article
             v-for="(post, index) in posts"
             :key="post.id"
-            type="button"
             class="post-bubble"
             :class="bubbleClassByIndex(index)"
             :style="bubbleStyleByIndex(index)"
+            role="button"
+            tabindex="0"
             @click="openPost(post, $event)"
+            @keydown.enter.prevent="openPost(post, $event)"
+            @keydown.space.prevent="openPost(post, $event)"
           >
             <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
               {{ post.emotionTagName || '心情' }}
@@ -62,7 +65,7 @@
               <span class="bubble-heart" aria-hidden="true">❤</span>
               <span class="bubble-like-count">{{ post.likeCount ?? 0 }}</span>
             </button>
-          </button>
+          </article>
         </div>
       </transition>
       
@@ -314,7 +317,7 @@ const loadPostDetailById = async (postId: number) => {
   }
 }
 
-const openPost = async (post: PostItem, event: MouseEvent) => {
+const openPost = async (post: PostItem, event: MouseEvent | KeyboardEvent) => {
   const target = event.currentTarget as HTMLElement | null
   lastBubbleRect.value = target?.getBoundingClientRect() || null
 
