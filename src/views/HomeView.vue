@@ -30,7 +30,8 @@
       </div>
     </header>
 
-    <div ref="mapContainer" class="map-container"></div>
+    <div ref="mapContainer" class="map-container" :class="{ 'is-ready': isMapReady }"></div>
+    <div v-if="!isMapReady && !loadError" class="map-skeleton"></div>
     <div v-if="landmarkLocations.length > 0" class="landmark-layer">
       <div
         v-for="location in landmarkLocations"
@@ -78,9 +79,21 @@ const router = useRouter()
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
 const MAP_INIT_ZOOM = 19
+const HOME_SPLASH_PLAYED_KEY = 'xinqing_map_home_splash_played'
 
-const isSplashVisible = ref(true)
-const isSplashHiding = ref(false)
+function shouldPlayHomeSplashOnce() {
+  try {
+    return sessionStorage.getItem(HOME_SPLASH_PLAYED_KEY) !== '1'
+  } catch {
+    return true
+  }
+}
+
+const shouldPlaySplash = shouldPlayHomeSplashOnce()
+
+const isSplashVisible = ref(shouldPlaySplash)
+const isSplashHiding = ref(!shouldPlaySplash)
+const isMapReady = ref(false)
 
 const mapContainer = ref<HTMLElement | null>(null)
 const loadError = ref('')
@@ -90,6 +103,7 @@ const svgMaskPath = ref('')
 let map: BMapGLMap | null = null
 let mapApi: BMapGLNamespace | null = null
 let maskUpdateFrame = 0
+let landmarkUpdateFrame = 0
 let maskOverlays: BMapGLPolygon[] = []
 let boundaryBounds: { minLng: number; maxLng: number; minLat: number; maxLat: number } | null = null
 let isAdjustingBounds = false
@@ -151,6 +165,10 @@ function clearLandmarks() {
   landmarkPixels.value = {}
 }
 
+function markMapReady() {
+  isMapReady.value = true
+}
+
 function updateLandmarkPixels() {
   if (!map || !mapApi || landmarkLocations.value.length === 0) return
 
@@ -164,6 +182,13 @@ function updateLandmarkPixels() {
   })
 
   landmarkPixels.value = nextPixels
+}
+
+function scheduleLandmarkPixelsUpdate() {
+  cancelAnimationFrame(landmarkUpdateFrame)
+  landmarkUpdateFrame = requestAnimationFrame(() => {
+    updateLandmarkPixels()
+  })
 }
 
 function getLandmarkStyle(locationId: number) {
@@ -382,13 +407,13 @@ async function loadLandmarks() {
   }
 
   landmarkLocations.value = visibleLocations
-  updateLandmarkPixels()
+  scheduleLandmarkPixelsUpdate()
 
-  map.addEventListener('zooming', updateLandmarkPixels)
+  map.addEventListener('zooming', scheduleLandmarkPixelsUpdate)
   map.addEventListener('zoomend', updateLandmarkPixels)
-  map.addEventListener('moving', updateLandmarkPixels)
+  map.addEventListener('moving', scheduleLandmarkPixelsUpdate)
   map.addEventListener('moveend', updateLandmarkPixels)
-  map.addEventListener('resize', updateLandmarkPixels)
+  map.addEventListener('resize', scheduleLandmarkPixelsUpdate)
 }
 
 onMounted(() => {
@@ -397,13 +422,31 @@ onMounted(() => {
   window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
   window.addEventListener('focus', syncTopBarUser)
 
+  const finishSplash = () => {
+    if (!shouldPlaySplash) return
+    isSplashHiding.value = true
+    setTimeout(() => {
+      isSplashVisible.value = false
+    }, 1200)
+  }
+
+  if (shouldPlaySplash) {
+    try {
+      sessionStorage.setItem(HOME_SPLASH_PLAYED_KEY, '1')
+    } catch {
+      // Ignore storage write errors and keep graceful fallback behavior.
+    }
+  }
+
   if (!mapContainer.value) {
     loadError.value = '地图容器初始化失败，请刷新页面重试。'
+    finishSplash()
     return
   }
 
   if (!window.BMapGL) {
     loadError.value = '百度地图脚本加载失败，请检查网络或 AK 配置。'
+    finishSplash()
     return
   }
 
@@ -420,6 +463,7 @@ onMounted(() => {
   instance.setMinZoom(MAP_MIN_ZOOM)
   instance.setMaxZoom(MAP_MAX_ZOOM)
   instance.addControl(new ScaleControl())
+  instance.addEventListener('tilesloaded', markMapReady)
 
   // 隐藏所有文字、POI图标（为了比赛隐藏真实校名和地标），保留地图底图几何轮廓
   instance.setMapStyleV2({
@@ -449,7 +493,9 @@ onMounted(() => {
 
   map = instance
 
-  const splashTimer = new Promise((resolve) => setTimeout(resolve, 3800))
+  const splashTimer = shouldPlaySplash
+    ? new Promise((resolve) => setTimeout(resolve, 3800))
+    : Promise.resolve()
 
   Promise.all([
     loadBoundaryAndMask().then(() => loadLandmarks()),
@@ -457,17 +503,11 @@ onMounted(() => {
   ])
     .then(() => {
       loadError.value = ''
-      isSplashHiding.value = true
-      setTimeout(() => {
-        isSplashVisible.value = false
-      }, 1200)
+      finishSplash()
     })
     .catch((error) => {
       loadError.value = error instanceof Error ? error.message : '地图数据加载失败，请稍后重试。'
-      isSplashHiding.value = true
-      setTimeout(() => {
-        isSplashVisible.value = false
-      }, 1200)
+      finishSplash()
     })
 })
 
@@ -479,7 +519,9 @@ onBeforeUnmount(() => {
   if (!map) return
 
   cancelAnimationFrame(maskUpdateFrame)
+  cancelAnimationFrame(landmarkUpdateFrame)
   svgMaskPath.value = ''
+  isMapReady.value = false
 
   map.removeEventListener('zooming', updateSvgMask)
   map.removeEventListener('zoomend', updateSvgMask)
@@ -487,11 +529,12 @@ onBeforeUnmount(() => {
   map.removeEventListener('moveend', updateSvgMask)
   map.removeEventListener('resize', updateSvgMask)
   map.removeEventListener('moveend', enforceDragBounds)
-  map.removeEventListener('zooming', updateLandmarkPixels)
+  map.removeEventListener('zooming', scheduleLandmarkPixelsUpdate)
   map.removeEventListener('zoomend', updateLandmarkPixels)
-  map.removeEventListener('moving', updateLandmarkPixels)
+  map.removeEventListener('moving', scheduleLandmarkPixelsUpdate)
   map.removeEventListener('moveend', updateLandmarkPixels)
-  map.removeEventListener('resize', updateLandmarkPixels)
+  map.removeEventListener('resize', scheduleLandmarkPixelsUpdate)
+  map.removeEventListener('tilesloaded', markMapReady)
 
   clearLandmarks()
   map.clearOverlays()
@@ -514,6 +557,29 @@ onBeforeUnmount(() => {
   z-index: 1;
   width: 100%;
   height: 100%;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+
+.map-container.is-ready {
+  opacity: 1;
+}
+
+.map-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(120deg, rgba(226, 232, 240, 0.9) 25%, rgba(241, 245, 249, 0.9) 38%, rgba(226, 232, 240, 0.9) 55%),
+    linear-gradient(180deg, #dbeafe 0%, #eff6ff 45%, #f8fafc 100%);
+  background-size: 260% 100%, 100% 100%;
+  animation: mapSkeletonShimmer 1.15s linear infinite;
+}
+
+@keyframes mapSkeletonShimmer {
+  0% { background-position: 100% 0, 0 0; }
+  100% { background-position: -100% 0, 0 0; }
 }
 
 .landmark-layer {
