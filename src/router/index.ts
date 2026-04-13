@@ -70,8 +70,12 @@ const router = createRouter({
       name: 'mood-edit',
       component: MoodEditView,
       meta: { requiresAuth: true }
-    },
-    {
+    },    {
+      path: '/mood/trend',
+      name: 'mood_trend',
+      component: () => import('@/views/MoodTrendView.vue'),
+      meta: { requiresAuth: true }
+    },    {
       path: '/post/:id',
       name: 'post-detail',
       component: PostDetailView,

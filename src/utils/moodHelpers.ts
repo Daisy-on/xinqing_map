@@ -11,6 +11,8 @@ export const MOODS = [
   { id: 10, name: '烦躁', color: '#FF7F50', icon: '😫' },
 ]
 
-export const getMoodById = (id: number) => {
-  return MOODS.find(m => m.id === id) || MOODS[3] // default to 平静
+export type MoodItem = (typeof MOODS)[number]
+
+export const getMoodById = (id: number): MoodItem => {
+  return MOODS.find((m) => m.id === id) ?? MOODS[3] ?? MOODS[0]!
 }

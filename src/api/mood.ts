@@ -40,3 +40,18 @@ export const getDiaryDetail = (date: string): Promise<MoodDiaryVO | null> => {
       throw error
     })
 }
+
+// 7.7 获取情绪趋势点
+export interface MoodTrendPointVO {
+  date: string
+  emotionTagId: number | null
+  emotionTagName: string | null
+  emotionTagColor: string | null
+  emotionValue: number | null
+  hasRecord: boolean
+}
+
+export const getTrendPoints = (begin: string, end: string): Promise<MoodTrendPointVO[]> => {
+  return http.get('/mood-diary/trendPoints', { params: { begin, end } })
+    .then(res => res.data?.data ?? res.data ?? [])
+}

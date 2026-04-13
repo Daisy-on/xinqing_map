@@ -44,6 +44,9 @@
 
           <div class="actions-area" v-if="isLoggedIn">
             <div class="primary-actions">
+              <el-button class="edit-btn trend-btn" round @click="router.push('/mood/trend')">
+                心情趋势
+              </el-button>
               <el-button class="edit-btn mood-btn" round @click="router.push('/mood/calendar')">心情打卡</el-button>
               <div class="firefly-icon-btn-wrapper">
                 <el-button class="icon-btn firefly-btn" circle @click="handleFireflyClick">

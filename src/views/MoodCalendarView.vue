@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Edit, ArrowRight } from '@element-plus/icons-vue'
+import { ArrowLeft, Edit, ArrowRight, DataLine } from '@element-plus/icons-vue'
 import { getMonthCalendar, getTodayStatus } from '@/api/mood'
 import { getMoodById } from '@/utils/moodHelpers'
 import type { MoodDiaryMonthVO } from '@/types/models'
@@ -20,8 +20,9 @@ const monthStr = computed(() => `${year.value}年${month.value}月`)
 const weekDays = ['一', '二', '三', '四', '五', '六', '日']
 
 const paddingDays = computed(() => {
-  if (!monthData.value.length) return []
-  const firstDay = dayjs(monthData.value[0].diaryDate).day()
+  const firstItem = monthData.value[0]
+  if (!firstItem) return []
+  const firstDay = dayjs(firstItem.diaryDate).day()
   // day() returns 0 for Sunday. We want Monday=1, Sunday=7
   const padCount = firstDay === 0 ? 6 : firstDay - 1
   return Array(padCount).fill(null)
@@ -86,7 +87,9 @@ onMounted(() => {
           </button>
         </div>
         <div class="header-right">
-          <!-- Optional stats icon -->
+          <button class="arrow-btn" type="button" aria-label="统计趋势" @click="router.push('/mood/trend')">
+            <el-icon><DataLine /></el-icon>
+          </button>
         </div>
       </div>
 
