@@ -154,6 +154,7 @@ function handleProfileEntry() {
 }
 
 function handleFireflyClick() {
+  letterStore.markAsRead()
   router.push('/firefly')
 }
 

@@ -46,7 +46,7 @@
             <el-button class="edit-btn" round @click="showEditModal = true">编辑资料</el-button>
             <el-button class="edit-btn mood-btn" round @click="router.push('/mood/calendar')">心情打卡</el-button>
             <div class="firefly-icon-btn-wrapper">
-              <el-button class="icon-btn firefly-btn" circle @click="router.push('/firefly')">
+              <el-button class="icon-btn firefly-btn" circle @click="handleFireflyClick">
                 <el-icon><MagicStick /></el-icon>
               </el-button>
               <span v-if="letterStore.hasUnreadLetter" class="glowing-red-dot"></span>
@@ -153,6 +153,11 @@ import {
 
 const router = useRouter()
 const letterStore = useLetterStore()
+
+const handleFireflyClick = () => {
+  letterStore.markAsRead()
+  router.push('/firefly')
+}
 
 const isLoggedIn = ref(false)
 const userInfo = ref<User | null>(null)

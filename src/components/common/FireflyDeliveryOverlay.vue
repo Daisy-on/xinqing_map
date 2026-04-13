@@ -29,7 +29,7 @@ const router = useRouter()
 const letterStore = useLetterStore()
 
 const goToLetter = () => {
-  letterStore.closeDeliveryOverlay()
+  letterStore.markAsRead()
   router.push('/firefly')
 }
 </script>

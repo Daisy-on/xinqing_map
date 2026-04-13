@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useLetterStore = defineStore('letter', () => {
-  const hasUnreadLetter = ref(false)
+  // 默认如果是首次访问或者有未读信件时亮起红点
+  const hasUnreadLetter = ref(localStorage.getItem('firefly_visited') !== '1')
   const currentLetter = ref<any>(null)
   const showDeliveryFly = ref(false)
   let ws: WebSocket | null = null
@@ -22,6 +23,8 @@ export const useLetterStore = defineStore('letter', () => {
       if (data && data.letter_content) {
         currentLetter.value = data
         hasUnreadLetter.value = true
+        // 收到新信件，清除已访问标记，确保红点亮起
+        localStorage.removeItem('firefly_visited')
         showDeliveryFly.value = true
       }
     }
@@ -34,6 +37,7 @@ export const useLetterStore = defineStore('letter', () => {
   const markAsRead = () => {
     hasUnreadLetter.value = false
     showDeliveryFly.value = false
+    localStorage.setItem('firefly_visited', '1')
   }
 
   const closeDeliveryOverlay = () => {
