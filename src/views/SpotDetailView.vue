@@ -1,12 +1,19 @@
 <template>
-  <main class="scatter-page" :class="{ rainy: isRainy, sunny: isSunny, severe: isSevere }">
-    <canvas ref="rainCanvas" class="rain-canvas" aria-hidden="true"></canvas>
-    <div class="sunny-layer" aria-hidden="true">
+  <main class="scatter-page" :class="weatherThemeClass">
+    <canvas ref="weatherCanvas" class="weather-canvas" aria-hidden="true"></canvas>
+
+    <div class="sun-layer" aria-hidden="true">
       <span class="sun-core"></span>
       <span class="sun-halo"></span>
+    </div>
+
+    <div class="cloud-layer" aria-hidden="true">
       <span class="fair-cloud cloud-a"></span>
       <span class="fair-cloud cloud-b"></span>
+      <span class="dark-cloud cloud-c"></span>
+      <span class="dark-cloud cloud-d"></span>
     </div>
+
     <div class="severe-layer" aria-hidden="true">
       <span class="storm-ring ring-a"></span>
       <span class="storm-ring ring-b"></span>
@@ -146,16 +153,22 @@ import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
 
-type RainDrop = {
+type Particle = {
   x: number
   y: number
-  len: number
-  speed: number
+  speedY: number
   alpha: number
-  thickness: number
+  // Rain
+  len?: number
+  thickness?: number
+  wind?: number
+  // Snow
+  radius?: number
+  phase?: number
+  swing?: number
 }
 
-type WeatherCategory = 'fair' | 'precipitation' | 'severe'
+type WeatherCode = 'clear_sky' | 'sunny' | 'cloudy' | 'overcast' | 'light_rain' | 'heavy_rain' | 'thunderstorm' | 'snow'
 
 const route = useRoute()
 const router = useRouter()
@@ -176,14 +189,14 @@ const sharedCardStyle = ref<Record<string, string>>({})
 const lastBubbleRect = ref<DOMRect | null>(null)
 const postDetailCache = ref<Record<number, PostItem>>({})
 
-const rainCanvas = ref<HTMLCanvasElement | null>(null)
+const weatherCanvas = ref<HTMLCanvasElement | null>(null)
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 let rafId = 0
 let resizeTimer = 0
 let cardAnimation: Animation | null = null
 let ctx: CanvasRenderingContext2D | null = null
-let drops: RainDrop[] = []
+let particles: Particle[] = []
 let lightning = 0
 
 const ENTER_DURATION = 320
@@ -191,49 +204,24 @@ const EXIT_DURATION = 200
 const ENTER_EASING = 'cubic-bezier(0.25, 1, 0.5, 1)'
 const EXIT_EASING = 'ease-in'
 
-const classifyWeatherCategory = (weatherCode: string, weatherText: string): WeatherCategory => {
-  const code = weatherCode.toUpperCase()
-  const text = weatherText
-
-  const severeCodeKeywords = ['THUNDERSTORM', 'TYPHOON', 'HAIL', 'TORNADO', 'HURRICANE']
-  const severeTextKeywords = ['雷暴', '台风', '冰雹', '龙卷', '飓风', '暴风', '强对流']
-
-  const precipitationCodeKeywords = ['RAIN', 'SHOWER', 'DRIZZLE', 'DOWNPOUR', 'SLEET', 'SNOW']
-  const precipitationTextKeywords = ['雨', '雷阵雨', '阵雨', '小雨', '中雨', '大雨', '暴雨', '雪']
-
-  const fairCodeKeywords = ['SUNNY', 'CLEAR', 'CLOUD', 'OVERCAST', 'CALM']
-  const fairTextKeywords = ['晴', '多云', '阴', '放晴', '转晴']
-
-  if (severeCodeKeywords.some((keyword) => code.includes(keyword)) || severeTextKeywords.some((keyword) => text.includes(keyword))) {
-    return 'severe'
-  }
-
-  if (
-    precipitationCodeKeywords.some((keyword) => code.includes(keyword)) ||
-    precipitationTextKeywords.some((keyword) => text.includes(keyword))
-  ) {
-    return 'precipitation'
-  }
-
-  if (fairCodeKeywords.some((keyword) => code.includes(keyword)) || fairTextKeywords.some((keyword) => text.includes(keyword))) {
-    return 'fair'
-  }
-
-  return 'fair'
-}
-
-const weatherCategory = computed<WeatherCategory>(() => {
-  const loc = currentLocation.value
-  if (!loc) return 'fair'
-  return classifyWeatherCategory(loc.weatherCode || '', loc.weatherText || '')
+const activeWeatherCode = computed<WeatherCode>(() => {
+  const code = currentLocation.value?.weatherCode as WeatherCode
+  const validCodes: WeatherCode[] = [
+    'clear_sky', 'sunny', 'cloudy', 'overcast',
+    'light_rain', 'heavy_rain', 'thunderstorm', 'snow'
+  ]
+  return validCodes.includes(code) ? code : 'sunny'
 })
 
-const isRainy = computed(() => {
-  return weatherCategory.value === 'precipitation'
+const weatherThemeClass = computed(() => `weather-${activeWeatherCode.value}`)
+
+const needsCanvas = computed(() => {
+  return ['light_rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(activeWeatherCode.value)
 })
 
-const isSunny = computed(() => weatherCategory.value === 'fair')
-const isSevere = computed(() => weatherCategory.value === 'severe')
+const isThunderstorm = computed(() => activeWeatherCode.value === 'thunderstorm')
+const particleType = computed(() => activeWeatherCode.value === 'snow' ? 'snow' : 'rain')
+
 
 const formatPostTime = (timeStr: string | undefined) => {
   if (!timeStr) return ''
@@ -520,22 +508,44 @@ const bubbleClassByIndex = (index: number) => {
   return classes[index % classes.length]
 }
 
-const createDrops = (width: number, height: number) => {
-  const density = reducedMotion ? 0.00006 : width < 768 ? 0.00018 : 0.00024
-  const count = Math.min(260, Math.max(90, Math.floor(width * height * density)))
+const createParticles = (width: number, height: number) => {
+  const code = activeWeatherCode.value
+  const type = particleType.value
+  
+  let density = reducedMotion ? 0.00003 : width < 768 ? 0.0001 : 0.00015
+  if (code === 'light_rain') density *= 0.5
+  if (code === 'heavy_rain' || code === 'thunderstorm') density *= 1.8
+  if (code === 'snow') density *= 0.4
 
-  drops = Array.from({ length: count }).map(() => ({
-    x: Math.random() * width,
-    y: Math.random() * height,
-    len: 16 + Math.random() * 18,
-    speed: 10 + Math.random() * 8,
-    alpha: 0.26 + Math.random() * 0.24,
-    thickness: 1.2 + Math.random() * 1,
-  }))
+  const count = Math.min(type === 'snow' ? 120 : 350, Math.max(50, Math.floor(width * height * density)))
+
+  particles = Array.from({ length: count }).map(() => {
+    const x = Math.random() * width
+    const y = Math.random() * height
+    const alpha = 0.2 + Math.random() * 0.3
+
+    if (type === 'snow') {
+      return {
+        x, y, alpha, 
+        speedY: 1 + Math.random() * 2, 
+        radius: 1.5 + Math.random() * 2, 
+        phase: Math.random() * Math.PI * 2, 
+        swing: 0.5 + Math.random() * 1.5
+      }
+    } else {
+      const isHeavy = code === 'heavy_rain' || code === 'thunderstorm'
+      const isLight = code === 'light_rain'
+      const speedY = isLight ? 6 + Math.random() * 4 : isHeavy ? 14 + Math.random() * 10 : 10 + Math.random() * 8
+      const len = isLight ? 8 + Math.random() * 10 : isHeavy ? 20 + Math.random() * 20 : 16 + Math.random() * 18
+      const thickness = isLight ? 0.8 : isHeavy ? 1.5 + Math.random() * 1 : 1.2 + Math.random() * 1
+      const wind = isLight ? -1 : isHeavy ? -4 : -2.8
+      return { x, y, alpha, speedY, len, thickness, wind }
+    }
+  })
 }
 
 const resizeCanvas = () => {
-  const canvas = rainCanvas.value
+  const canvas = weatherCanvas.value
   if (!canvas) return
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -551,37 +561,48 @@ const resizeCanvas = () => {
   if (!ctx) return
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
-  createDrops(width, height)
+  createParticles(width, height)
 }
 
-const drawRainFrame = () => {
-  if (!ctx || !isRainy.value) return
+const drawWeatherFrame = () => {
+  if (!ctx || !needsCanvas.value) return
 
   const width = window.innerWidth
   const height = window.innerHeight
-  const wind = -2.8
+  const type = particleType.value
 
   ctx.clearRect(0, 0, width, height)
 
-  for (const d of drops) {
+  for (const p of particles) {
     ctx.beginPath()
-    ctx.lineWidth = d.thickness
-    ctx.lineCap = 'round'
-    ctx.strokeStyle = `rgba(204, 224, 255, ${d.alpha})`
-    ctx.moveTo(d.x, d.y)
-    ctx.lineTo(d.x + wind, d.y + d.len)
-    ctx.stroke()
 
-    d.y += d.speed
-    d.x += wind * 0.06
+    if (type === 'snow') {
+      ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`
+      ctx.arc(p.x, p.y, p.radius || 2, 0, Math.PI * 2)
+      ctx.fill()
+      
+      p.y += p.speedY
+      p.x += Math.sin(p.y / 30 + (p.phase || 0)) * (p.swing || 1)
+    } else {
+      const w = p.wind || -2.8
+      ctx.lineWidth = p.thickness || 1.2
+      ctx.lineCap = 'round'
+      ctx.strokeStyle = activeWeatherCode.value === 'light_rain' ? `rgba(224, 235, 255, ${p.alpha})` : `rgba(204, 224, 255, ${p.alpha})`
+      ctx.moveTo(p.x, p.y)
+      ctx.lineTo(p.x + w, p.y + (p.len || 16))
+      ctx.stroke()
+      
+      p.y += p.speedY
+      p.x += w * 0.06
+    }
 
-    if (d.y > height + 20 || d.x < -20) {
-      d.y = -20 - Math.random() * 120
-      d.x = Math.random() * (width + 100)
+    if (p.y > height + 20 || p.x < -20 || p.x > width + 20) {
+      p.y = -20 - Math.random() * 120
+      p.x = Math.random() * (width + 100)
     }
   }
 
-  if (!reducedMotion && Math.random() < 0.004) {
+  if (isThunderstorm.value && !reducedMotion && Math.random() < 0.003) {
     lightning = 0.08 + Math.random() * 0.06
   }
   if (lightning > 0.001) {
@@ -590,10 +611,10 @@ const drawRainFrame = () => {
     lightning *= 0.88
   }
 
-  rafId = window.requestAnimationFrame(drawRainFrame)
+  rafId = window.requestAnimationFrame(drawWeatherFrame)
 }
 
-const stopRain = () => {
+const stopWeather = () => {
   if (rafId) {
     window.cancelAnimationFrame(rafId)
     rafId = 0
@@ -603,12 +624,12 @@ const stopRain = () => {
   }
 }
 
-const startRain = async () => {
-  if (!isRainy.value) return
+const startWeather = async () => {
+  if (!needsCanvas.value) return
   await nextTick()
   resizeCanvas()
-  stopRain()
-  rafId = window.requestAnimationFrame(drawRainFrame)
+  stopWeather()
+  rafId = window.requestAnimationFrame(drawWeatherFrame)
 }
 
 const handleResize = () => {
@@ -659,23 +680,23 @@ const prevPage = () => {
 onMounted(async () => {
   await Promise.all([loadLocation(), loadPosts()])
 
-  if (isRainy.value) {
-    await startRain()
+  if (needsCanvas.value) {
+    await startWeather()
   }
 
   window.addEventListener('resize', handleResize)
 })
 
-watch(isRainy, async (rain) => {
-  if (rain) {
-    await startRain()
+watch(needsCanvas, async (needed) => {
+  if (needed) {
+    await startWeather()
   } else {
-    stopRain()
+    stopWeather()
   }
 })
 
 onBeforeUnmount(() => {
-  stopRain()
+  stopWeather()
   window.removeEventListener('resize', handleResize)
   window.clearTimeout(resizeTimer)
   cancelCardAnimation()
@@ -683,7 +704,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* CSS Var transitions */
 .scatter-page {
+  transition: background 0.8s ease;
   width: 100vw;
   height: 100vh;
   position: relative;
@@ -691,19 +714,29 @@ onBeforeUnmount(() => {
   background: radial-gradient(130% 100% at 50% 8%, #d7e5f4 0%, #98aec8 48%, #50657d 100%);
 }
 
-.scatter-page.rainy {
-  background: radial-gradient(130% 120% at 50% 0%, #9fb3c9 0%, #5c7289 42%, #2f3f52 100%);
+.scatter-page.weather-clear_sky {
+  background: radial-gradient(130% 110% at 50% 0%, #fffbf0 0%, #ffeaa7 40%, #fdc830 100%);
 }
-
-.scatter-page.sunny {
+.scatter-page.weather-sunny {
   background: radial-gradient(130% 110% at 50% 0%, #fff2b8 0%, #ffc971 45%, #e4a95a 100%);
 }
-
-.scatter-page.severe {
+.scatter-page.weather-cloudy {
+  background: radial-gradient(130% 100% at 50% 8%, #eef2f3 0%, #bdc3c7 48%, #8e9eab 100%);
+}
+.scatter-page.weather-overcast {
+  background: radial-gradient(130% 120% at 50% 0%, #8ca1a5 0%, #5d6d7e 42%, #34495e 100%);
+}
+.scatter-page.weather-light_rain, .scatter-page.weather-heavy_rain {
+  background: radial-gradient(130% 120% at 50% 0%, #9fb3c9 0%, #5c7289 42%, #2f3f52 100%);
+}
+.scatter-page.weather-thunderstorm {
   background: radial-gradient(130% 120% at 50% 0%, #6b7685 0%, #3d4958 42%, #202a37 100%);
 }
+.scatter-page.weather-snow {
+  background: radial-gradient(130% 110% at 50% 0%, #f1f2b5 0%, #e0eafc 45%, #cfdef3 100%);
+}
 
-.rain-canvas {
+.weather-canvas {
   position: absolute;
   inset: 0;
   z-index: 3;
@@ -712,71 +745,99 @@ onBeforeUnmount(() => {
   transition: opacity 280ms ease;
 }
 
-.scatter-page.rainy .rain-canvas {
+.scatter-page.weather-light_rain .weather-canvas,
+.scatter-page.weather-heavy_rain .weather-canvas,
+.scatter-page.weather-thunderstorm .weather-canvas,
+.scatter-page.weather-snow .weather-canvas {
   opacity: 1;
 }
 
-.sunny-layer,
+/* Layers */
+.sun-layer,
+.cloud-layer,
 .severe-layer {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 320ms ease;
+  transition: opacity 600ms ease;
 }
 
-.scatter-page.sunny .sunny-layer {
-  opacity: 1;
-}
+.scatter-page.weather-clear_sky .sun-layer,
+.scatter-page.weather-sunny .sun-layer { opacity: 1; }
 
-.scatter-page.severe .severe-layer {
-  opacity: 1;
-}
+.scatter-page.weather-sunny .cloud-layer,
+.scatter-page.weather-cloudy .cloud-layer { opacity: 1; }
 
+/* Override logic to show different clouds */
+.scatter-page.weather-sunny .dark-cloud { display: none; }
+.scatter-page.weather-cloudy .dark-cloud { opacity: 0.3; }
+.scatter-page.weather-overcast .cloud-layer { opacity: 1; }
+.scatter-page.weather-overcast .fair-cloud { opacity: 0; }
+.scatter-page.weather-overcast .dark-cloud { opacity: 0.8; }
+.scatter-page.weather-light_rain .cloud-layer { opacity: 1; }
+.scatter-page.weather-light_rain .fair-cloud { display: none; }
+.scatter-page.weather-light_rain .dark-cloud { opacity: 0.9; }
+.scatter-page.weather-heavy_rain .cloud-layer,
+.scatter-page.weather-thunderstorm .cloud-layer,
+.scatter-page.weather-snow .cloud-layer { opacity: 1; }
+.scatter-page.weather-heavy_rain .fair-cloud,
+.scatter-page.weather-thunderstorm .fair-cloud,
+.scatter-page.weather-snow .fair-cloud { display: none; }
+.scatter-page.weather-heavy_rain .dark-cloud,
+.scatter-page.weather-thunderstorm .dark-cloud { opacity: 1; }
+.scatter-page.weather-snow .dark-cloud { opacity: 0.3; }
+
+.scatter-page.weather-thunderstorm .severe-layer { opacity: 1; }
+
+/* Elements */
 .sun-core {
   position: absolute;
   top: 10%;
   right: 12%;
-  width: 96px;
-  height: 96px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 244, 181, 0.95) 0%, rgba(255, 214, 126, 0.85) 65%, rgba(255, 214, 126, 0) 100%);
+  background: radial-gradient(circle, rgba(255,244,181,0.95) 0%, rgba(255,214,126,0.85) 65%, rgba(255,214,126,0) 100%);
   animation: sunny-breathe 4.2s ease-in-out infinite;
+}
+.scatter-page.weather-clear_sky .sun-core {
+  background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,230,150,0.85) 55%, transparent 100%);
+  transform: scale(1.2);
 }
 
 .sun-halo {
   position: absolute;
-  top: 6%;
-  right: 8%;
-  width: 180px;
-  height: 180px;
+  top: 4%;
+  right: 6%;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 236, 165, 0.32) 0%, rgba(255, 236, 165, 0) 72%);
+  background: radial-gradient(circle, rgba(255,236,165,0.4) 0%, rgba(255,236,165,0) 72%);
   animation: halo-drift 6s ease-in-out infinite;
 }
+.scatter-page.weather-clear_sky .sun-halo {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,250,200,0.6) 0%, transparent 60%);
+}
 
-.fair-cloud {
+.fair-cloud, .dark-cloud {
   position: absolute;
-  width: 220px;
-  height: 62px;
+  width: 260px;
+  height: 70px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.12));
-  filter: blur(0.5px);
+  filter: blur(1px);
 }
+.fair-cloud { background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1)); }
+.dark-cloud { background: linear-gradient(180deg, rgba(90,105,120,0.7), rgba(40,50,60,0.3)); }
 
-.cloud-a {
-  top: 20%;
-  left: -8%;
-  animation: cloud-move-a 18s linear infinite;
-}
+.cloud-a { top: 18%; left: -10%; animation: cloud-move-a 20s linear infinite; }
+.cloud-b { top: 30%; left: -15%; opacity: 0.8; animation: cloud-move-b 28s linear infinite; }
+.cloud-c { top: 12%; left: -20%; animation: cloud-move-b 25s linear infinite reverse; }
+.cloud-d { top: -2%; right: -10%; animation: cloud-move-a 22s linear infinite reverse; }
 
-.cloud-b {
-  top: 33%;
-  left: -15%;
-  opacity: 0.72;
-  animation: cloud-move-b 23s linear infinite;
-}
 
 .storm-ring {
   position: absolute;
@@ -789,18 +850,8 @@ onBeforeUnmount(() => {
   filter: blur(0.2px);
 }
 
-.ring-a {
-  top: -8%;
-  right: -8%;
-  animation: storm-spin-a 13s linear infinite;
-}
-
-.ring-b {
-  top: -4%;
-  right: -2%;
-  border-color: rgba(168, 192, 232, 0.12);
-  animation: storm-spin-b 9s linear infinite reverse;
-}
+.ring-a { top: -8%; right: -8%; animation: storm-spin-a 13s linear infinite; }
+.ring-b { top: -4%; right: -2%; border-color: rgba(168, 192, 232, 0.12); animation: storm-spin-b 9s linear infinite reverse; }
 
 .storm-flash {
   position: absolute;
@@ -814,22 +865,26 @@ onBeforeUnmount(() => {
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background:
-    radial-gradient(100% 70% at 50% 15%, rgba(233, 242, 250, 0.12) 0%, rgba(233, 242, 250, 0) 70%),
-    linear-gradient(to bottom, rgba(14, 23, 37, 0.04), rgba(14, 23, 37, 0.14));
+  background: radial-gradient(100% 70% at 50% 15%, rgba(233, 242, 250, 0.12) 0%, rgba(233, 242, 250, 0) 70%), linear-gradient(to bottom, rgba(14, 23, 37, 0.04), rgba(14, 23, 37, 0.14));
   backdrop-filter: blur(1px);
 }
 
-.scatter-page.sunny .weather-fog {
-  background:
-    radial-gradient(100% 70% at 50% 15%, rgba(255, 248, 214, 0.18) 0%, rgba(255, 248, 214, 0) 70%),
-    linear-gradient(to bottom, rgba(124, 90, 25, 0.04), rgba(124, 90, 25, 0.12));
+.scatter-page.weather-sunny .weather-fog {
+  background: radial-gradient(100% 70% at 50% 15%, rgba(255, 248, 214, 0.18) 0%, rgba(255, 248, 214, 0) 70%), linear-gradient(to bottom, rgba(124, 90, 25, 0.04), rgba(124, 90, 25, 0.12));
 }
 
-.scatter-page.severe .weather-fog {
-  background:
-    radial-gradient(100% 70% at 50% 10%, rgba(205, 220, 245, 0.12) 0%, rgba(205, 220, 245, 0) 70%),
-    linear-gradient(to bottom, rgba(12, 19, 31, 0.1), rgba(12, 19, 31, 0.28));
+.scatter-page.weather-clear_sky .weather-fog {
+  background: radial-gradient(100% 70% at 50% 10%, rgba(255, 253, 238, 0.4) 0%, rgba(255, 253, 238, 0) 50%), linear-gradient(to bottom, rgba(200, 160, 50, 0.02), rgba(200, 160, 50, 0.08));
+}
+
+.scatter-page.weather-thunderstorm .weather-fog,
+.scatter-page.weather-heavy_rain .weather-fog,
+.scatter-page.weather-overcast .weather-fog {
+  background: radial-gradient(100% 70% at 50% 10%, rgba(205, 220, 245, 0.12) 0%, rgba(205, 220, 245, 0) 70%), linear-gradient(to bottom, rgba(12, 19, 31, 0.1), rgba(12, 19, 31, 0.28));
+}
+
+.scatter-page.weather-snow .weather-fog {
+  background: radial-gradient(100% 70% at 50% 20%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 70%), linear-gradient(to bottom, rgba(150, 170, 190, 0.05), rgba(150, 170, 190, 0.15));
 }
 
 @keyframes sunny-breathe {
