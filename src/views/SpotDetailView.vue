@@ -186,10 +186,10 @@ let ctx: CanvasRenderingContext2D | null = null
 let drops: RainDrop[] = []
 let lightning = 0
 
-const ENTER_DURATION = 460
-const EXIT_DURATION = 280
-const ENTER_EASING = 'cubic-bezier(0.16, 1, 0.3, 1)'
-const EXIT_EASING = 'cubic-bezier(0.7, 0, 0.84, 0)'
+const ENTER_DURATION = 320
+const EXIT_DURATION = 200
+const ENTER_EASING = 'cubic-bezier(0.25, 1, 0.5, 1)'
+const EXIT_EASING = 'ease-in'
 
 const classifyWeatherCategory = (weatherCode: string, weatherText: string): WeatherCategory => {
   const code = weatherCode.toUpperCase()
@@ -359,19 +359,11 @@ const openPost = async (post: PostItem, event: MouseEvent) => {
     [
       {
         transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-        opacity: 0.58,
-        filter: 'blur(4px)',
-      },
-      {
-        transform: 'translate(0px, 0px) scale(1.012, 1.012)',
-        opacity: 1,
-        filter: 'blur(0px)',
-        offset: 0.78,
+        opacity: 0,
       },
       {
         transform: 'translate(0px, 0px) scale(1, 1)',
         opacity: 1,
-        filter: 'blur(0px)',
       },
     ],
     {
@@ -410,12 +402,10 @@ const closePost = async () => {
       {
         transform: 'translate(0px, 0px) scale(1, 1)',
         opacity: 1,
-        filter: 'blur(0px)',
       },
       {
         transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
-        opacity: 0.18,
-        filter: 'blur(2px)',
+        opacity: 0,
       },
     ],
     {
@@ -977,11 +967,11 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   z-index: 6;
-  transition: filter 260ms ease, transform 260ms ease;
+  transition: filter 300ms cubic-bezier(0.25, 1, 0.5, 1), transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .scatter-container.blurred {
-  filter: blur(6px) brightness(0.76);
+  filter: blur(4px) brightness(0.85);
   transform: scale(0.985);
 }
 
