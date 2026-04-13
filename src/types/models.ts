@@ -56,6 +56,33 @@ export interface BackendLocationItem {
   postCount?: number | null
 }
 
+export interface BackendLocationDetailItem {
+  id: number
+  name?: string | null
+  description?: string | null
+  locationImage?: string | null
+  longitude?: number | null
+  latitude?: number | null
+  lng?: number | null
+  lat?: number | null
+  weatherVO?: WeatherVO | null
+  postCount?: number | null
+  weatherUpdateTime?: string | null
+}
+
+export interface LocationDetail {
+  id: number
+  name: string
+  lng: number
+  lat: number
+  weatherCode: string
+  weatherText: string
+  description: string
+  locationImage?: string
+  postCount: number
+  weatherUpdateTime?: string
+}
+
 export interface EmotionTag {
   id: number
   name: string

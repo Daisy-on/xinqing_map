@@ -50,6 +50,9 @@
     <LandmarkDetailPanel
       v-model="isDetailPanelVisible"
       :landmark="selectedLandmark"
+      :landmark-detail="selectedLandmarkDetail"
+      :loading="isLandmarkDetailLoading"
+      :error="landmarkDetailError"
     />
 
     <!-- 心情胶囊入口悬浮图标 -->
@@ -64,12 +67,12 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { fetchLocationList } from '@/api/location'
+import { fetchLocationDetail, fetchLocationList } from '@/api/location'
 import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
 import { ChatDotRound, UserFilled, LocationInformation } from '@element-plus/icons-vue'
-import type { Location, User } from '@/types/models'
+import type { Location, LocationDetail, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
 
 type BoundaryPoint = { lng: number; lat: number }
@@ -112,7 +115,19 @@ const landmarkPixels = ref<Record<number, { x: number; y: number }>>({})
 
 const isDetailPanelVisible = ref(false)
 const selectedLandmark = ref<Location | null>(null)
+const selectedLandmarkDetail = ref<LocationDetail | null>(null)
+const isLandmarkDetailLoading = ref(false)
+const landmarkDetailError = ref('')
+const landmarkDetailCache = new Map<number, LocationDetail>()
+let landmarkDetailRequestSerial = 0
 const currentUser = ref<User | null>(null)
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return fallback
+}
 
 function syncTopBarUser() {
   if (!getToken()) {
@@ -149,9 +164,43 @@ function handleAuthStorageChanged(event: Event) {
   syncTopBarUser()
 }
 
+async function loadLandmarkDetail(locationId: number) {
+  const cached = landmarkDetailCache.get(locationId)
+  if (cached) {
+    selectedLandmarkDetail.value = cached
+    landmarkDetailError.value = ''
+    isLandmarkDetailLoading.value = false
+    return
+  }
+
+  isLandmarkDetailLoading.value = true
+  landmarkDetailError.value = ''
+  const currentSerial = ++landmarkDetailRequestSerial
+
+  try {
+    const detail = await fetchLocationDetail(locationId)
+    if (currentSerial !== landmarkDetailRequestSerial || selectedLandmark.value?.id !== locationId) return
+    landmarkDetailCache.set(locationId, detail)
+    selectedLandmarkDetail.value = detail
+  } catch (error) {
+    if (currentSerial !== landmarkDetailRequestSerial || selectedLandmark.value?.id !== locationId) return
+    const message = getErrorMessage(error, '地点详情加载失败，请稍后重试')
+    landmarkDetailError.value = message
+    selectedLandmarkDetail.value = null
+    ElMessage.warning(message)
+  } finally {
+    if (currentSerial === landmarkDetailRequestSerial && selectedLandmark.value?.id === locationId) {
+      isLandmarkDetailLoading.value = false
+    }
+  }
+}
+
 function handleLandmarkClick(loc: Location) {
   selectedLandmark.value = loc
+  selectedLandmarkDetail.value = null
+  landmarkDetailError.value = ''
   isDetailPanelVisible.value = true
+  void loadLandmarkDetail(loc.id)
 }
 
 function clearMaskOverlays(instance: BMapGLMap) {

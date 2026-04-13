@@ -6,10 +6,16 @@
     :with-header="false"
     class="landmark-detail-drawer"
   >
-    <div v-if="landmark" class="drawer-content">
+    <div v-if="landmark || landmarkDetail" class="drawer-content">
       <div class="drawer-header">
-        <div class="header-image-placeholder">
-          <!-- Placeholder for image, or use dummy image -->
+        <img
+          v-if="displayImage && !imageLoadFailed"
+          :src="displayImage"
+          :alt="displayName"
+          class="header-image"
+          @error="handleImageError"
+        />
+        <div v-else class="header-image-placeholder">
           <el-icon class="image-icon"><Picture /></el-icon>
         </div>
         <div class="close-btn" @click="closeDrawer">
@@ -18,17 +24,31 @@
       </div>
       
       <div class="drawer-body">
-        <h2 class="title">{{ landmark.name }}</h2>
-        <div class="tags">
-          <el-tag size="small" type="info" effect="plain" round>
-            {{ landmark.weatherText }}
-          </el-tag>
-        </div>
-        <p class="description">{{ landmark.description || '暂无详细介绍' }}</p>
+        <template v-if="loading">
+          <el-skeleton animated>
+            <template #template>
+              <el-skeleton-item variant="text" style="width: 60%; height: 32px; margin-bottom: 18px" />
+              <el-skeleton-item variant="text" style="width: 28%; height: 24px; margin-bottom: 24px" />
+              <el-skeleton-item variant="text" style="width: 100%; height: 20px; margin-bottom: 12px" />
+              <el-skeleton-item variant="text" style="width: 100%; height: 20px; margin-bottom: 12px" />
+              <el-skeleton-item variant="text" style="width: 76%; height: 20px" />
+            </template>
+          </el-skeleton>
+        </template>
+        <template v-else>
+          <h2 class="title">{{ displayName }}</h2>
+          <div class="tags">
+            <el-tag size="small" type="info" effect="plain" round>
+              {{ displayWeatherText }}
+            </el-tag>
+          </div>
+          <p v-if="error" class="error-tip">{{ error }}</p>
+          <p class="description">{{ displayDescription }}</p>
+        </template>
       </div>
 
       <div class="drawer-footer">
-        <el-button type="primary" size="large" class="action-btn" @click="viewPosts" round>
+        <el-button type="primary" size="large" class="action-btn" :disabled="!targetSpotId" @click="viewPosts" round>
           查看心声
         </el-button>
       </div>
@@ -40,11 +60,14 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Picture, Close } from '@element-plus/icons-vue'
-import type { Location } from '@/types/models'
+import type { Location, LocationDetail } from '@/types/models'
 
 const props = defineProps<{
   modelValue: boolean
   landmark: Location | null
+  landmarkDetail: LocationDetail | null
+  loading: boolean
+  error?: string
 }>()
 
 const emit = defineEmits<{
@@ -76,15 +99,32 @@ onUnmounted(() => {
 const isMobile = computed(() => windowWidth.value < 768)
 const drawerDirection = computed(() => isMobile.value ? 'btt' : 'ltr')
 const drawerSize = computed(() => isMobile.value ? '60%' : '400px')
+const imageLoadFailed = ref(false)
+
+const displayName = computed(() => props.landmarkDetail?.name ?? props.landmark?.name ?? '未命名地点')
+const displayWeatherText = computed(() => props.landmarkDetail?.weatherText ?? props.landmark?.weatherText ?? '未知天气')
+const displayDescription = computed(
+  () => props.landmarkDetail?.description ?? props.landmark?.description ?? '暂无详细介绍',
+)
+const displayImage = computed(() => props.landmarkDetail?.locationImage ?? props.landmark?.locationImage ?? '')
+const targetSpotId = computed(() => props.landmarkDetail?.id ?? props.landmark?.id)
+
+watch(displayImage, () => {
+  imageLoadFailed.value = false
+})
+
+function handleImageError() {
+  imageLoadFailed.value = true
+}
 
 const closeDrawer = () => {
   drawerVisible.value = false
 }
 
 const viewPosts = () => {
-  if (props.landmark) {
+  if (targetSpotId.value) {
     drawerVisible.value = false
-    router.push({ name: 'spot-detail', params: { spotId: props.landmark.id } })
+    router.push({ name: 'spot-detail', params: { spotId: targetSpotId.value } })
   }
 }
 </script>
@@ -100,6 +140,13 @@ const viewPosts = () => {
   position: relative;
   height: 240px;
   background-color: #f5f7fa;
+}
+
+.header-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .header-image-placeholder {
@@ -158,6 +205,13 @@ const viewPosts = () => {
   font-size: 15px;
   line-height: 1.6;
   color: #606266;
+}
+
+.error-tip {
+  margin: 0 0 12px;
+  color: #b42318;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .drawer-footer {

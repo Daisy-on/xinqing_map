@@ -1,5 +1,5 @@
 import http from './http'
-import type { BackendLocationItem, Location } from '@/types/models'
+import type { BackendLocationDetailItem, BackendLocationItem, Location, LocationDetail } from '@/types/models'
 
 interface ApiResponse<T> {
   code: number
@@ -32,6 +32,21 @@ function normalizeLocation(item: BackendLocationItem): Location {
   }
 }
 
+function normalizeLocationDetail(item: BackendLocationDetailItem): LocationDetail {
+  return {
+    id: Number(item.id),
+    name: item.name ?? '未命名地点',
+    lng: toFiniteNumber(item.longitude ?? item.lng),
+    lat: toFiniteNumber(item.latitude ?? item.lat),
+    weatherCode: item.weatherVO?.code ?? '',
+    weatherText: item.weatherVO?.name ?? '未知天气',
+    description: item.description ?? '暂无详细介绍',
+    locationImage: item.locationImage ?? undefined,
+    postCount: typeof item.postCount === 'number' ? item.postCount : 0,
+    weatherUpdateTime: item.weatherUpdateTime ?? undefined,
+  }
+}
+
 export async function fetchLocationList(): Promise<Location[]> {
   const response = await http.get<ApiResponse<BackendLocationItem[]>>('/location/list')
   const payload = response.data
@@ -41,4 +56,15 @@ export async function fetchLocationList(): Promise<Location[]> {
   }
 
   return []
+}
+
+export async function fetchLocationDetail(id: number): Promise<LocationDetail> {
+  const response = await http.get<ApiResponse<BackendLocationDetailItem>>(`/location/${id}`)
+  const payload = response.data
+
+  if (payload?.data && typeof payload.data === 'object') {
+    return normalizeLocationDetail(payload.data)
+  }
+
+  throw new Error('地点详情数据格式异常')
 }

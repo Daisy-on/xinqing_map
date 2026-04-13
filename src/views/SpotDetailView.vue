@@ -41,6 +41,20 @@
               {{ post.emotionTagName || '心情' }}
             </span>
             <p class="bubble-content">{{ post.content }}</p>
+            <time class="bubble-time">
+              编辑于{{ formatPostTime(post.updateTime || post.createTime) }}
+            </time>
+            <button
+              type="button"
+              class="bubble-like-btn"
+              :class="{ liked: !!post.liked }"
+              :disabled="isPostLiking(post.id)"
+              @click.stop="likeInBubble(post, $event)"
+              aria-label="点赞"
+            >
+              <span class="bubble-heart" aria-hidden="true">❤</span>
+              <span class="bubble-like-count">{{ post.likeCount ?? 0 }}</span>
+            </button>
           </button>
         </div>
       </transition>
@@ -101,9 +115,13 @@
           </div>
 
           <footer class="detail-actions">
+            <time class="detail-time">
+              编辑于{{ formatPostTime(selectedPost.updateTime || selectedPost.createTime) }}
+            </time>
+
             <button
               type="button"
-              class="action-btn like"
+              class="detail-like-btn"
               :class="{ liked: selectedPost?.liked }"
               :disabled="isLiking"
               @click="likeSelected"
@@ -112,8 +130,6 @@
               <span class="heart-icon" aria-hidden="true">❤</span>
               <span>{{ selectedLikeCount }}</span>
             </button>
-
-            <time class="detail-time">最后更新 {{ formatPostTime(selectedPost.updateTime || selectedPost.createTime) }}</time>
           </footer>
         </article>
       </div>
@@ -153,6 +169,7 @@ const totalPosts = ref(0)
 const slideDirection = ref('slide-left')
 const selectedPost = ref<PostItem | null>(null)
 const isLiking = ref(false)
+const likingPostIds = ref<number[]>([])
 const detailCardRef = ref<HTMLElement | null>(null)
 const isSharedAnimating = ref(false)
 const sharedCardStyle = ref<Record<string, string>>({})
@@ -456,6 +473,29 @@ const likeSelected = async () => {
     console.error('Failed to like post', error)
   } finally {
     isLiking.value = false
+  }
+}
+
+const isPostLiking = (postId: number) => likingPostIds.value.includes(postId)
+
+const likeInBubble = async (post: PostItem, event: MouseEvent) => {
+  event.stopPropagation()
+  if (isPostLiking(post.id)) return
+
+  likingPostIds.value = [...likingPostIds.value, post.id]
+  try {
+    const result = await togglePostLike(post.id)
+    applyLikeResult(result.postId, result.likeCount, result.liked)
+  } catch (error: any) {
+    const status = error?.response?.status
+    if (status === 401) {
+      ElMessage.warning('请先登录后再点赞')
+      return
+    }
+    ElMessage.error('点赞失败，请稍后重试')
+    console.error('Failed to like bubble post', error)
+  } finally {
+    likingPostIds.value = likingPostIds.value.filter((id) => id !== post.id)
   }
 }
 
@@ -1023,7 +1063,7 @@ onBeforeUnmount(() => {
   color: #2d4258;
   backdrop-filter: blur(9px);
   text-align: left;
-  padding: 12px 14px;
+  padding: 12px 14px 44px;
   cursor: pointer;
   z-index: 5;
   transition: transform 220ms ease, box-shadow 220ms ease, z-index 0ms;
@@ -1073,6 +1113,62 @@ onBeforeUnmount(() => {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+}
+
+.bubble-time {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  color: rgba(45, 66, 88, 0.62);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+}
+
+.bubble-like-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  border: none;
+  background: rgba(255, 240, 244, 0.78);
+  color: #c43b62;
+  border-radius: 999px;
+  min-height: 26px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(188, 75, 109, 0.08);
+  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.bubble-like-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 230, 236, 0.98);
+  box-shadow: 0 4px 10px rgba(188, 75, 109, 0.12);
+}
+
+.bubble-like-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.bubble-like-btn.liked {
+  background: rgba(255, 221, 230, 0.96);
+  border-color: rgba(224, 81, 118, 0.52);
+  color: #b82e55;
+}
+
+.bubble-heart {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.bubble-like-count {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .detail-veil {
@@ -1170,11 +1266,6 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.detail-time {
-  color: #7a8f9c;
-  font-size: 13px;
-}
-
 .detail-content {
   margin: 0;
   color: #24374a;
@@ -1209,38 +1300,37 @@ onBeforeUnmount(() => {
   justify-content: space-between;
 }
 
-.action-btn {
-  border: 1px solid rgba(82, 109, 133, 0.24);
-  background: rgba(239, 248, 255, 0.9);
+.detail-time {
+  color: #7a8f9c;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+}
+
+.detail-like-btn {
+  border: none;
+  background: transparent;
   color: #24405c;
   border-radius: 999px;
-  height: 36px;
-  padding: 0 12px;
+  height: 32px;
+  padding: 0 2px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
   cursor: pointer;
-  transition: transform 180ms ease, background-color 180ms ease;
+  transition: transform 180ms ease, color 180ms ease, opacity 180ms ease;
 }
 
-.action-btn:hover {
+.detail-like-btn:hover {
   transform: translateY(-1px);
-  background: rgba(225, 241, 255, 0.96);
 }
 
-.action-btn.like {
-  background: rgba(255, 238, 198, 0.94);
-  border-color: rgba(233, 180, 67, 0.36);
-}
-
-.action-btn.like:disabled {
+.detail-like-btn:disabled {
   cursor: not-allowed;
   opacity: 0.7;
 }
 
-.action-btn.like.liked {
-  background: rgba(255, 224, 230, 0.95);
-  border-color: rgba(235, 112, 137, 0.4);
+.detail-like-btn.liked {
   color: #b73557;
 }
 
