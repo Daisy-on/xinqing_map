@@ -25,7 +25,9 @@
 
       <!-- Chart Container -->
       <section class="chart-section">
-        <div ref="chartContainerRef" class="echarts-container"></div>
+        <div ref="scrollWrapperRef" class="chart-scroll-wrapper">
+          <div ref="chartContainerRef" class="echarts-container" :style="{ width: chartWidth }"></div>
+        </div>
 
         <div v-if="loading" class="chart-loading">
           <el-skeleton animated style="width: 100%; height: 100%">
@@ -49,16 +51,17 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, onMounted, onUnmounted, watch } from 'vue'
+import { computed, nextTick, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
 import dayjs from 'dayjs'
-import { getTrendPoints, type MoodTrendPointVO } from '@/api/mood'
+import { getTrendPoints, getMonthCalendar, type MoodTrendPointVO } from '@/api/mood'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const scrollWrapperRef = ref<HTMLElement | null>(null)
 const chartContainerRef = ref<HTMLElement | null>(null)
 let chartInstance: ECharts | null = null
 
@@ -71,10 +74,65 @@ const timeOptions = [
 const selectedDays = ref(7)
 const loading = ref(false)
 const trendData = ref<MoodTrendPointVO[]>([])
+const wrapperWidth = ref(0)
+let wrapperResizeObserver: ResizeObserver | null = null
 let requestSeq = 0
+
+// Keep chart width deterministic to avoid overscrolling into blank space.
+const chartWidth = computed(() => {
+  const dayCount = selectedDays.value
+  const perDayWidth = dayCount === 30 ? 54 : 60
+  const targetWidth = dayCount * perDayWidth
+  if (!wrapperWidth.value) {
+    return dayCount === 7 ? '100%' : `${targetWidth}px`
+  }
+  return `${Math.max(targetWidth, wrapperWidth.value)}px`
+})
+
+// Cache to avoid refetching calendar constantly
+let cachedRegisterDate: string | null = null
+
+const fetchImplicitRegisterDate = async () => {
+  if (cachedRegisterDate) return cachedRegisterDate
+  
+  const current = dayjs()
+  try {
+    const p1 = getMonthCalendar(current.year(), current.month() + 1)
+    const prevMonth = current.subtract(1, 'month')
+    const p2 = getMonthCalendar(prevMonth.year(), prevMonth.month() + 1)
+    const p3 = getMonthCalendar(prevMonth.subtract(1, 'month').year(), prevMonth.subtract(1, 'month').month() + 1)
+    
+    // Load last 3 months just to be safe for 30-day views
+    const [c1, c2, c3] = await Promise.all([p1, p2, p3])
+    const combined = [...c3, ...c2, ...c1]
+    
+    const firstValid = combined.find(day => day.canBackfill)
+    if (firstValid) {
+      cachedRegisterDate = firstValid.diaryDate
+      return cachedRegisterDate
+    }
+  } catch (error) {
+    console.error('Failed to probe calendar', error)
+  }
+  
+  // Fallback if not found: allow at least 60 days
+  return current.subtract(2, 'month').format('YYYY-MM-DD')
+}
 
 const setRange = (days: number) => {
   selectedDays.value = days
+}
+
+const alignScrollToRight = () => {
+  const wrapper = scrollWrapperRef.value
+  if (!wrapper) return
+  const maxScrollLeft = Math.max(wrapper.scrollWidth - wrapper.clientWidth, 0)
+  wrapper.scrollLeft = maxScrollLeft
+}
+
+const updateWrapperWidth = () => {
+  if (!scrollWrapperRef.value) return
+  wrapperWidth.value = scrollWrapperRef.value.clientWidth
 }
 
 /**
@@ -82,6 +140,8 @@ const setRange = (days: number) => {
  * Since `emotionTagColor` is returned per data point, we can leverage LinearGradient.
  */
 const renderChart = () => {
+  updateWrapperWidth()
+
   if (!chartInstance && chartContainerRef.value) {
     chartInstance = echarts.init(chartContainerRef.value)
   }
@@ -116,10 +176,10 @@ const renderChart = () => {
   // To create a beautiful glowing line and area
   const option: echarts.EChartsOption = {
     grid: {
-      left: '4%',
-      right: '6%',
-      bottom: '5%',
-      top: '15%',
+      left: 24,
+      right: 24,
+      bottom: '10%',
+      top: 30,
       containLabel: true
     },
     tooltip: {
@@ -158,7 +218,11 @@ const renderChart = () => {
       data: xAxisData,
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: '#90a4ae', padding: [8, 0, 0, 0] },
+      axisLabel: { 
+        color: '#90a4ae', 
+        padding: [8, 0, 0, 0],
+        interval: selectedDays.value === 7 ? 0 : (selectedDays.value === 14 ? 1 : 2)
+      },
       splitLine: { show: false }
     },
     yAxis: {
@@ -180,7 +244,7 @@ const renderChart = () => {
       {
         name: 'Mood Trend',
         type: 'line',
-        smooth: true,
+        smooth: false,
         data: seriesData,
         symbol: 'circle',
         symbolSize: (value, params) => {
@@ -211,23 +275,67 @@ const renderChart = () => {
   }
 
   chartInstance.setOption(option, { notMerge: true, lazyUpdate: false })
-  chartInstance.resize()
+
+  // Resize after DOM width settles, then lock viewport to latest date (right edge).
+  nextTick(() => {
+    if (chartInstance && chartContainerRef.value) {
+      chartInstance.resize({
+        width: chartContainerRef.value.clientWidth,
+        height: chartContainerRef.value.clientHeight
+      })
+    }
+    alignScrollToRight()
+  })
 }
 
 const loadTrendData = async () => {
   const currentRequest = ++requestSeq
   loading.value = true
   
-  // Calculate begin and end logic
+  const reqDays = selectedDays.value
   const now = dayjs()
   const end = now.format('YYYY-MM-DD')
-  // Note: If we want exactly 7 days including today, we go back 6 days.
-  const begin = now.subtract(selectedDays.value - 1, 'day').format('YYYY-MM-DD')
+  const beginTarget = now.subtract(reqDays - 1, 'day').format('YYYY-MM-DD')
 
   try {
-    const data = await getTrendPoints(begin, end)
+    // 1. Probe the safe starting date
+    const registerDate = await fetchImplicitRegisterDate()
     if (currentRequest !== requestSeq) return
-    trendData.value = data
+
+    // 2. Bound the request date to the register date
+    const safeBegin = dayjs(beginTarget).isBefore(dayjs(registerDate)) ? registerDate : beginTarget
+    
+    // 3. Fetch data from backend
+    const rawData = await getTrendPoints(safeBegin, end)
+    if (currentRequest !== requestSeq) return
+
+    // 4. Pad the beginning of the data if incomplete to ensure 'reqDays' ticks on X Axis.
+    let fullData = [...rawData]
+    if (rawData.length < reqDays) {
+      const paddedData = []
+      // We start adding empty points from beginTarget up to the first item (safeBegin)
+      // actually, just loop from beginTarget to end and map or merge
+      for (let i = 0; i < reqDays; i++) {
+        const iterDate = now.subtract(reqDays - 1 - i, 'day').format('YYYY-MM-DD')
+        const existing = fullData.find(d => d.date === iterDate)
+        if (existing) {
+          paddedData.push(existing)
+        } else {
+          // Empty placeholder padding
+          paddedData.push({
+            date: iterDate,
+            emotionTagId: null,
+            emotionTagName: null,
+            emotionTagColor: '#e0e0e0', // Placeholder offline gray
+            emotionValue: 0,
+            hasRecord: false
+          })
+        }
+      }
+      fullData = paddedData
+    }
+
+    trendData.value = fullData
   } catch (error) {
     trendData.value = []
     ElMessage.warning('当前时间范围暂无可用数据，请先持续打卡')
@@ -236,6 +344,7 @@ const loadTrendData = async () => {
     if (currentRequest !== requestSeq) return
     loading.value = false
     await nextTick()
+    updateWrapperWidth()
 
     if (!trendData.value.length) {
       if (chartInstance) {
@@ -253,17 +362,48 @@ watch(selectedDays, () => {
   loadTrendData()
 }, { immediate: true })
 
+watch(wrapperWidth, async () => {
+  await nextTick()
+  if (chartInstance && chartContainerRef.value) {
+    chartInstance.resize({
+      width: chartContainerRef.value.clientWidth,
+      height: chartContainerRef.value.clientHeight
+    })
+    alignScrollToRight()
+  }
+})
+
 const handleResize = () => {
+  updateWrapperWidth()
   if (chartInstance) {
     chartInstance.resize()
+    alignScrollToRight()
   }
 }
 
 onMounted(() => {
+  updateWrapperWidth()
+
+  if (scrollWrapperRef.value) {
+    wrapperResizeObserver = new ResizeObserver(() => {
+      updateWrapperWidth()
+    })
+    wrapperResizeObserver.observe(scrollWrapperRef.value)
+  }
+
+  if (trendData.value.length) {
+    renderChart()
+  }
+
   window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
+  if (wrapperResizeObserver) {
+    wrapperResizeObserver.disconnect()
+    wrapperResizeObserver = null
+  }
+
   if (chartInstance) {
     chartInstance.dispose()
   }
@@ -359,20 +499,35 @@ onUnmounted(() => {
 
 .chart-section {
   width: 100%;
-  max-width: 800px;
-  height: 380px;
+  max-width: 1000px;
+  height: 480px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 24px;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.04);
-  padding: 20px;
+  padding: 20px 12px;
   position: relative;
 }
 
-.echarts-container {
+.chart-scroll-wrapper {
   width: 100%;
   height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+  /* Hide scrollbar for cleaner look */
+  scrollbar-width: none;
+}
+.chart-scroll-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.echarts-container {
+  height: 100%;
+  flex: 0 0 auto;
 }
 
 .chart-loading, .chart-empty {
