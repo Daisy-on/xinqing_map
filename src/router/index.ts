@@ -20,6 +20,7 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { keepAlive: true },
     },
     {
       path: '/auth',

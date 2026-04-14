@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchLocationDetail, fetchLocationList } from '@/api/location'
@@ -118,6 +118,10 @@ let boundaryBounds: { minLng: number; maxLng: number; minLat: number; maxLat: nu
 let isAdjustingBounds = false
 const landmarkLocations = ref<Location[]>([])
 const landmarkPixels = ref<Record<number, { x: number; y: number }>>({})
+let allLandmarkLocations: Location[] = []
+let hasBoundMapEvents = false
+let hasBoundUserEvents = false
+let mapInitPromise: Promise<void> | null = null
 
 const isDetailPanelVisible = ref(false)
 const selectedLandmark = ref<Location | null>(null)
@@ -171,6 +175,22 @@ function handleAuthStorageChanged(event: Event) {
   syncTopBarUser()
 }
 
+function bindUserEvents() {
+  if (hasBoundUserEvents) return
+  window.addEventListener('storage', handleAuthStorageChanged)
+  window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
+  window.addEventListener('focus', syncTopBarUser)
+  hasBoundUserEvents = true
+}
+
+function unbindUserEvents() {
+  if (!hasBoundUserEvents) return
+  window.removeEventListener('storage', handleAuthStorageChanged)
+  window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
+  window.removeEventListener('focus', syncTopBarUser)
+  hasBoundUserEvents = false
+}
+
 async function loadLandmarkDetail(locationId: number) {
   const cached = landmarkDetailCache.get(locationId)
   if (cached) {
@@ -217,8 +237,24 @@ function clearMaskOverlays(instance: BMapGLMap) {
 }
 
 function clearLandmarks() {
+  allLandmarkLocations = []
   landmarkLocations.value = []
   landmarkPixels.value = {}
+}
+
+function applyVisibleLandmarks() {
+  const visibleLocations = boundaryBounds
+    ? allLandmarkLocations.filter(
+        (location) =>
+          location.lng >= boundaryBounds!.minLng &&
+          location.lng <= boundaryBounds!.maxLng &&
+          location.lat >= boundaryBounds!.minLat &&
+          location.lat <= boundaryBounds!.maxLat,
+      )
+    : allLandmarkLocations
+
+  landmarkLocations.value = visibleLocations
+  scheduleLandmarkPixelsUpdate()
 }
 
 function markMapReady() {
@@ -393,6 +429,40 @@ function enforceDragBounds() {
   }
 }
 
+function bindMapRuntimeEvents() {
+  if (!map || hasBoundMapEvents) return
+
+  map.addEventListener('zooming', updateSvgMask)
+  map.addEventListener('zoomend', updateSvgMask)
+  map.addEventListener('moving', updateSvgMask)
+  map.addEventListener('moveend', updateSvgMask)
+  map.addEventListener('resize', updateSvgMask)
+  map.addEventListener('moveend', enforceDragBounds)
+  map.addEventListener('zooming', scheduleLandmarkPixelsUpdate)
+  map.addEventListener('zoomend', updateLandmarkPixels)
+  map.addEventListener('moving', scheduleLandmarkPixelsUpdate)
+  map.addEventListener('moveend', updateLandmarkPixels)
+  map.addEventListener('resize', scheduleLandmarkPixelsUpdate)
+  hasBoundMapEvents = true
+}
+
+function unbindMapRuntimeEvents(instance: BMapGLMap) {
+  if (!hasBoundMapEvents) return
+
+  instance.removeEventListener('zooming', updateSvgMask)
+  instance.removeEventListener('zoomend', updateSvgMask)
+  instance.removeEventListener('moving', updateSvgMask)
+  instance.removeEventListener('moveend', updateSvgMask)
+  instance.removeEventListener('resize', updateSvgMask)
+  instance.removeEventListener('moveend', enforceDragBounds)
+  instance.removeEventListener('zooming', scheduleLandmarkPixelsUpdate)
+  instance.removeEventListener('zoomend', updateLandmarkPixels)
+  instance.removeEventListener('moving', scheduleLandmarkPixelsUpdate)
+  instance.removeEventListener('moveend', updateLandmarkPixels)
+  instance.removeEventListener('resize', scheduleLandmarkPixelsUpdate)
+  hasBoundMapEvents = false
+}
+
 async function loadBoundaryAndMask() {
   if (!map || !mapApi) return
 
@@ -430,13 +500,8 @@ async function loadBoundaryAndMask() {
     maxLat: maxLat + latBuffer,
   }
 
+  applyVisibleLandmarks()
   updateSvgMask()
-  map.addEventListener('zooming', updateSvgMask)
-  map.addEventListener('zoomend', updateSvgMask)
-  map.addEventListener('moving', updateSvgMask)
-  map.addEventListener('moveend', updateSvgMask)
-  map.addEventListener('resize', updateSvgMask)
-  map.addEventListener('moveend', enforceDragBounds)
 }
 
 async function loadLandmarks() {
@@ -451,129 +516,146 @@ async function loadLandmarks() {
     (location) => Number.isFinite(location.lng) && Number.isFinite(location.lat),
   )
 
-  const visibleLocations = boundaryBounds
-    ? allValidLocations.filter(
-        (location) =>
-          location.lng >= boundaryBounds!.minLng &&
-          location.lng <= boundaryBounds!.maxLng &&
-          location.lat >= boundaryBounds!.minLat &&
-          location.lat <= boundaryBounds!.maxLat,
-      )
-    : allValidLocations
-
-  if (visibleLocations.length === 0) {
+  if (allValidLocations.length === 0) {
     throw new Error('地点坐标格式无效，无法渲染地标。')
   }
 
-  landmarkLocations.value = visibleLocations
-  scheduleLandmarkPixelsUpdate()
+  allLandmarkLocations = allValidLocations
+  applyVisibleLandmarks()
+}
 
-  map.addEventListener('zooming', scheduleLandmarkPixelsUpdate)
-  map.addEventListener('zoomend', updateLandmarkPixels)
-  map.addEventListener('moving', scheduleLandmarkPixelsUpdate)
-  map.addEventListener('moveend', updateLandmarkPixels)
-  map.addEventListener('resize', scheduleLandmarkPixelsUpdate)
+function finishSplash() {
+  if (!shouldPlaySplash) return
+  isSplashHiding.value = true
+  setTimeout(() => {
+    isSplashVisible.value = false
+  }, 1200)
+}
+
+if (shouldPlaySplash) {
+  try {
+    sessionStorage.setItem(HOME_SPLASH_PLAYED_KEY, '1')
+  } catch {
+    // Ignore storage write errors and keep graceful fallback behavior.
+  }
+}
+
+function restoreMapViewState() {
+  if (!map) return
+  updateSvgMask()
+  scheduleLandmarkPixelsUpdate()
+}
+
+async function initMapIfNeeded() {
+  if (map) {
+    restoreMapViewState()
+    return
+  }
+
+  if (mapInitPromise) {
+    await mapInitPromise
+    return
+  }
+
+  mapInitPromise = (async () => {
+    if (!mapContainer.value) {
+      throw new Error('地图容器初始化失败，请刷新页面重试。')
+    }
+
+    if (!window.BMapGL) {
+      throw new Error('百度地图脚本加载失败，请检查网络或 AK 配置。')
+    }
+
+    mapApi = window.BMapGL
+    const { Map, Point, ScaleControl } = mapApi
+    const center = new Point(106.796971, 29.719559)
+    const instance = new Map(mapContainer.value, {
+      minZoom: MAP_MIN_ZOOM,
+      maxZoom: MAP_MAX_ZOOM,
+    })
+
+    instance.centerAndZoom(center, MAP_INIT_ZOOM)
+    instance.enableScrollWheelZoom(true)
+    instance.setMinZoom(MAP_MIN_ZOOM)
+    instance.setMaxZoom(MAP_MAX_ZOOM)
+    instance.addControl(new ScaleControl())
+    instance.addEventListener('tilesloaded', markMapReady)
+
+    // 隐藏所有文字、POI图标（为了比赛隐藏真实校名和地标），保留地图底图几何轮廓
+    instance.setMapStyleV2({
+      styleJson: [
+        {
+          featureType: 'all',
+          elementType: 'labels',
+          stylers: { visibility: 'off' },
+        },
+        {
+          featureType: 'all',
+          elementType: 'icons',
+          stylers: { visibility: 'off' },
+        },
+        {
+          featureType: 'poi',
+          elementType: 'all',
+          stylers: { visibility: 'off' },
+        },
+        {
+          featureType: 'education',
+          elementType: 'all',
+          stylers: { visibility: 'off' },
+        },
+      ],
+    })
+
+    map = instance
+    bindMapRuntimeEvents()
+
+    const splashTimer = shouldPlaySplash
+      ? new Promise((resolve) => setTimeout(resolve, 1200))
+      : Promise.resolve()
+
+    await Promise.all([
+      loadBoundaryAndMask(),
+      loadLandmarks(),
+      splashTimer,
+    ])
+
+    loadError.value = ''
+    restoreMapViewState()
+  })()
+    .catch((error) => {
+      loadError.value = error instanceof Error ? error.message : '地图数据加载失败，请稍后重试。'
+    })
+    .finally(() => {
+      finishSplash()
+      mapInitPromise = null
+    })
+
+  await mapInitPromise
 }
 
 onMounted(() => {
   syncTopBarUser()
-  window.addEventListener('storage', handleAuthStorageChanged)
-  window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
-  window.addEventListener('focus', syncTopBarUser)
+  bindUserEvents()
+  void initMapIfNeeded()
+})
 
-  const finishSplash = () => {
-    if (!shouldPlaySplash) return
-    isSplashHiding.value = true
-    setTimeout(() => {
-      isSplashVisible.value = false
-    }, 1200)
-  }
-
-  if (shouldPlaySplash) {
-    try {
-      sessionStorage.setItem(HOME_SPLASH_PLAYED_KEY, '1')
-    } catch {
-      // Ignore storage write errors and keep graceful fallback behavior.
-    }
-  }
-
-  if (!mapContainer.value) {
-    loadError.value = '地图容器初始化失败，请刷新页面重试。'
-    finishSplash()
+onActivated(() => {
+  syncTopBarUser()
+  bindUserEvents()
+  if (map) {
+    restoreMapViewState()
     return
   }
+  void initMapIfNeeded()
+})
 
-  if (!window.BMapGL) {
-    loadError.value = '百度地图脚本加载失败，请检查网络或 AK 配置。'
-    finishSplash()
-    return
-  }
-
-  mapApi = window.BMapGL
-  const { Map, Point, ScaleControl } = mapApi
-  const center = new Point(106.796971, 29.719559)
-  const instance = new Map(mapContainer.value, {
-    minZoom: MAP_MIN_ZOOM,
-    maxZoom: MAP_MAX_ZOOM,
-  })
-
-  instance.centerAndZoom(center, MAP_INIT_ZOOM)
-  instance.enableScrollWheelZoom(true)
-  instance.setMinZoom(MAP_MIN_ZOOM)
-  instance.setMaxZoom(MAP_MAX_ZOOM)
-  instance.addControl(new ScaleControl())
-  instance.addEventListener('tilesloaded', markMapReady)
-
-  // 隐藏所有文字、POI图标（为了比赛隐藏真实校名和地标），保留地图底图几何轮廓
-  instance.setMapStyleV2({
-    styleJson: [
-      {
-        featureType: 'all',
-        elementType: 'labels',
-        stylers: { visibility: 'off' },
-      },
-      {
-        featureType: 'all',
-        elementType: 'icons',
-        stylers: { visibility: 'off' },
-      },
-      {
-        featureType: 'poi',
-        elementType: 'all',
-        stylers: { visibility: 'off' },
-      },
-      {
-        featureType: 'education',
-        elementType: 'all',
-        stylers: { visibility: 'off' },
-      },
-    ],
-  })
-
-  map = instance
-
-  const splashTimer = shouldPlaySplash
-    ? new Promise((resolve) => setTimeout(resolve, 3800))
-    : Promise.resolve()
-
-  Promise.all([
-    loadBoundaryAndMask().then(() => loadLandmarks()),
-    splashTimer,
-  ])
-    .then(() => {
-      loadError.value = ''
-      finishSplash()
-    })
-    .catch((error) => {
-      loadError.value = error instanceof Error ? error.message : '地图数据加载失败，请稍后重试。'
-      finishSplash()
-    })
+onDeactivated(() => {
+  unbindUserEvents()
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('storage', handleAuthStorageChanged)
-  window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
-  window.removeEventListener('focus', syncTopBarUser)
+  unbindUserEvents()
 
   if (!map) return
 
@@ -582,17 +664,7 @@ onBeforeUnmount(() => {
   svgMaskPath.value = ''
   isMapReady.value = false
 
-  map.removeEventListener('zooming', updateSvgMask)
-  map.removeEventListener('zoomend', updateSvgMask)
-  map.removeEventListener('moving', updateSvgMask)
-  map.removeEventListener('moveend', updateSvgMask)
-  map.removeEventListener('resize', updateSvgMask)
-  map.removeEventListener('moveend', enforceDragBounds)
-  map.removeEventListener('zooming', scheduleLandmarkPixelsUpdate)
-  map.removeEventListener('zoomend', updateLandmarkPixels)
-  map.removeEventListener('moving', scheduleLandmarkPixelsUpdate)
-  map.removeEventListener('moveend', updateLandmarkPixels)
-  map.removeEventListener('resize', scheduleLandmarkPixelsUpdate)
+  unbindMapRuntimeEvents(map)
   map.removeEventListener('tilesloaded', markMapReady)
 
   clearLandmarks()
