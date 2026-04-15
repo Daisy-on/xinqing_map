@@ -1,16 +1,16 @@
 ﻿import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import AuthView from '../views/AuthView.vue'
-import SpotDetailView from '../views/SpotDetailView.vue'
-import ComposeView from '../views/ComposeView.vue'
-import ProfileView from '../views/ProfileView.vue'
-import PostDetailView from '../views/PostDetailView.vue'
-import MatchView from '@/views/MatchView.vue'
-import ChatView from '@/views/ChatView.vue'
-import FireflyView from '@/views/FireflyView.vue'
-import CapsuleView from '@/views/CapsuleView.vue'
-import MoodCalendarView from '@/views/MoodCalendarView.vue'
-import MoodEditView from '@/views/MoodEditView.vue'
+import HomeView from '@/views/map/HomeView.vue'
+import AuthView from '@/views/auth/AuthView.vue'
+import SpotDetailView from '@/views/map/SpotDetailView.vue'
+import ComposeView from '@/views/social/ComposeView.vue'
+import ProfileView from '@/views/profile/ProfileView.vue'
+import PostDetailView from '@/views/social/PostDetailView.vue'
+import MatchView from '@/views/chat/MatchView.vue'
+import ChatView from '@/views/chat/ChatView.vue'
+import FireflyView from '@/views/special/FireflyView.vue'
+import CapsuleView from '@/views/special/CapsuleView.vue'
+import MoodCalendarView from '@/views/mood/MoodCalendarView.vue'
+import MoodEditView from '@/views/mood/MoodEditView.vue'
 import { getToken } from '@/utils/auth'
 
 const router = createRouter({
@@ -74,7 +74,7 @@ const router = createRouter({
     },    {
       path: '/mood/trend',
       name: 'mood_trend',
-      component: () => import('@/views/MoodTrendView.vue'),
+      component: () => import('@/views/mood/MoodTrendView.vue'),
       meta: { requiresAuth: true }
     },    {
       path: '/post/:id',

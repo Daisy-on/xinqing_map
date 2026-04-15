@@ -156,7 +156,7 @@ import { ArrowLeft, UserFilled, Message, Lock, Star, MoreFilled, ChatRound, Loca
 import { deletePost } from '@/api/post'
 import { fetchCurrentUser, fetchUserPosts, type UserPostItem } from '@/api/user'
 import type { User } from '@/types/models'
-import EditProfileModal from '@/components/profile/EditProfileModal.vue'
+import EditProfileModal from '@/components/modal/EditProfileModal.vue'
 import { useLetterStore } from '@/stores/letter'
 import {
   AUTH_STORAGE_CHANGED_EVENT,

@@ -66,10 +66,20 @@
 xinqing_map/               # 前端项目
 ├─ src/
 │  ├─ api/                 # 接口封装
-│  ├─ components/          # 通用组件、地图组件、个人中心组件
+│  ├─ components/          # 可复用组件
+│  │  ├─ common/           # 全局通用组件（启动动画、全局通知层）
+│  │  ├─ map/              # 地图相关组件
+│  │  └─ modal/            # 弹窗类组件
 │  ├─ router/              # 路由配置
 │  ├─ stores/              # Pinia 状态
-│  ├─ views/               # 页面视图
+│  ├─ views/               # 路由页面（按领域分组）
+│  │  ├─ auth/
+│  │  ├─ map/
+│  │  ├─ social/
+│  │  ├─ profile/
+│  │  ├─ chat/
+│  │  ├─ mood/
+│  │  └─ special/
 │  └─ assets/              # 全局样式与静态资源
 ├─ mock/                   # 本地 mock 服务
 └─ public/data/            # 地图边界等静态数据
