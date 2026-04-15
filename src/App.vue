@@ -11,7 +11,10 @@ const handleAuthChange = () => {
   const token = getToken()
   if (token) {
     letterStore.connect(token)
+    return
   }
+
+  letterStore.disconnect()
 }
 
 onMounted(() => {
@@ -21,6 +24,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthChange as EventListener)
+  letterStore.disconnect()
 })
 </script>
 
