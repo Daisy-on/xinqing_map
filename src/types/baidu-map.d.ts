@@ -53,6 +53,7 @@ declare global {
 
   interface Window {
     BMapGL?: BMapGLNamespace
+    _initBaiduMapGL?: () => void
   }
 }
 

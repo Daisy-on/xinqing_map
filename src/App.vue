@@ -27,9 +27,9 @@ onBeforeUnmount(() => {
 <template>
   <RouterView v-slot="{ Component, route }">
     <KeepAlive>
-      <component :is="Component" v-if="route.meta.keepAlive" />
+      <component :is="Component" :key="route.name" v-if="route.meta.keepAlive" />
     </KeepAlive>
-    <component :is="Component" v-if="!route.meta.keepAlive" />
+    <component :is="Component" :key="route.name" v-if="!route.meta.keepAlive" />
   </RouterView>
   <FireflyDeliveryOverlay />
 </template>

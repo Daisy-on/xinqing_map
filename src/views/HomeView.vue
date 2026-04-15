@@ -72,6 +72,7 @@ import { onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchLocationDetail, fetchLocationList } from '@/api/location'
+import { loadBaiduMapGL } from '@/utils/baiduMapLoader'
 import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
@@ -562,11 +563,17 @@ async function initMapIfNeeded() {
       throw new Error('地图容器初始化失败，请刷新页面重试。')
     }
 
-    if (!window.BMapGL) {
-      throw new Error('百度地图脚本加载失败，请检查网络或 AK 配置。')
+    const ak = import.meta.env.VITE_BMAP_AK
+    if (!ak) {
+      throw new Error('未配置百度地图 AK，请检查环境变量。')
     }
 
-    mapApi = window.BMapGL
+    mapApi = await loadBaiduMapGL(ak)
+
+    if (!mapApi) {
+      throw new Error('百度地图对象未知错误。')
+    }
+
     const { Map, Point, ScaleControl } = mapApi
     const center = new Point(106.796971, 29.719559)
     const instance = new Map(mapContainer.value, {
