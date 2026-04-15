@@ -175,10 +175,6 @@ onMounted(() => {
                 placeholder="记录详细内容吧，将成为珍贵的回忆哟～"
                 maxlength="500"
               ></textarea>
-              
-              <div class="image-placeholder">
-                <div class="add-icon">+</div>
-              </div>
             </div>
           </div>
         </div>
@@ -405,19 +401,6 @@ onMounted(() => {
 }
 .diary-textarea::placeholder {
   color: #c0c0c0;
-}
-
-.image-placeholder {
-  width: 80px;
-  height: 80px;
-  border-radius: 12px;
-  background: #f9f9f9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ccc;
-  font-size: 24px;
-  cursor: text;
 }
 
 /* Transitions */
