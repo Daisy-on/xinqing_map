@@ -69,6 +69,7 @@ xinqing_map/               # 前端项目
 │  ├─ components/          # 可复用组件
 │  │  ├─ common/           # 全局通用组件（启动动画、全局通知层）
 │  │  ├─ map/              # 地图相关组件
+│  │  ├─ profile/          # 个人中心相关组件
 │  │  └─ modal/            # 弹窗类组件
 │  ├─ router/              # 路由配置
 │  ├─ stores/              # Pinia 状态
