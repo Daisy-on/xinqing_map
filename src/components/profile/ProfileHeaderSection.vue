@@ -103,7 +103,7 @@ const onProfileActionCommand = (command: string | number | Record<string, unknow
   height: 100%;
   background-image: url('@/assets/images/profile-bgc.png');
   background-size: cover;
-  background-position: center center;
+  background-position: center 53%;
   background-repeat: no-repeat;
 }
 

@@ -86,31 +86,23 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
 .section-title-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding: 2px 2px 0;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
 .section-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  letter-spacing: 0.02em;
+  font-size: 17px;
+  font-weight: 500;
+  color: #333;
+  letter-spacing: 0.1em;
 }
 
 .section-count {
-  min-width: 28px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: var(--el-fill-color-light);
+  font-size: 15px;
   color: var(--el-text-color-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .content-area {
