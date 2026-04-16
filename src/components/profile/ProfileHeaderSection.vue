@@ -101,8 +101,10 @@ const onProfileActionCommand = (command: string | number | Record<string, unknow
 .banner-bg {
   width: 100%;
   height: 100%;
-  background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
-  object-fit: cover;
+  background-image: url('@/assets/images/profile-bgc.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .top-nav {

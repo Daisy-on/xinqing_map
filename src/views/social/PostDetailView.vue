@@ -113,7 +113,7 @@ const formattedTime = computed(() => {
   const day = String(d.getDate()).padStart(2, '0')
   const h = d.getHours().toString().padStart(2, '0')
   const m = d.getMinutes().toString().padStart(2, '0')
-  return `最后更新 ${month}-${day} ${h}:${m}`
+  return `最后更新于 ${month}-${day} ${h}:${m}`
 })
 
 const goBack = () => {
