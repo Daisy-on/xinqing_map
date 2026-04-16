@@ -12,6 +12,8 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(ElementPlus)
+app.use(ElementPlus, {
+  zIndex: 20000
+})
 
 app.mount('#app')
