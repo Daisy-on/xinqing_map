@@ -5,9 +5,6 @@
       <div class="icon-btn" @click="goBack">
         <el-icon><ArrowLeft /></el-icon>
       </div>
-      <div class="icon-btn">
-        <el-icon><MoreFilled /></el-icon>
-      </div>
     </div>
 
     <!-- Scrollable Content -->
@@ -62,33 +59,6 @@
         <div class="post-meta-footer">
           <span class="read-count">阅读 {{ mockReadCount }}</span>
         </div>
-
-        <div class="divider"></div>
-
-        <!-- Comments Section -->
-        <div class="comments-section">
-          <h3 class="comments-title">0 评论</h3>
-          
-          <div class="empty-comments">
-            <div class="lamp-illustration">
-              <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-                <path d="M35 50 Q60 10 85 50" fill="#f8cd9a" />
-                <path d="M30 50 L90 50 L90 55 L30 55 Z" fill="#e99e63" />
-                <circle cx="60" cy="55" r="9" fill="#fcea79" />
-                <path d="M45 64 L75 64 L100 110 L20 110 Z" fill="url(#grad-light)" />
-                <path d="M40 80 Q43 80 43 83 Q43 80 46 80 Q43 80 43 77 Q43 80 40 80 Z" fill="#fff" />
-                <path d="M75 90 Q77 90 77 92 Q77 90 79 90 Q77 90 77 88 Q77 90 75 90 Z" fill="#fff" opacity="0.8"/>
-                <defs>
-                  <linearGradient id="grad-light" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#fcea79" stop-opacity="0.4" />
-                    <stop offset="100%" stop-color="#fcea79" stop-opacity="0" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-            <p class="empty-text">还没有评论</p>
-          </div>
-        </div>
       </div>
       
       <div v-else class="error-state">
@@ -99,18 +69,11 @@
     <!-- Bottom Action Bar (Fixed) -->
     <div class="bottom-action-bar">
       <div class="action-bar-inner">
-        <div class="comment-input-btn">
-          <span>我来评论...</span>
-        </div>
-        <div class="action-icons">
-          <div class="action-item">
-            <el-icon class="icon"><Star /></el-icon>
-            <span class="count">{{ post?.likeCount || 0 }}</span>
-          </div>
-          <div class="action-item">
-            <el-icon class="icon"><ChatRound /></el-icon>
-            <span class="count">0</span>
-          </div>
+        <div class="like-action-btn" aria-label="点赞数">
+          <svg class="like-icon" viewBox="0 0 1024 1024" aria-hidden="true">
+            <path d="M512 917.6 123.4 518.8c-85.2-87.2-81-227.3 9.4-309.1 86.6-78.5 218.8-73.2 300.1 9.9L512 245.4l79.1-25.8c81.3-83.1 213.5-88.4 300.1-9.9 90.4 81.8 94.6 221.9 9.4 309.1L512 917.6z" />
+          </svg>
+          <span class="count">{{ post?.likeCount || 0 }}</span>
         </div>
       </div>
     </div>
@@ -120,7 +83,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ArrowLeft, MoreFilled, UserFilled, Star, ChatRound, Male, Female } from '@element-plus/icons-vue'
+import { ArrowLeft, UserFilled, Male, Female } from '@element-plus/icons-vue'
 import { fetchPostDetail } from '@/api/post'
 import type { PostItem, User } from '@/types/models'
 import { getStoredUserInfo } from '@/utils/auth'
@@ -140,11 +103,17 @@ const mockReadCount = computed(() => {
 })
 
 const formattedTime = computed(() => {
-  if (!post.value?.createTime) return '未知时间'
-  const d = new Date(post.value.createTime)
+  const sourceTime = post.value?.updateTime || post.value?.createTime
+  if (!sourceTime) return '未知时间'
+
+  const d = new Date(sourceTime)
+  if (Number.isNaN(d.getTime())) return '未知时间'
+
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
   const h = d.getHours().toString().padStart(2, '0')
   const m = d.getMinutes().toString().padStart(2, '0')
-  return `${h}:${m}`
+  return `最后更新 ${month}-${day} ${h}:${m}`
 })
 
 const goBack = () => {
@@ -194,11 +163,12 @@ onMounted(async () => {
 
 <style scoped>
 .post-detail-layout {
-  min-height: 100vh;
+  height: 100vh;
   background-color: var(--el-bg-color);
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -212,7 +182,8 @@ onMounted(async () => {
     background-color: var(--el-bg-color);
   }
   .main-content {
-    min-height: 100vh;
+    min-height: 0;
+    overflow-y: auto;
     border-left: 1px solid var(--el-border-color-light);
     border-right: 1px solid var(--el-border-color-light);
   }
@@ -234,7 +205,7 @@ onMounted(async () => {
   z-index: 10;
   height: 56px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 0 16px;
   background-color: rgba(255, 255, 255, 0.95);
@@ -260,7 +231,9 @@ onMounted(async () => {
 
 .main-content {
   flex: 1;
-  padding: 16px 20px 80px 20px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 96px 20px;
 }
 
 .loading-state, .error-state {
@@ -342,51 +315,12 @@ onMounted(async () => {
 .post-meta-footer {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .read-count {
   font-size: 13px;
   color: var(--el-text-color-secondary);
-}
-
-.divider {
-  height: 1px;
-  background-color: var(--el-border-color-lighter);
-  margin: 0 -20px 20px -20px;
-}
-
-.comments-section {
-  padding-bottom: 20px;
-}
-
-.comments-title {
-  margin: 0 0 24px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-}
-
-.empty-comments {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
-  color: var(--el-text-color-secondary);
-}
-
-.lamp-illustration {
-  width: 120px;
-  height: 120px;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-text {
-  font-size: 14px;
 }
 
 .bottom-action-bar {
@@ -404,54 +338,36 @@ onMounted(async () => {
   height: 56px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 16px;
-  gap: 16px;
 }
 
-.comment-input-btn {
-  flex: 1;
-  height: 36px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 18px;
+.like-action-btn {
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  color: var(--el-text-color-placeholder);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.comment-input-btn:hover {
-  background-color: var(--el-fill-color);
-}
-
-.action-icons {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.action-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
   color: var(--el-text-color-secondary);
-  cursor: pointer;
   transition: color 0.2s;
 }
 
-.action-item:hover {
-  color: var(--el-color-primary);
+.like-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 78;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
 }
 
-.action-item .icon {
-  font-size: 20px;
-}
-
-.action-item .count {
+.like-action-btn .count {
   font-size: 14px;
   font-weight: 500;
+  min-width: 20px;
 }
 </style>

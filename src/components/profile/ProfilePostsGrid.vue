@@ -45,13 +45,11 @@
           </div>
         </div>
         <div class="card-footer">
-          <div class="action-btn">
-            <el-icon><Star /></el-icon>
+          <div class="action-btn like-action">
+            <svg class="heart-icon" viewBox="0 0 1024 1024" aria-hidden="true">
+              <path d="M512 917.6 123.4 518.8c-85.2-87.2-81-227.3 9.4-309.1 86.6-78.5 218.8-73.2 300.1 9.9L512 245.4l79.1-25.8c81.3-83.1 213.5-88.4 300.1-9.9 90.4 81.8 94.6 221.9 9.4 309.1L512 917.6z" />
+            </svg>
             <span>{{ post.likeCount || 0 }}</span>
-          </div>
-          <div class="action-btn">
-            <el-icon><ChatRound /></el-icon>
-            <span>0</span>
           </div>
         </div>
       </div>
@@ -60,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ChatRound, EditPen, Lock, Location, MoreFilled, Star } from '@element-plus/icons-vue'
+import { EditPen, Lock, Location, MoreFilled } from '@element-plus/icons-vue'
 import type { UserPostItem } from '@/api/user'
 
 const props = defineProps<{
@@ -263,7 +261,6 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 16px;
   padding-top: 12px;
   margin-top: 4px;
   border-top: 1px solid var(--el-border-color-lighter);
@@ -279,7 +276,23 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
 }
 
 .action-btn:hover {
-  color: var(--el-color-primary);
+  color: var(--el-text-color-secondary);
+}
+
+.like-action {
+  gap: 6px;
+}
+
+.heart-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 78;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
 }
 
 .empty-state-wrapper {
