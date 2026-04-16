@@ -137,17 +137,22 @@ const handleCancelMatch = () => {
 }
 
 .back-btn {
-  font-size: 24px;
+  font-size: 32px;
   color: #333;
   cursor: pointer;
   padding: 8px;
   margin-left: -8px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
 }
 
 .back-btn:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--el-color-primary, #409EFF);
+  text-shadow: 0 0 15px rgba(64, 158, 255, 0.6);
+  transform: scale(1.1);
 }
 
 .match-header h2 {

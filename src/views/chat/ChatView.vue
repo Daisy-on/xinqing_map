@@ -84,13 +84,13 @@ const handleBack = () => {
       type: 'warning'
     }).then(() => {
       chatStore.endChat();
-      router.push('/');
+      router.push('/match');
     }).catch(() => {
       router.push('/');
     });
   } else {
     chatStore.resetState();
-    router.push('/');
+    router.push('/match');
   }
 };
 
