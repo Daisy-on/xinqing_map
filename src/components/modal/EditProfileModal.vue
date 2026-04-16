@@ -73,6 +73,12 @@ const handleClose = () => {
 
 const handleAvatarSuccess = (newAvatarUrl: string) => {
   formData.value.avatar = newAvatarUrl
+  if (props.userInfo) {
+    emit('success', {
+      ...props.userInfo,
+      avatar: newAvatarUrl,
+    })
+  }
   // 修改成功后跳转回首页继续完善
   currentView.value = 'profileForm'
 }
@@ -87,7 +93,8 @@ const submitSave = async () => {
   try {
     const res = await updateUserInfo({
       nickname: formData.value.nickname.trim(),
-      gender: formData.value.gender
+      gender: formData.value.gender,
+      avatar: formData.value.avatar || undefined,
     })
     // 补齐传出信息，保证视图更新
     const completeUser: User = { ...props.userInfo, ...res, avatar: formData.value.avatar }

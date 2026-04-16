@@ -1,65 +1,66 @@
 <template>
   <div class="route-view-container">
-  <div class="modal-header">
-    <div class="header-left">
-      <el-icon class="icon-btn" @click="handleBack"><ArrowLeft /></el-icon>
-    </div>
-    <div class="header-title">{{ step === 'list' ? '查看头像' : '头像预览' }}</div>
-    <div class="header-right"></div>
-  </div>
-
-  <!-- 状态一：头像列表库 -->
-  <template v-if="step === 'list'">
-    <div class="modal-body list-body">
-      <div class="current-avatar-section">
-        <el-avatar :size="80" :src="currentAvatar" class="avatar-big">
-          <el-icon v-if="!currentAvatar"><UserFilled /></el-icon>
-        </el-avatar>
-        <div class="current-label">当前头像</div>
+    <div class="modal-header">
+      <div class="header-left">
+        <el-icon class="icon-btn" @click="handleBack"><ArrowLeft /></el-icon>
       </div>
+      <div class="header-title">{{ step === 'list' ? '查看头像' : '头像预览' }}</div>
+      <div class="header-right"></div>
+    </div>
 
-      <div class="presets-section">
-        <div class="section-title">可选头像</div>
-        <div class="presets-grid" v-if="!loadingPresets">
-          <div 
-            v-for="(url, index) in presetList" 
-            :key="index"
-            class="preset-item"
-            @click="handlePreview(url)"
-          >
-            <img :src="url" class="preset-img" />
+    <!-- 状态一：头像列表库 -->
+    <template v-if="step === 'list'">
+      <div class="modal-body list-body">
+        <div class="current-avatar-section">
+          <el-avatar :size="80" :src="currentAvatar" class="avatar-big">
+            <el-icon v-if="!currentAvatar"><UserFilled /></el-icon>
+          </el-avatar>
+          <div class="current-label">当前头像</div>
+        </div>
+
+        <div class="presets-section">
+          <div class="section-title">可选头像</div>
+          <div class="presets-grid" v-if="!loadingPresets">
+            <div
+              v-for="preset in presetList"
+              :key="preset.id"
+              class="preset-item"
+              :class="{ 'is-active': preset.avatarUrl === currentAvatar }"
+              @click="handlePreview(preset)"
+            >
+              <img :src="preset.avatarUrl" :alt="preset.avatarName" class="preset-img" />
+            </div>
+            <div v-if="presetList.length === 0" class="empty-data">
+              暂无预设头像
+            </div>
           </div>
-          <div v-if="presetList.length === 0" class="empty-data">
-            暂无预设头像
+          <div v-else class="loading-data">
+            <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+            <p>正在加载头像库...</p>
           </div>
         </div>
-        <div v-else class="loading-data">
-          <el-icon class="is-loading" :size="24"><Loading /></el-icon>
-          <p>正在加载头像库...</p>
+      </div>
+    </template>
+
+    <!-- 状态二：大图预览 -->
+    <template v-if="step === 'preview'">
+      <div class="modal-body preview-body">
+        <div class="preview-stage">
+          <img :src="previewUrl" class="preview-img" :alt="previewName" />
         </div>
       </div>
-    </div>
-  </template>
 
-  <!-- 状态二：大图预览 -->
-  <template v-if="step === 'preview'">
-    <div class="modal-body preview-body">
-      <div class="preview-stage">
-        <img :src="previewUrl" class="preview-img" />
+      <div class="modal-footer">
+        <button
+          class="set-avatar-btn"
+          :disabled="saving"
+          @click="handleSetAvatar"
+        >
+          <span v-if="!saving">设为头像</span>
+          <el-icon v-else class="is-loading"><Loading /></el-icon>
+        </button>
       </div>
-    </div>
-
-    <div class="modal-footer">
-      <button 
-        class="set-avatar-btn" 
-        :disabled="saving"
-        @click="handleSetAvatar"
-      >
-        <span v-if="!saving">设为头像</span>
-        <el-icon v-else class="is-loading"><Loading /></el-icon>
-      </button>
-    </div>
-  </template>
+    </template>
   </div>
 </template>
 
@@ -68,6 +69,7 @@ import { ref, onMounted } from 'vue'
 import { ArrowLeft, UserFilled, Loading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { fetchAvatarList, updateUserInfo } from '@/api/user'
+import type { AvatarPreset } from '@/types/models'
 
 const props = defineProps<{
   currentAvatar: string
@@ -80,8 +82,9 @@ const emit = defineEmits<{
 
 const step = ref<'list' | 'preview'>('list')
 const loadingPresets = ref(false)
-const presetList = ref<string[]>([])
+const presetList = ref<AvatarPreset[]>([])
 const previewUrl = ref('')
+const previewName = ref('')
 const saving = ref(false)
 
 onMounted(() => {
@@ -109,8 +112,9 @@ const handleBack = () => {
   }
 }
 
-const handlePreview = (url: string) => {
-  previewUrl.value = url
+const handlePreview = (preset: AvatarPreset) => {
+  previewUrl.value = preset.avatarUrl
+  previewName.value = preset.avatarName
   step.value = 'preview'
 }
 
@@ -221,10 +225,15 @@ const handleSetAvatar = async () => {
   cursor: pointer;
   transition: transform 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 2px solid transparent;
 }
 
 .preset-item:active, .preset-item:hover {
   transform: scale(0.96);
+}
+
+.preset-item.is-active {
+  border-color: var(--el-color-primary);
 }
 
 .preset-img {
@@ -301,5 +310,3 @@ const handleSetAvatar = async () => {
   cursor: not-allowed;
 }
 </style>
-
-<style scoped>.route-view-container { height: 100%; display: flex; flex-direction: column; }</style>

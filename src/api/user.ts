@@ -1,6 +1,6 @@
 import http from './http'
 import type { ApiResponse } from '@/types/api'
-import type { User } from '@/types/models'
+import type { AvatarPreset, User } from '@/types/models'
 import type { PublishPostParams } from './post'
 
 export interface RegisterParams {
@@ -87,7 +87,7 @@ export async function fetchUserDetailById(userId: number): Promise<User> {
 
 export const fetchUserInfo = fetchUserDetailById
 
-export async function fetchAvatarList(): Promise<string[]> {
-  const response = await http.get<ApiResponse<string[]>>('/avatar/list')
+export async function fetchAvatarList(): Promise<AvatarPreset[]> {
+  const response = await http.get<ApiResponse<AvatarPreset[]>>('/avatar/list')
   return response.data.data || []
 }

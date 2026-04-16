@@ -6,6 +6,12 @@ export interface User {
   gender?: number
 }
 
+export interface AvatarPreset {
+  id: number
+  avatarName: string
+  avatarUrl: string
+}
+
 export interface CapsuleDTO {
   content: string
   type: number
