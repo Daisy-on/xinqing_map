@@ -127,7 +127,7 @@ export async function uploadPostImage(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await http.post<ApiResponse<string>>('/image/upload', formData, {
+  const response = await http.post<ApiResponse<string>>('/file/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
