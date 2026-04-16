@@ -122,15 +122,17 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, MoreFilled, UserFilled, Star, ChatRound, Male, Female } from '@element-plus/icons-vue'
 import { fetchPostDetail } from '@/api/post'
-import { fetchUserInfo } from '@/api/user'
 import type { PostItem, User } from '@/types/models'
+import { getStoredUserInfo } from '@/utils/auth'
 
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(true)
 const post = ref<PostItem | null>(null)
-const author = ref<User | null>(null)
+type PostAuthorInfo = Pick<User, 'id' | 'nickname' | 'avatar'>
+
+const author = ref<PostAuthorInfo | null>(null)
 
 const mockReadCount = computed(() => {
   if (!post.value) return 1
@@ -164,13 +166,22 @@ onMounted(async () => {
   try {
     const postData = await fetchPostDetail(id)
     post.value = postData
-    
+
+    const cachedUser = getStoredUserInfo()
+    if (cachedUser?.id === postData.userId) {
+      author.value = {
+        id: cachedUser.id,
+        nickname: cachedUser.nickname,
+        avatar: cachedUser.avatar,
+      }
+      return
+    }
+
     if (postData.userId) {
-      try {
-        const userData = await fetchUserInfo(postData.userId)
-        author.value = userData
-      } catch (err) {
-        console.warn('Failed to fetch user info', err)
+      author.value = {
+        id: postData.userId,
+        nickname: postData.nickname || '心晴用户',
+        avatar: postData.avatar,
       }
     }
   } catch (error) {
