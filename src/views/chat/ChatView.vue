@@ -12,6 +12,45 @@ const messagesContainer = ref<HTMLElement | null>(null);
 
 const myId = computed(() => chatStore.getMyUserId());
 
+// --- 可拉伸高度控制 ---
+const inputBoxHeight = ref(100); // 默认初始高度
+let startY = 0;
+let startHeight = 0;
+
+const startDrag = (e: MouseEvent | TouchEvent) => {
+  // 避免选中文字
+  if (e.cancelable) e.preventDefault();
+  startY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
+  startHeight = inputBoxHeight.value;
+  
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+  document.addEventListener('touchmove', onDrag, { passive: false });
+  document.addEventListener('touchend', stopDrag);
+};
+
+const onDrag = (e: MouseEvent | TouchEvent) => {
+  const clientY = e instanceof MouseEvent ? e.clientY : e.touches[0].clientY;
+  const delta = startY - clientY; // 鼠标上移 delta>0 高度增加
+  let newHeight = startHeight + delta;
+  
+  const windowHeight = window.innerHeight;
+  const minHeight = windowHeight / 8;
+  const maxHeight = windowHeight / 2;
+  
+  if (newHeight < minHeight) newHeight = minHeight;
+  if (newHeight > maxHeight) newHeight = maxHeight;
+  
+  inputBoxHeight.value = newHeight;
+};
+
+const stopDrag = () => {
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  document.removeEventListener('touchmove', onDrag);
+  document.removeEventListener('touchend', stopDrag);
+};
+
 // 滚动到底部
 const scrollToBottom = () => {
   nextTick(() => {
@@ -139,28 +178,30 @@ const getClosedReasonText = (reason: string | null) => {
     </main>
 
     <!-- Input Area -->
-    <footer class="chat-footer" :class="{ 'is-disabled': chatStore.isRoomClosed }">
+    <footer class="chat-footer" :class="{ 'is-disabled': chatStore.isRoomClosed }" :style="{ height: chatStore.isRoomClosed ? 'auto' : inputBoxHeight + 'px' }">
+      <div v-if="!chatStore.isRoomClosed" class="resize-handle" @mousedown="startDrag" @touchstart="startDrag"></div>
       <div v-if="chatStore.isRoomClosed" class="footer-overlay">
         聊天已结束
         <el-button @click="handleBack" type="primary" link style="margin-left: 8px;">返回首页</el-button>
       </div>
       <div v-else class="input-wrapper">
-        <input 
+        <textarea 
           v-model="inputMsg" 
-          type="text" 
-          class="chat-input" 
+          class="chat-input qq-textarea" 
           placeholder="说点什么吧..." 
-          @keyup.enter="sendMsg"
+          @keydown.enter.exact.prevent="sendMsg"
           :disabled="chatStore.isRoomClosed"
-        />
-        <button 
-          class="send-btn" 
-          :class="{ 'active': inputMsg.trim() }"
-          @click="sendMsg"
-          :disabled="!inputMsg.trim() || chatStore.isRoomClosed"
-        >
-          发送
-        </button>
+        ></textarea>
+        <div class="send-action-bar">
+          <button 
+            class="send-btn" 
+            :class="{ 'active': inputMsg.trim() }"
+            @click="sendMsg"
+            :disabled="!inputMsg.trim() || chatStore.isRoomClosed"
+          >
+            发送
+          </button>
+        </div>
       </div>
     </footer>
   </div>
@@ -189,15 +230,22 @@ const getClosedReasonText = (reason: string | null) => {
 }
 
 .back-btn {
-  font-size: 24px;
+  font-size: 32px;
   color: #333;
   cursor: pointer;
   padding: 8px;
   margin-left: -8px;
-  border-radius: 50%;
-  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
 }
-.back-btn:hover { background-color: rgba(0, 0, 0, 0.05); }
+.back-btn:hover {
+  color: var(--el-color-primary, #409EFF);
+  text-shadow: 0 0 15px rgba(64, 158, 255, 0.6);
+  transform: scale(1.1);
+}
 
 .peer-info {
   display: flex;
@@ -282,9 +330,11 @@ const getClosedReasonText = (reason: string | null) => {
   background: white;
   color: #333;
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.5;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
 }
 
 .message-row.is-mine .message-bubble {
@@ -303,11 +353,21 @@ const getClosedReasonText = (reason: string | null) => {
 
 /* Footer / Input */
 .chat-footer {
-  padding: 12px 16px;
   background: white;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
-  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.resize-handle {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: row-resize;
+  z-index: 10;
 }
 
 .chat-footer.is-disabled {
@@ -318,7 +378,7 @@ const getClosedReasonText = (reason: string | null) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  padding: 16px;
   color: #888;
   font-size: 14px;
   animation: fadeIn 0.3s ease;
@@ -326,47 +386,53 @@ const getClosedReasonText = (reason: string | null) => {
 
 .input-wrapper {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #f4f5f7;
-  border-radius: 20px;
-  padding: 6px 16px;
-  transition: background 0.2s;
-}
-
-.input-wrapper:focus-within {
+  flex-direction: column;
+  flex: 1;
   background: #fff;
-  box-shadow: 0 0 0 1px rgba(var(--el-color-primary-rgb, 64, 158, 255), 0.3),
-              0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 12px 16px;
+  box-sizing: border-box;
+  height: 100%;
 }
 
-.chat-input {
+.qq-textarea {
   flex: 1;
   border: none;
   background: transparent;
   outline: none;
   font-size: 15px;
-  padding: 8px 0;
   color: #333;
+  resize: none;
+  line-height: 1.5;
+  overflow-y: auto;
+  font-family: inherit;
 }
 
-.chat-input::placeholder {
+.qq-textarea::placeholder {
   color: #bbb;
+}
+
+.send-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-top: 8px;
 }
 
 .send-btn {
   border: none;
-  background: transparent;
-  color: #bbb;
-  font-size: 15px;
-  font-weight: 600;
+  background: #f0f0f0;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 500;
   cursor: not-allowed;
-  padding: 4px 8px;
-  transition: color 0.2s;
+  padding: 6px 18px;
+  border-radius: 4px;
+  transition: all 0.2s;
 }
 
 .send-btn.active {
-  color: var(--el-color-primary, #409EFF);
+  background: var(--el-color-primary, #409EFF);
+  color: white;
   cursor: pointer;
 }
 
