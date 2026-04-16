@@ -55,6 +55,7 @@ export interface UserPostItem {
   likeCount: number
   createTime: string
   liked?: boolean
+  image?: string | null
   imageUrls?: string[]
 }
 

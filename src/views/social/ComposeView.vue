@@ -2,7 +2,10 @@
   <main class="compose-page">
     <section class="compose-card">
       <header class="compose-head">
-        <el-button class="back-btn" text @click="handleBack">{{ isEditMode ? '返回个人中心' : '返回点位' }}</el-button>
+        <el-button class="back-btn" text @click="handleBack">
+          <el-icon class="back-icon"><ArrowLeft /></el-icon>
+          {{ isEditMode ? ' 返回个人中心' : ' 返回地图' }}
+        </el-button>
         <h1>{{ isEditMode ? '编辑帖子' : '记录心声' }}</h1>
       </header>
 
@@ -11,14 +14,13 @@
         class="source-tip"
         type="info"
         :closable="false"
-        show-icon
       >
-        {{ editTip || `当前来自 ${sourceLocationName}，你也可以切换其他地图点位。` }}
+        {{ editTip || `当前来自 ${sourceLocationName}，你也可以切换其他地点。` }}
       </el-alert>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="compose-form">
-        <el-form-item label="请选择地图点位" prop="locationId">
-          <el-select v-model="form.locationId" class="full-width" placeholder="请选择地图点位" filterable>
+        <el-form-item label="请选择地点" prop="locationId">
+          <el-select v-model="form.locationId" class="full-width" placeholder="请选择地点" filterable>
             <el-option
               v-for="location in locationOptions"
               :key="location.id"
@@ -51,12 +53,13 @@
             :rows="7"
             maxlength="500"
             show-word-limit
-            placeholder="此刻你想记录什么？比如：图书馆今天下雨了，但我写完了拖了很久的报告。"
+            placeholder="此刻你想记录什么？比如：图书馆今天下雨了，但我终于写完了拖了很久的报告。"
           />
         </el-form-item>
 
         <el-form-item label="上传封面图（可选）" class="cover-item">
           <el-upload
+            ref="uploadRef"
             class="cover-uploader"
             action="/"
             accept=".jpg,.jpeg,.png,.webp"
@@ -108,17 +111,18 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import type { FormInstance, FormRules, UploadProps, UploadRequestOptions } from 'element-plus'
-import { Loading, Plus } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules, UploadInstance, UploadProps, UploadRequestOptions } from 'element-plus'
+import { ArrowLeft, Loading, Plus } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
-import { fetchEmotionTagList, fetchPostDetail, publishPost, uploadPostImage } from '@/api/post'
+import { fetchEmotionTagList, fetchPostDetail, getPostCoverImage, publishPost, uploadPostImage } from '@/api/post'
 import type { EmotionTag, Location } from '@/types/models'
-import { updateUserPost } from '@/api/user'
+import { fetchUserPosts, updateUserPost } from '@/api/user'
 
 const route = useRoute()
 const router = useRouter()
 
 const formRef = ref<FormInstance>()
+const uploadRef = ref<UploadInstance>()
 const publishing = ref(false)
 const uploadingImage = ref(false)
 const locationOptions = ref<Location[]>([])
@@ -164,6 +168,18 @@ const sourceLocationName = computed(() => {
   return source?.name || ''
 })
 
+const resolvePostCoverImage = (post: { id: number; image?: string | null; imageUrls?: Array<string | null> | null }) => {
+  const directImage = typeof post.image === 'string' ? post.image.trim() : ''
+  if (directImage) return directImage
+
+  const imageFromUrls = Array.isArray(post.imageUrls)
+    ? post.imageUrls.find((item) => typeof item === 'string' && item.trim())?.trim() || ''
+    : ''
+  if (imageFromUrls) return imageFromUrls
+
+  return getPostCoverImage(post.id)
+}
+
 const rules: FormRules = {
   locationId: [{ required: true, message: '请选择地图点位', trigger: 'change' }],
   emotionTagId: [{ required: true, message: '请选择心情标签', trigger: 'change' }],
@@ -180,15 +196,16 @@ const initForm = async () => {
   tagOptions.value = tags
 
   if (isEditMode.value && editPostId.value) {
-    const postDetail = await fetchPostDetail(editPostId.value)
+    const userPosts = await fetchUserPosts()
+    const postDetail = userPosts.find((item) => item.id === editPostId.value) || await fetchPostDetail(editPostId.value)
     editingPostId.value = postDetail.id
     form.locationId = postDetail.locationId || form.locationId
     form.emotionTagId = postDetail.emotionTagId || form.emotionTagId
     form.content = postDetail.content || ''
-    selectedImageUrl.value = postDetail.image || ''
-    selectedImageName.value = postDetail.image ? '已存在的封面图' : ''
+    selectedImageUrl.value = resolvePostCoverImage(postDetail)
+    selectedImageName.value = selectedImageUrl.value ? '已存在的封面图' : ''
     imageCleared.value = false
-    editTip.value = `正在编辑“${postDetail.locationName || '分享瞬间'}”的帖子，修改后将保存到你的我的动态中。`
+    editTip.value = `正在编辑“${postDetail.locationName || '分享瞬间'}”的帖子，修改后将保存到你的动态中。`
   }
 
   if (!isEditMode.value && sourceSpotId.value) {
@@ -229,6 +246,7 @@ const clearSelectedImage = () => {
   selectedImageUrl.value = ''
   selectedImageName.value = ''
   imageCleared.value = isEditMode.value
+  uploadRef.value?.clearFiles()
 }
 
 const beforeImageSelect: UploadProps['beforeUpload'] = (rawFile) => {
@@ -266,6 +284,7 @@ const handleImageUpload = async (options: UploadRequestOptions) => {
     selectedImageUrl.value = ''
     selectedImageName.value = ''
     resetPreviewBlob()
+    uploadRef.value?.clearFiles()
     options.onError?.(error)
     ElMessage.error(error?.response?.data?.message || error?.message || '图片上传失败，请稍后重试')
   } finally {
@@ -390,7 +409,7 @@ onBeforeUnmount(() => {
   box-shadow: 
     0 24px 60px rgba(45, 65, 95, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  padding: 36px 40px;
+  padding: 36px;
   animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
@@ -421,6 +440,12 @@ onBeforeUnmount(() => {
   font-weight: 500;
   font-size: 15px;
   transition: color 0.2s, transform 0.2s;
+}
+
+.back-btn :deep(.back-icon) {
+  font-size: 18px;
+  vertical-align: middle;
+  margin-right: 4px;
 }
 
 .back-btn:hover {

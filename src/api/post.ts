@@ -47,6 +47,10 @@ function getCachedPostImage(postId: number): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+export function getPostCoverImage(postId: number): string {
+  return getCachedPostImage(postId)
+}
+
 function normalizePostItem(item: BackendPostItem): PostItem {
   const imageUrls = Array.isArray(item.imageUrls)
     ? item.imageUrls.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
