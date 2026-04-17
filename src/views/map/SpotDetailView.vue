@@ -13,8 +13,14 @@
     </div>
 
     <div class="scatter-container" :class="{ blurred: !!selectedPost }">
-      <div v-if="isLoadingPosts" class="state-card">正在加载帖子...</div>
-      <div v-else-if="posts.length === 0" class="state-card">这里还没有留言，发一条成为第一位吧。</div>
+      <article v-if="isLoadingPosts" class="post-bubble empty-bubble">
+        <span class="bubble-tag" style="background-color: #6AA6FF">加载中</span>
+        <p class="bubble-content">正在加载帖子...</p>
+      </article>
+      <article v-else-if="posts.length === 0" class="post-bubble empty-bubble">
+        <span class="bubble-tag" style="background-color: #6AA6FF">提示</span>
+        <p class="bubble-content">这里还没有留言，发一条成为第一位吧。</p>
+      </article>
 
       <transition :name="slideDirection">
         <div v-if="posts.length > 0" class="bubbles-layer" :key="currentPage">
@@ -726,18 +732,6 @@ onBeforeUnmount(() => {
   opacity: 0;
 }
 
-.state-card {
-  position: absolute;
-  left: 50%;
-  top: 54%;
-  transform: translate(-50%, -50%);
-  padding: 12px 16px;
-  border-radius: 12px;
-  color: #e9f2fb;
-  background: rgba(21, 33, 51, 0.5);
-  border: 1px solid rgba(216, 231, 247, 0.25);
-}
-
 .post-bubble {
   position: absolute;
   width: min(280px, 40vw);
@@ -757,6 +751,21 @@ onBeforeUnmount(() => {
 .post-bubble:hover {
   z-index: 50;
   box-shadow: 0 16px 30px rgba(9, 19, 34, 0.3);
+}
+
+.empty-bubble {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) !important;
+  width: min(320px, 80vw);
+  z-index: 60;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.empty-bubble:hover {
+  transform: translate(-50%, -50%) scale(1.02) !important;
+  z-index: 60;
 }
 
 .bubble-a {
