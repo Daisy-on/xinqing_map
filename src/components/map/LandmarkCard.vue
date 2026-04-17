@@ -1,6 +1,6 @@
 ﻿<template>
   <article class="landmark-card" aria-label="landmark-card" @click="$emit('click', location)">
-    <WeatherLottieIcon :weather-code="location.weatherCode" :size="32" class="landmark-icon-wrap" />
+    <WeatherLottieIcon :weather-code="location.weatherCode" :size="36" class="landmark-icon-wrap" />
     <div class="text-content">
       <span class="landmark-name">{{ location.name || '未命名地点' }}</span>
       <span class="landmark-meta">{{ location.weatherText || '未知天气' }}</span>
@@ -28,9 +28,9 @@ defineEmits<{
   width: max-content;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px 6px 6px;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: var(--surface);
   backdrop-filter: blur(12px);
@@ -53,13 +53,13 @@ defineEmits<{
 .text-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   justify-content: center;
 }
 
 .landmark-icon-wrap {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -68,7 +68,7 @@ defineEmits<{
 
 .landmark-name {
   color: #1a425a;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
@@ -76,7 +76,7 @@ defineEmits<{
 
 .landmark-meta {
   color: #2b5d7e;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);

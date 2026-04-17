@@ -43,7 +43,9 @@
         class="landmark-anchor"
         :style="getLandmarkStyle(location.id)"
       >
-        <LandmarkCard :location="location" @click="handleLandmarkClick" />
+        <div class="landmark-card-scale" :style="{ transform: `scale(${landmarkScale})` }">
+          <LandmarkCard :location="location" @click="handleLandmarkClick" />
+        </div>
       </div>
     </div>
     <svg v-if="svgMaskPath" class="dom-mask" xmlns="http://www.w3.org/2000/svg">
@@ -119,6 +121,7 @@ let boundaryBounds: { minLng: number; maxLng: number; minLat: number; maxLat: nu
 let isAdjustingBounds = false
 const landmarkLocations = ref<Location[]>([])
 const landmarkPixels = ref<Record<number, { x: number; y: number }>>({})
+const landmarkScale = ref(1.08)
 let allLandmarkLocations: Location[] = []
 let hasBoundMapEvents = false
 let hasBoundUserEvents = false
@@ -264,6 +267,10 @@ function markMapReady() {
 
 function updateLandmarkPixels() {
   if (!map || !mapApi || landmarkLocations.value.length === 0) return
+
+  const zoom = map.getZoom()
+  const clampedZoom = Math.min(MAP_MAX_ZOOM, Math.max(MAP_MIN_ZOOM, zoom))
+  landmarkScale.value = Math.min(1.68, Math.max(0.94, 1.08 + (clampedZoom - MAP_INIT_ZOOM) * 0.18))
 
   const nextPixels: Record<number, { x: number; y: number }> = {}
   landmarkLocations.value.forEach((location) => {
@@ -731,6 +738,12 @@ onBeforeUnmount(() => {
   position: absolute;
   transform: translate(-50%, calc(-100% - 14px));
   pointer-events: auto;
+}
+
+.landmark-card-scale {
+  display: inline-block;
+  transform-origin: center bottom;
+  will-change: transform;
 }
 
 .map-error {
