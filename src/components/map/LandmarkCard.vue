@@ -1,6 +1,6 @@
 ﻿<template>
   <article class="landmark-card" aria-label="landmark-card" @click="$emit('click', location)">
-    <div class="landmark-icon">{{ iconText }}</div>
+    <WeatherLottieIcon :weather-code="location.weatherCode" :size="32" class="landmark-icon-wrap" />
     <div class="text-content">
       <span class="landmark-name">{{ location.name || '未命名地点' }}</span>
       <span class="landmark-meta">{{ location.weatherText || '未知天气' }}</span>
@@ -9,8 +9,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import type { Location } from '@/types/models'
+import WeatherLottieIcon from './WeatherLottieIcon.vue'
 
 const props = defineProps<{
   location: Location
@@ -19,11 +19,6 @@ const props = defineProps<{
 defineEmits<{
   (e: 'click', value: Location): void
 }>()
-
-const iconText = computed(() => {
-  if (!props.location.icon) return '📍'
-  return String(props.location.icon).slice(0, 4).toUpperCase()
-})
 </script>
 
 <style scoped>
@@ -62,20 +57,13 @@ const iconText = computed(() => {
   justify-content: center;
 }
 
-.landmark-icon {
-  min-width: 28px;
-  height: 28px;
+.landmark-icon-wrap {
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
-  border-radius: 50%;
-  background: rgba(11, 131, 180, 0.4);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  backdrop-filter: blur(4px);
 }
 
 .landmark-name {
