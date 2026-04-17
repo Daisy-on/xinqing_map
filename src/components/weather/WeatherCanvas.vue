@@ -47,6 +47,7 @@ const props = withDefaults(defineProps<Props>(), {
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const requestRef = ref<number>(0);
 const configRef = ref<WeatherConfig>(props.config || {});
+let initParticlesFn: (() => void) | null = null;
 
 let width = typeof window !== 'undefined' ? window.innerWidth : 800;
 let height = typeof window !== 'undefined' ? window.innerHeight : 600;
@@ -188,6 +189,13 @@ class SnowPile {
 watch(() => props.config, (newConfig) => {
   configRef.value = { ...configRef.value, ...newConfig };
 }, { deep: true });
+
+// Watch for weather changes to re-initialize particles
+watch(() => props.weather, () => {
+  if (initParticlesFn) {
+    initParticlesFn();
+  }
+}, { immediate: true });
 
 onMounted(() => {
   const canvas = canvasRef.value;
@@ -1171,6 +1179,7 @@ onMounted(() => {
     }
   };
 
+  initParticlesFn = initParticles;
   initParticles();
 
   // Animation loop
