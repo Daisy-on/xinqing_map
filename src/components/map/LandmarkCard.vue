@@ -64,6 +64,10 @@ defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 添加微弱图标保护底座，确保雨雪天气可见度 */
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .landmark-name {
