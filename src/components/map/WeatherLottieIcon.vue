@@ -21,6 +21,7 @@ import { computed } from 'vue'
 import { Vue3Lottie } from 'vue3-lottie'
 
 import sunnyJSON from '@/assets/Lottie/sunny.json'
+import verySunnyJSON from '@/assets/Lottie/very-sunny.json'
 import cloudyJSON from '@/assets/Lottie/cloudy.json'
 import veryCloudyJSON from '@/assets/Lottie/very-cloudy.json'
 import rain1JSON from '@/assets/Lottie/rain1.json'
@@ -36,14 +37,14 @@ const size = computed(() => props.size || 40)
 
 // 映射关系
 const weatherToLottieMap: Record<string, any> = {
-  clear_sky: sunnyJSON,
-  sunny: sunnyJSON,
-  cloudy: cloudyJSON,
-  overcast: veryCloudyJSON,
-  light_rain: rain1JSON,
-  heavy_rain: rain1JSON,
-  thunderstorm: thunderJSON,
-  snow: snowJSON
+  clear_sky: sunnyJSON,        // 晴空万里 -> sunny.json
+  sunny: verySunnyJSON,        // 晴 -> very-sunny.json
+  overcast: cloudyJSON,        // 阴 -> cloudy.json (改为映射阴天)
+  cloudy: veryCloudyJSON,      // 多云 -> very-cloudy.json (改为映射多云)
+  light_rain: rain1JSON,       // 小雨
+  heavy_rain: rain1JSON,       // 大雨
+  thunderstorm: thunderJSON,   // 雷雨交加
+  snow: snowJSON               // 雪
 }
 
 const animationData = computed(() => {

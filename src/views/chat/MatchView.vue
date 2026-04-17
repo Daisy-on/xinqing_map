@@ -3,6 +3,8 @@ import { onMounted, ref, watch, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useChatStore } from '@/stores/chat';
 import { ArrowLeft } from '@element-plus/icons-vue';
+import { Vue3Lottie } from 'vue3-lottie';
+import scanJSON from '@/assets/Lottie/Scan.json';
 
 const router = useRouter();
 const chatStore = useChatStore();
@@ -61,23 +63,32 @@ const handleCancelMatch = () => {
     <!-- Header -->
     <header class="match-header">
       <el-icon class="back-btn" @click="handleBack"><ArrowLeft /></el-icon>
-      <h2>随机小伴</h2>
+      <h2>小伴</h2>
       <div class="placeholder"></div>
     </header>
 
     <!-- Main Content -->
     <main class="match-main">
       <div class="radar-wrapper" :class="{ 'is-matching': chatStore.isMatching }">
-        <div class="radar-circle circle-1"></div>
-        <div class="radar-circle circle-2"></div>
-        <div class="radar-circle circle-3"></div>
-        
-        <!-- Center Avatar or Status -->
-        <div class="center-content">
-          <div v-if="!isOpenTime" class="status-icon sleep-icon">🌙</div>
-          <div v-else-if="!chatStore.isMatching" class="status-icon ready-icon">✨</div>
-          <div v-else class="status-icon matching-icon">🔍</div>
-        </div>
+        <template v-if="chatStore.isMatching">
+          <Vue3Lottie
+            :animationData="scanJSON"
+            :width="260"
+            :height="260"
+            class="scan-lottie"
+          />
+        </template>
+        <template v-else>
+          <div class="radar-circle circle-1"></div>
+          <div class="radar-circle circle-2"></div>
+          <div class="radar-circle circle-3"></div>
+          
+          <!-- Center Avatar or Status -->
+          <div class="center-content">
+            <div v-if="!isOpenTime" class="status-icon sleep-icon">🌙</div>
+            <div v-else class="status-icon ready-icon">✨</div>
+          </div>
+        </template>
       </div>
 
       <div class="status-text">
@@ -178,12 +189,17 @@ const handleCancelMatch = () => {
 /* Radar Animation */
 .radar-wrapper {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 260px;
+  height: 260px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 40px;
+}
+
+.scan-lottie {
+  position: absolute;
+  z-index: 1;
 }
 
 .radar-circle {
