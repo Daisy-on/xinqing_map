@@ -189,6 +189,9 @@ const canvasWeather = computed(() => {
       return 'rainy'
     case 'snow':
       return 'snowy'
+    case 'cloudy':
+    case 'overcast':
+      return 'cloudy'
     default:
       return 'sunny'
   }
@@ -205,6 +208,8 @@ const canvasConfig = computed(() => {
     return { ...base, particleCount: 500, speed: 1.8, wind: -0.2, thunder: true }
   } else if (code === 'snow') {
     return { ...base, particleCount: 200, speed: 0.8 }
+  } else if (code === 'clear_sky' || code === 'sunny') {
+    return { ...base, particleCount: 0 }
   }
   return base
 })
@@ -221,7 +226,7 @@ const activeWeatherCode = computed<WeatherCode>(() => {
 const weatherThemeClass = computed(() => `weather-${activeWeatherCode.value}`)
 
 const needsCanvas = computed(() => {
-  return ['light_rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(activeWeatherCode.value)
+  return ['clear_sky', 'sunny', 'light_rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(activeWeatherCode.value)
 })
 
 const needsCloud = computed(() => {
@@ -588,33 +593,24 @@ onBeforeUnmount(() => {
   background: radial-gradient(130% 100% at 50% 8%, #d7e5f4 0%, #98aec8 48%, #50657d 100%);
 }
 
-.scatter-page.weather-clear_sky {
-  background: url('@/assets/images/sunny-bgc.png') center/cover no-repeat;
-}
-
+.scatter-page.weather-clear_sky,
 .scatter-page.weather-sunny {
-  background: url('@/assets/images/sunny-bgc.png') center/cover no-repeat;
+  background: radial-gradient(130% 100% at 50% 100%, #87c3ef 0%, #4a90e2 50%, #2f69b8 100%);
 }
 
-.scatter-page.weather-cloudy {
-  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
-}
-
+.scatter-page.weather-cloudy,
 .scatter-page.weather-overcast {
-  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
+  background: radial-gradient(150% 100% at 50% 100%, #cbd2d9 0%, #9ba5b1 50%, #6f7883 100%);
 }
 
 .scatter-page.weather-light_rain,
-.scatter-page.weather-heavy_rain {
-  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
-}
-
+.scatter-page.weather-heavy_rain,
 .scatter-page.weather-thunderstorm {
-  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
+  background: radial-gradient(150% 100% at 50% 100%, #8c96a3 0%, #5a6470 50%, #3e4650 100%);
 }
 
 .scatter-page.weather-snow {
-  background: url('@/assets/images/snow-bgc.png') center/cover no-repeat;
+  background: radial-gradient(150% 100% at 50% 100%, #e1e6eb 0%, #bac4cd 50%, #909ba7 100%);
 }
 
 .header-nav {

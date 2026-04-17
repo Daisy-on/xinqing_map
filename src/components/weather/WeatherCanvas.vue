@@ -1369,6 +1369,38 @@ onMounted(() => {
         ctx.fillStyle = bottomGrad;
         ctx.fillRect(0, height - botH, width, botH);
       }
+    } else if (props.weather === 'sunny') {
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      
+      const beamCount = 3;
+      const baseAngle = Math.PI / 5 + windVal * 0.1;
+      
+      for (let i = 0; i < beamCount; i++) {
+        const offset = Math.sin(now * 0.0005 + i * 2) * 0.15;
+        const angle = baseAngle + offset;
+        const alpha = 0.04 + Math.sin(now * 0.0008 + i) * 0.03;
+        
+        const cx = width * 0.7 + Math.sin(now * 0.0003 + i) * 150 - i * width * 0.2;
+        const cy = -100;
+        
+        ctx.translate(cx, cy);
+        ctx.rotate(angle);
+        
+        const beamWidth = 150 + i * 50;
+        const beamGrad = ctx.createLinearGradient(-beamWidth, 0, beamWidth, 0);
+        beamGrad.addColorStop(0, 'rgba(255, 250, 220, 0)');
+        beamGrad.addColorStop(0.5, `rgba(255, 245, 200, ${alpha})`);
+        beamGrad.addColorStop(1, 'rgba(255, 250, 220, 0)');
+        
+        ctx.fillStyle = beamGrad;
+        ctx.fillRect(-beamWidth * 1.5, 0, beamWidth * 3, height * 2.5);
+        
+        ctx.rotate(-angle);
+        ctx.translate(-cx, -cy);
+      }
+      
+      ctx.restore();
     }
 
     requestRef.value = requestAnimationFrame(animate);
