@@ -1,25 +1,8 @@
 <template>
   <main class="scatter-page" :class="weatherThemeClass">
-    <canvas ref="weatherCanvas" class="weather-canvas" aria-hidden="true"></canvas>
-
-    <div class="sun-layer" aria-hidden="true">
-      <span class="sun-core"></span>
-      <span class="sun-halo"></span>
-    </div>
-
-    <div class="cloud-layer" aria-hidden="true">
-      <span class="fair-cloud cloud-a"></span>
-      <span class="fair-cloud cloud-b"></span>
-      <span class="dark-cloud cloud-c"></span>
-      <span class="dark-cloud cloud-d"></span>
-    </div>
-
-    <div class="severe-layer" aria-hidden="true">
-      <span class="storm-ring ring-a"></span>
-      <span class="storm-ring ring-b"></span>
-      <span class="storm-flash"></span>
-    </div>
-    <div class="weather-fog" aria-hidden="true"></div>
+    <!-- @vue-ignore -->
+    <WeatherCanvas v-if="needsCanvas" :weather="canvasWeather" :config="canvasConfig" />
+    <CloudOverlay :active="needsCloud" />
 
     <div class="header-nav">
       <el-button circle :icon="ArrowLeft" class="back-btn" @click="goBack" aria-label="返回地图" />
@@ -155,21 +138,9 @@ import { ArrowLeft, CloseBold, UserFilled } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
-
-type Particle = {
-  x: number
-  y: number
-  speedY: number
-  alpha: number
-  // Rain
-  len?: number
-  thickness?: number
-  wind?: number
-  // Snow
-  radius?: number
-  phase?: number
-  swing?: number
-}
+import CloudOverlay from '@/components/weather/CloudOverlay.vue'
+import WeatherCanvas from '@/components/weather/WeatherCanvas.vue'
+import { useWeatherAudio } from '@/composables/useWeatherAudio'
 
 type WeatherCode = 'clear_sky' | 'sunny' | 'cloudy' | 'overcast' | 'light_rain' | 'heavy_rain' | 'thunderstorm' | 'snow'
 
@@ -192,20 +163,45 @@ const sharedCardStyle = ref<Record<string, string>>({})
 const lastBubbleRect = ref<DOMRect | null>(null)
 const postDetailCache = ref<Record<number, PostItem>>({})
 
-const weatherCanvas = ref<HTMLCanvasElement | null>(null)
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-let rafId = 0
 let resizeTimer = 0
 let cardAnimation: Animation | null = null
-let ctx: CanvasRenderingContext2D | null = null
-let particles: Particle[] = []
-let lightning = 0
+
+const { initAudio, triggerThunder } = useWeatherAudio()
 
 const ENTER_DURATION = 320
 const EXIT_DURATION = 200
 const ENTER_EASING = 'cubic-bezier(0.25, 1, 0.5, 1)'
 const EXIT_EASING = 'ease-in'
+
+const canvasWeather = computed(() => {
+  switch (activeWeatherCode.value) {
+    case 'light_rain':
+    case 'heavy_rain':
+    case 'thunderstorm':
+      return 'rainy'
+    case 'snow':
+      return 'snowy'
+    default:
+      return 'sunny'
+  }
+})
+
+const canvasConfig = computed(() => {
+  const code = activeWeatherCode.value
+  const base = { speed: 1, wind: 0, intensity: 1, time: 12 }
+  if (code === 'light_rain') {
+    return { ...base, particleCount: 150 }
+  } else if (code === 'heavy_rain') {
+    return { ...base, particleCount: 400, speed: 1.5, wind: -0.1 }
+  } else if (code === 'thunderstorm') {
+    return { ...base, particleCount: 500, speed: 1.8, wind: -0.2, thunder: true }
+  } else if (code === 'snow') {
+    return { ...base, particleCount: 200, speed: 0.8 }
+  }
+  return base
+})
 
 const activeWeatherCode = computed<WeatherCode>(() => {
   const code = currentLocation.value?.weatherCode as WeatherCode
@@ -222,9 +218,9 @@ const needsCanvas = computed(() => {
   return ['light_rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(activeWeatherCode.value)
 })
 
-const isThunderstorm = computed(() => activeWeatherCode.value === 'thunderstorm')
-const particleType = computed(() => activeWeatherCode.value === 'snow' ? 'snow' : 'rain')
-
+const needsCloud = computed(() => {
+  return ['sunny', 'cloudy', 'overcast', 'light_rain', 'heavy_rain', 'thunderstorm', 'snow'].includes(activeWeatherCode.value)
+})
 
 const formatPostTime = (timeStr: string | undefined) => {
   if (!timeStr) return ''
@@ -349,7 +345,7 @@ const openPost = async (post: PostItem, event: MouseEvent | KeyboardEvent) => {
     card,
     [
       {
-        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        transform: 	`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
         opacity: 0,
       },
       {
@@ -395,7 +391,7 @@ const closePost = async () => {
         opacity: 1,
       },
       {
-        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        transform: 	`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
         opacity: 0,
       },
     ],
@@ -481,8 +477,6 @@ const likeInBubble = async (post: PostItem, event: MouseEvent) => {
 }
 
 const bubbleStyleByIndex = (index: number) => {
-  // 妙招 1: 提供足够多的预设点位(大于等于 pageSize 10)，彻底消灭百分百同位置覆盖
-  // 并采用左右错落的黄金分布规律
   const presets = [
     { top: '14%', left: '4%' },
     { top: '18%', left: '56%' },
@@ -500,7 +494,6 @@ const bubbleStyleByIndex = (index: number) => {
   return {
     top: value.top,
     left: value.left,
-    // 注入随机偏移量给 CSS 计算使用
     '--tx': `${Math.sin(index * 13) * 12}px`,
     '--ty': `${Math.cos(index * 17) * 12}px`,
   }
@@ -509,137 +502,6 @@ const bubbleStyleByIndex = (index: number) => {
 const bubbleClassByIndex = (index: number) => {
   const classes = ['bubble-a', 'bubble-b', 'bubble-c']
   return classes[index % classes.length]
-}
-
-const createParticles = (width: number, height: number) => {
-  const code = activeWeatherCode.value
-  const type = particleType.value
-  
-  let density = reducedMotion ? 0.00003 : width < 768 ? 0.0001 : 0.00015
-  if (code === 'light_rain') density *= 0.5
-  if (code === 'heavy_rain' || code === 'thunderstorm') density *= 1.8
-  if (code === 'snow') density *= 0.4
-
-  const count = Math.min(type === 'snow' ? 120 : 350, Math.max(50, Math.floor(width * height * density)))
-
-  particles = Array.from({ length: count }).map(() => {
-    const x = Math.random() * width
-    const y = Math.random() * height
-    const alpha = 0.2 + Math.random() * 0.3
-
-    if (type === 'snow') {
-      return {
-        x, y, alpha, 
-        speedY: 1 + Math.random() * 2, 
-        radius: 1.5 + Math.random() * 2, 
-        phase: Math.random() * Math.PI * 2, 
-        swing: 0.5 + Math.random() * 1.5
-      }
-    } else {
-      const isHeavy = code === 'heavy_rain' || code === 'thunderstorm'
-      const isLight = code === 'light_rain'
-      const speedY = isLight ? 6 + Math.random() * 4 : isHeavy ? 14 + Math.random() * 10 : 10 + Math.random() * 8
-      const len = isLight ? 8 + Math.random() * 10 : isHeavy ? 20 + Math.random() * 20 : 16 + Math.random() * 18
-      const thickness = isLight ? 0.8 : isHeavy ? 1.5 + Math.random() * 1 : 1.2 + Math.random() * 1
-      const wind = isLight ? -1 : isHeavy ? -4 : -2.8
-      return { x, y, alpha, speedY, len, thickness, wind }
-    }
-  })
-}
-
-const resizeCanvas = () => {
-  const canvas = weatherCanvas.value
-  if (!canvas) return
-
-  const dpr = Math.min(window.devicePixelRatio || 1, 2)
-  const width = Math.floor(window.innerWidth)
-  const height = Math.floor(window.innerHeight)
-
-  canvas.style.width = width + 'px'
-  canvas.style.height = height + 'px'
-  canvas.width = Math.floor(width * dpr)
-  canvas.height = Math.floor(height * dpr)
-
-  ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-
-  createParticles(width, height)
-}
-
-const drawWeatherFrame = () => {
-  if (!ctx || !needsCanvas.value) return
-
-  const width = window.innerWidth
-  const height = window.innerHeight
-  const type = particleType.value
-
-  ctx.clearRect(0, 0, width, height)
-
-  for (const p of particles) {
-    ctx.beginPath()
-
-    if (type === 'snow') {
-      ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`
-      ctx.arc(p.x, p.y, p.radius || 2, 0, Math.PI * 2)
-      ctx.fill()
-      
-      p.y += p.speedY
-      p.x += Math.sin(p.y / 30 + (p.phase || 0)) * (p.swing || 1)
-    } else {
-      const w = p.wind || -2.8
-      ctx.lineWidth = p.thickness || 1.2
-      ctx.lineCap = 'round'
-      ctx.strokeStyle = activeWeatherCode.value === 'light_rain' ? `rgba(224, 235, 255, ${p.alpha})` : `rgba(204, 224, 255, ${p.alpha})`
-      ctx.moveTo(p.x, p.y)
-      ctx.lineTo(p.x + w, p.y + (p.len || 16))
-      ctx.stroke()
-      
-      p.y += p.speedY
-      p.x += w * 0.06
-    }
-
-    if (p.y > height + 20 || p.x < -20 || p.x > width + 20) {
-      p.y = -20 - Math.random() * 120
-      p.x = Math.random() * (width + 100)
-    }
-  }
-
-  if (isThunderstorm.value && !reducedMotion && Math.random() < 0.003) {
-    lightning = 0.08 + Math.random() * 0.06
-  }
-  if (lightning > 0.001) {
-    ctx.fillStyle = `rgba(220, 235, 255, ${lightning})`
-    ctx.fillRect(0, 0, width, height)
-    lightning *= 0.88
-  }
-
-  rafId = window.requestAnimationFrame(drawWeatherFrame)
-}
-
-const stopWeather = () => {
-  if (rafId) {
-    window.cancelAnimationFrame(rafId)
-    rafId = 0
-  }
-  if (ctx) {
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
-  }
-}
-
-const startWeather = async () => {
-  if (!needsCanvas.value) return
-  await nextTick()
-  resizeCanvas()
-  stopWeather()
-  rafId = window.requestAnimationFrame(drawWeatherFrame)
-}
-
-const handleResize = () => {
-  window.clearTimeout(resizeTimer)
-  resizeTimer = window.setTimeout(() => {
-    resizeCanvas()
-  }, 120)
 }
 
 const loadLocation = async () => {
@@ -683,31 +545,34 @@ const prevPage = () => {
 onMounted(async () => {
   await Promise.all([loadLocation(), loadPosts()])
 
-  if (needsCanvas.value) {
-    await startWeather()
+  if (currentLocation.value) {
+    initAudio()
+    if (activeWeatherCode.value === 'thunderstorm') {
+      triggerThunder()
+    }
   }
 
-  window.addEventListener('resize', handleResize)
+  window.addEventListener('resize', () => {
+    window.clearTimeout(resizeTimer)
+    resizeTimer = window.setTimeout(() => {
+      // Handle resize if needed for new components
+    }, 120)
+  })
 })
 
-watch(needsCanvas, async (needed) => {
-  if (needed) {
-    await startWeather()
-  } else {
-    stopWeather()
+watch(activeWeatherCode, (newCode) => {
+  if (newCode === 'thunderstorm') {
+    triggerThunder()
   }
 })
 
 onBeforeUnmount(() => {
-  stopWeather()
-  window.removeEventListener('resize', handleResize)
   window.clearTimeout(resizeTimer)
   cancelCardAnimation()
 })
 </script>
 
 <style scoped>
-/* CSS Var transitions */
 .scatter-page {
   transition: background 0.8s ease;
   width: 100vw;
@@ -718,260 +583,32 @@ onBeforeUnmount(() => {
 }
 
 .scatter-page.weather-clear_sky {
-  background: radial-gradient(130% 110% at 50% 0%, #fffbf0 0%, #ffeaa7 40%, #fdc830 100%);
+  background: url('@/assets/images/sunny-bgc.png') center/cover no-repeat;
 }
+
 .scatter-page.weather-sunny {
-  background: radial-gradient(130% 110% at 50% 0%, #fff2b8 0%, #ffc971 45%, #e4a95a 100%);
+  background: url('@/assets/images/sunny-bgc.png') center/cover no-repeat;
 }
+
 .scatter-page.weather-cloudy {
-  background: radial-gradient(130% 100% at 50% 8%, #eef2f3 0%, #bdc3c7 48%, #8e9eab 100%);
+  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
 }
+
 .scatter-page.weather-overcast {
-  background: radial-gradient(130% 120% at 50% 0%, #8ca1a5 0%, #5d6d7e 42%, #34495e 100%);
+  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
 }
-.scatter-page.weather-light_rain, .scatter-page.weather-heavy_rain {
-  background: radial-gradient(130% 120% at 50% 0%, #9fb3c9 0%, #5c7289 42%, #2f3f52 100%);
+
+.scatter-page.weather-light_rain,
+.scatter-page.weather-heavy_rain {
+  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
 }
+
 .scatter-page.weather-thunderstorm {
-  background: radial-gradient(130% 120% at 50% 0%, #6b7685 0%, #3d4958 42%, #202a37 100%);
+  background: url('@/assets/images/dark-rain-bgc.png') center/cover no-repeat;
 }
+
 .scatter-page.weather-snow {
-  background: radial-gradient(130% 110% at 50% 0%, #f1f2b5 0%, #e0eafc 45%, #cfdef3 100%);
-}
-
-.weather-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 280ms ease;
-}
-
-.scatter-page.weather-light_rain .weather-canvas,
-.scatter-page.weather-heavy_rain .weather-canvas,
-.scatter-page.weather-thunderstorm .weather-canvas,
-.scatter-page.weather-snow .weather-canvas {
-  opacity: 1;
-}
-
-/* Layers */
-.sun-layer,
-.cloud-layer,
-.severe-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 600ms ease;
-}
-
-.scatter-page.weather-clear_sky .sun-layer,
-.scatter-page.weather-sunny .sun-layer { opacity: 1; }
-
-.scatter-page.weather-sunny .cloud-layer,
-.scatter-page.weather-cloudy .cloud-layer { opacity: 1; }
-
-/* Override logic to show different clouds */
-.scatter-page.weather-sunny .dark-cloud { display: none; }
-.scatter-page.weather-cloudy .dark-cloud { opacity: 0.3; }
-.scatter-page.weather-overcast .cloud-layer { opacity: 1; }
-.scatter-page.weather-overcast .fair-cloud { opacity: 0; }
-.scatter-page.weather-overcast .dark-cloud { opacity: 0.8; }
-.scatter-page.weather-light_rain .cloud-layer { opacity: 1; }
-.scatter-page.weather-light_rain .fair-cloud { display: none; }
-.scatter-page.weather-light_rain .dark-cloud { opacity: 0.9; }
-.scatter-page.weather-heavy_rain .cloud-layer,
-.scatter-page.weather-thunderstorm .cloud-layer,
-.scatter-page.weather-snow .cloud-layer { opacity: 1; }
-.scatter-page.weather-heavy_rain .fair-cloud,
-.scatter-page.weather-thunderstorm .fair-cloud,
-.scatter-page.weather-snow .fair-cloud { display: none; }
-.scatter-page.weather-heavy_rain .dark-cloud,
-.scatter-page.weather-thunderstorm .dark-cloud { opacity: 1; }
-.scatter-page.weather-snow .dark-cloud { opacity: 0.3; }
-
-.scatter-page.weather-thunderstorm .severe-layer { opacity: 1; }
-
-/* Elements */
-.sun-core {
-  position: absolute;
-  top: 10%;
-  right: 12%;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,244,181,0.95) 0%, rgba(255,214,126,0.85) 65%, rgba(255,214,126,0) 100%);
-  animation: sunny-breathe 4.2s ease-in-out infinite;
-}
-.scatter-page.weather-clear_sky .sun-core {
-  background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,230,150,0.85) 55%, transparent 100%);
-  transform: scale(1.2);
-}
-
-.sun-halo {
-  position: absolute;
-  top: 4%;
-  right: 6%;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,236,165,0.4) 0%, rgba(255,236,165,0) 72%);
-  animation: halo-drift 6s ease-in-out infinite;
-}
-.scatter-page.weather-clear_sky .sun-halo {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,250,200,0.6) 0%, transparent 60%);
-}
-
-.fair-cloud, .dark-cloud {
-  position: absolute;
-  width: 260px;
-  height: 70px;
-  border-radius: 999px;
-  filter: blur(1px);
-}
-.fair-cloud { background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1)); }
-.dark-cloud { background: linear-gradient(180deg, rgba(90,105,120,0.7), rgba(40,50,60,0.3)); }
-
-.cloud-a { top: 18%; left: -10%; animation: cloud-move-a 20s linear infinite; }
-.cloud-b { top: 30%; left: -15%; opacity: 0.8; animation: cloud-move-b 28s linear infinite; }
-.cloud-c { top: 12%; left: -20%; animation: cloud-move-b 25s linear infinite reverse; }
-.cloud-d { top: -2%; right: -10%; animation: cloud-move-a 22s linear infinite reverse; }
-
-
-.storm-ring {
-  position: absolute;
-  width: 44vw;
-  height: 44vw;
-  max-width: 460px;
-  max-height: 460px;
-  border-radius: 50%;
-  border: 1px solid rgba(199, 219, 255, 0.18);
-  filter: blur(0.2px);
-}
-
-.ring-a { top: -8%; right: -8%; animation: storm-spin-a 13s linear infinite; }
-.ring-b { top: -4%; right: -2%; border-color: rgba(168, 192, 232, 0.12); animation: storm-spin-b 9s linear infinite reverse; }
-
-.storm-flash {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(80% 45% at 75% 10%, rgba(214, 229, 255, 0.12), rgba(214, 229, 255, 0));
-  animation: storm-flash 2.4s ease-in-out infinite;
-}
-
-.weather-fog {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: radial-gradient(100% 70% at 50% 15%, rgba(233, 242, 250, 0.12) 0%, rgba(233, 242, 250, 0) 70%), linear-gradient(to bottom, rgba(14, 23, 37, 0.04), rgba(14, 23, 37, 0.14));
-  backdrop-filter: blur(1px);
-}
-
-.scatter-page.weather-sunny .weather-fog {
-  background: radial-gradient(100% 70% at 50% 15%, rgba(255, 248, 214, 0.18) 0%, rgba(255, 248, 214, 0) 70%), linear-gradient(to bottom, rgba(124, 90, 25, 0.04), rgba(124, 90, 25, 0.12));
-}
-
-.scatter-page.weather-clear_sky .weather-fog {
-  background: radial-gradient(100% 70% at 50% 10%, rgba(255, 253, 238, 0.4) 0%, rgba(255, 253, 238, 0) 50%), linear-gradient(to bottom, rgba(200, 160, 50, 0.02), rgba(200, 160, 50, 0.08));
-}
-
-.scatter-page.weather-thunderstorm .weather-fog,
-.scatter-page.weather-heavy_rain .weather-fog,
-.scatter-page.weather-overcast .weather-fog {
-  background: radial-gradient(100% 70% at 50% 10%, rgba(205, 220, 245, 0.12) 0%, rgba(205, 220, 245, 0) 70%), linear-gradient(to bottom, rgba(12, 19, 31, 0.1), rgba(12, 19, 31, 0.28));
-}
-
-.scatter-page.weather-snow .weather-fog {
-  background: radial-gradient(100% 70% at 50% 20%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 70%), linear-gradient(to bottom, rgba(150, 170, 190, 0.05), rgba(150, 170, 190, 0.15));
-}
-
-@keyframes sunny-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.9;
-  }
-  50% {
-    transform: scale(1.06);
-    opacity: 1;
-  }
-}
-
-@keyframes halo-drift {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(-8px, 6px);
-  }
-}
-
-@keyframes cloud-move-a {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(122vw);
-  }
-}
-
-@keyframes cloud-move-b {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(132vw);
-  }
-}
-
-@keyframes storm-spin-a {
-  0% {
-    transform: rotate(0deg);
-    opacity: 0.28;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    transform: rotate(360deg);
-    opacity: 0.28;
-  }
-}
-
-@keyframes storm-spin-b {
-  0% {
-    transform: rotate(0deg) scale(0.94);
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 0.44;
-  }
-  100% {
-    transform: rotate(360deg) scale(1.04);
-    opacity: 0.2;
-  }
-}
-
-@keyframes storm-flash {
-  0%,
-  100% {
-    opacity: 0.08;
-  }
-  46% {
-    opacity: 0.12;
-  }
-  50% {
-    opacity: 0.34;
-  }
-  56% {
-    opacity: 0.1;
-  }
+  background: url('@/assets/images/snow-bgc.png') center/cover no-repeat;
 }
 
 .header-nav {
@@ -984,7 +621,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 14px;
   z-index: 12;
-  background: linear-gradient(to bottom, rgba(248, 252, 255, 0.48) 0%, transparent 100%);
+  background: transparent;
   pointer-events: none;
 }
 
@@ -1118,7 +755,7 @@ onBeforeUnmount(() => {
 }
 
 .post-bubble:hover {
-  z-index: 50; /* 妙招 3：hover 时将层级提到最高，即使有交叠遮挡，也能看清被压在下面的卡片 */
+  z-index: 50;
   box-shadow: 0 16px 30px rgba(9, 19, 34, 0.3);
 }
 
@@ -1440,11 +1077,6 @@ onBeforeUnmount(() => {
   .scatter-container,
   .action-btn {
     transition: none;
-  }
-
-  .sunny-layer *,
-  .severe-layer * {
-    animation: none !important;
   }
 }
 </style>

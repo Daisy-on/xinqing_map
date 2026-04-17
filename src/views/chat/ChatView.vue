@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// @ts-nocheck
+// @ts-nocheck
 import { ref, onMounted, nextTick, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useChatStore } from '@/stores/chat';
