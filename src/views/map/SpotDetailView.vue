@@ -2,7 +2,7 @@
   <main class="scatter-page" :class="weatherThemeClass">
     <!-- @vue-ignore -->
     <WeatherCanvas v-if="needsCanvas" :weather="canvasWeather" :config="canvasConfig" />
-    <CloudOverlay :active="needsCloud" />
+    <CloudOverlay :active="needsCloud" :type="activeWeatherCode" />
 
     <div class="header-nav">
       <el-button circle :icon="ArrowLeft" class="back-btn" @click="goBack" aria-label="返回地图" />
@@ -594,18 +594,18 @@ onBeforeUnmount(() => {
 }
 
 .scatter-page.weather-clear_sky,
-.scatter-page.weather-sunny {
+.scatter-page.weather-sunny,
+.scatter-page.weather-cloudy {
   background: radial-gradient(130% 100% at 50% 100%, #87c3ef 0%, #4a90e2 50%, #2f69b8 100%);
 }
 
-.scatter-page.weather-cloudy,
-.scatter-page.weather-overcast {
-  background: radial-gradient(150% 100% at 50% 100%, #cbd2d9 0%, #9ba5b1 50%, #6f7883 100%);
-}
-
-.scatter-page.weather-light_rain,
+.scatter-page.weather-overcast,
 .scatter-page.weather-heavy_rain,
 .scatter-page.weather-thunderstorm {
+  background: radial-gradient(150% 100% at 50% 100%, #3e4650 0%, #2c343d 50%, #1a1f26 100%);
+}
+
+.scatter-page.weather-light_rain {
   background: radial-gradient(150% 100% at 50% 100%, #8c96a3 0%, #5a6470 50%, #3e4650 100%);
 }
 
