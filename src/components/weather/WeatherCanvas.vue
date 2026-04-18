@@ -1,7 +1,8 @@
 <template>
   <canvas
     ref="canvasRef"
-    class="absolute top-0 left-0 w-full h-full pointer-events-none" style="z-index: 2;"
+    class="weather-canvas"
+    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"
   />
 </template>
 
