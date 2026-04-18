@@ -1,6 +1,11 @@
 // @ts-nocheck
 // @ts-nocheck
-import { ref, watch, onUnmounted, type Ref } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
+import birdSongUrl from '@/assets/sounds/bird-song.mp3'
+import heavyRainUrl from '@/assets/sounds/heavy-rain.mp3'
+import lightningOneUrl from '@/assets/sounds/lightning-1.mp3'
+import lightningTwoUrl from '@/assets/sounds/lightning-2.ogg'
+import smallRainUrl from '@/assets/sounds/small-rain.mp3'
 type WeatherType = string;
 type WeatherConfig = Record<string, any>;
 
@@ -505,429 +510,311 @@ function createHailAmbient(ctx: AudioContext, dest: AudioNode): LoopSampleAmbien
 
 // ── Main Vue 3 Composable ──────────────────────────────────────
 
+interface SampleCacheEntry {
+  ctx: AudioContext
+  buffer: AudioBuffer | null
+  loading: Promise<AudioBuffer | null> | null
+}
+
+interface AmbientPlayback {
+  key: string
+  source: AudioBufferSourceNode
+  gain: GainNode
+  panner: StereoPannerNode
+  stopTimer: ReturnType<typeof setTimeout> | null
+}
+
+const sampleCache = new Map<string, SampleCacheEntry>()
+
 export function useWeatherAudio() {
-  const ctxRef = ref<AudioContext | null>(null);
-  const masterGainRef = ref<GainNode | null>(null);
-  const rainRef = ref<AmbientSet | null>(null);
-  const windRef = ref<AmbientSet | null>(null);
-  const snowRef = ref<AmbientSet | null>(null);
-  const sandstormRef = ref<LoopSampleAmbient | null>(null);
-  const hailRef = ref<LoopSampleAmbient | null>(null);
-  const sandstormBufferRef = ref<AudioBuffer | null>(null);
-  const loadingSandstormRef = ref(false);
-  const hailBufferRef = ref<AudioBuffer | null>(null);
-  const loadingHailRef = ref(false);
-  const lightningBuffersRef = ref<AudioBuffer[]>([]);
-  const loadingLightningRef = ref(false);
-  const initedRef = ref(false);
-  const thunderTimersRef = ref<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const ctxRef = ref<AudioContext | null>(null)
+  const masterGainRef = ref<GainNode | null>(null)
+  const activeAmbientRef = ref<AmbientPlayback | null>(null)
+  const lightningBuffersRef = ref<AudioBuffer[]>([])
+  const loadingLightningRef = ref(false)
+  const initedRef = ref(false)
+  const thunderTimersRef = ref<Set<ReturnType<typeof setTimeout>>>(new Set())
 
-  const weatherRef = ref<WeatherType>('sunny');
-  const configRef = ref<WeatherConfig>({ wind: 0, particleCount: 0, speed: 0 });
-  const enabledRef = ref(true);
-  const volumeRef = ref(0.5);
-  const pausedRef = ref(false);
+  const weatherRef = ref<WeatherType>('sunny')
+  const configRef = ref<WeatherConfig>({ wind: 0, particleCount: 0, speed: 0 })
+  const enabledRef = ref(true)
+  const volumeRef = ref(0.5)
+  const pausedRef = ref(false)
 
-  const fadeTo = (gain: GainNode, target: number, duration = 0.5) => {
-    const ctx = ctxRef.value;
-    if (!ctx) return;
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setTargetAtTime(target, ctx.currentTime, duration / 3);
-  };
-
-  const ensureStarted = (set: AmbientSet | null) => {
-    if (!set) return;
-    for (const layer of set.layers) {
-      if (!layer.started) {
-        layer.source.start();
-        layer.started = true;
-      }
-    }
-  };
-
-  const loadHailSample = async (ctx: AudioContext) => {
-    if (loadingHailRef.value || hailBufferRef.value) return;
-    loadingHailRef.value = true;
-    try {
-      const res = await fetch('/sounds/hail.mp3');
-      if (!res.ok) throw new Error('Failed to load hail sample');
-      const arr = await res.arrayBuffer();
-      hailBufferRef.value = await ctx.decodeAudioData(arr);
-    } catch {
-      // Hail sample unavailable — silent fallback
-    } finally {
-      loadingHailRef.value = false;
-    }
-  };
-
-  const loadSandstormSample = async (ctx: AudioContext) => {
-    if (loadingSandstormRef.value || sandstormBufferRef.value) return;
-    loadingSandstormRef.value = true;
-    try {
-      const res = await fetch('/sounds/sandstorm.mp3');
-      if (!res.ok) throw new Error('Failed to load sandstorm sample');
-      const arr = await res.arrayBuffer();
-      sandstormBufferRef.value = await ctx.decodeAudioData(arr);
-    } catch {
-      // Sandstorm sample unavailable — silent fallback
-    } finally {
-      loadingSandstormRef.value = false;
-    }
-  };
-
-  const loadLightningSamples = async (ctx: AudioContext) => {
-    if (loadingLightningRef.value || lightningBuffersRef.value.length > 0) return;
-    loadingLightningRef.value = true;
-
-    const urls = ['/sounds/lightning-1.mp3', '/sounds/lightning-2.ogg'];
-    const decoded = await Promise.allSettled(
-      urls.map(async (url) => {
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`Failed to load lightning sample: ${url}`);
-        }
-        const arr = await res.arrayBuffer();
-        return await ctx.decodeAudioData(arr);
-      })
-    );
-
-    lightningBuffersRef.value = decoded
-      .filter((r): r is PromiseFulfilledResult<AudioBuffer> => r.status === 'fulfilled')
-      .map((r) => r.value);
-
-    loadingLightningRef.value = false;
-  };
-
-  const initAudio = () => {
-    if (initedRef.value) return;
-    initedRef.value = true;
-
-    const ctx = new AudioContext();
-    ctxRef.value = ctx;
-
-    const master = ctx.createGain();
-    master.gain.value = 0;
-    master.connect(ctx.destination);
-    masterGainRef.value = master;
-
-    rainRef.value = createRainAmbient(ctx, master);
-    windRef.value = createWindAmbient(ctx, master);
-    snowRef.value = createSnowAmbient(ctx, master);
-    sandstormRef.value = createSandstormAmbient(ctx, master);
-    hailRef.value = createHailAmbient(ctx, master);
-
-    void loadLightningSamples(ctx);
-    void loadHailSample(ctx);
-    void loadSandstormSample(ctx);
-  };
+  const fadeTo = (gain: GainNode, target: number, duration = 0.25) => {
+    const ctx = ctxRef.value
+    if (!ctx) return
+    gain.gain.cancelScheduledValues(ctx.currentTime)
+    gain.gain.setTargetAtTime(target, ctx.currentTime, Math.max(0.01, duration / 3))
+  }
 
   const resumeCtx = () => {
-    const ctx = ctxRef.value;
+    const ctx = ctxRef.value
     if (ctx && ctx.state === 'suspended') {
       void ctx.resume().catch(() => {
-        // Resume may be blocked before first user gesture.
-      });
+        // Resume may be blocked before the first user gesture.
+      })
     }
-  };
+  }
 
-  const resumeAudio = async () => {
-    const ctx = ctxRef.value;
-    if (!ctx) return;
-    if (ctx.state === 'suspended') {
+  const decodeSample = async (ctx: AudioContext, url: string) => {
+    const cached = sampleCache.get(url)
+    if (cached?.ctx === ctx && cached.buffer) return cached.buffer
+    if (cached?.ctx === ctx && cached.loading) return cached.loading
+
+    const loading = (async () => {
       try {
-        await ctx.resume();
+        const response = await fetch(url)
+        if (!response.ok) return null
+        const arrayBuffer = await response.arrayBuffer()
+        return await ctx.decodeAudioData(arrayBuffer)
       } catch {
-        // Resume may fail if called before a user gesture.
+        return null
       }
+    })()
+
+    sampleCache.set(url, { ctx, buffer: cached?.buffer ?? null, loading })
+    const buffer = await loading
+    sampleCache.set(url, { ctx, buffer, loading: null })
+    return buffer
+  }
+
+  const loadLightningSamples = async (ctx: AudioContext) => {
+    if (loadingLightningRef.value || lightningBuffersRef.value.length > 0) return
+    loadingLightningRef.value = true
+
+    const decoded = await Promise.allSettled([
+      decodeSample(ctx, lightningOneUrl),
+      decodeSample(ctx, lightningTwoUrl),
+    ])
+
+    lightningBuffersRef.value = decoded
+      .filter((result): result is PromiseFulfilledResult<AudioBuffer | null> => result.status === 'fulfilled')
+      .map((result) => result.value)
+      .filter((buffer): buffer is AudioBuffer => !!buffer)
+
+    loadingLightningRef.value = false
+  }
+
+  const stopActiveAmbient = (immediate = false) => {
+    const active = activeAmbientRef.value
+    if (!active) return
+
+    if (active.stopTimer) {
+      clearTimeout(active.stopTimer)
     }
-    updateWeatherState();
-  };
+
+    if (immediate) {
+      try { active.source.stop() } catch { /* already stopped */ }
+      try { active.source.disconnect() } catch { /* already disconnected */ }
+      activeAmbientRef.value = null
+      return
+    }
+
+    fadeTo(active.gain, 0, 0.18)
+    active.stopTimer = setTimeout(() => {
+      try { active.source.stop() } catch { /* already stopped */ }
+      try { active.source.disconnect() } catch { /* already disconnected */ }
+      activeAmbientRef.value = null
+    }, 240)
+  }
+
+  const startAmbient = async (key: string, url: string, targetVolume: number) => {
+    const ctx = ctxRef.value
+    const master = masterGainRef.value
+    if (!ctx || !master || !enabledRef.value) return
+
+    const buffer = await decodeSample(ctx, url)
+    if (!buffer || !ctxRef.value || !masterGainRef.value || !enabledRef.value) return
+
+    const current = activeAmbientRef.value
+    if (current?.key === key) {
+      fadeTo(current.gain, targetVolume, 0.35)
+      return
+    }
+
+    stopActiveAmbient()
+
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.loop = true
+    source.playbackRate.value = 1
+
+    const gain = ctx.createGain()
+    gain.gain.value = 0
+
+    const panner = ctx.createStereoPanner()
+    panner.pan.value = 0
+
+    source.connect(gain)
+    gain.connect(panner)
+    panner.connect(master)
+    source.start()
+
+    activeAmbientRef.value = {
+      key,
+      source,
+      gain,
+      panner,
+      stopTimer: null,
+    }
+
+    fadeTo(gain, targetVolume, 0.35)
+  }
 
   const updatePauseState = (paused: boolean) => {
-    const ctx = ctxRef.value;
-    if (!ctx) return;
+    const ctx = ctxRef.value
+    if (!ctx) return
     if (paused) {
-      if (ctx.state === 'running') ctx.suspend();
-    } else {
-      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state === 'running') void ctx.suspend()
+    } else if (ctx.state === 'suspended') {
+      void ctx.resume()
     }
-  };
+  }
 
   const updateWeatherState = () => {
-    if (!initedRef.value || !ctxRef.value) return;
+    if (!initedRef.value || !ctxRef.value || !masterGainRef.value) return
 
-    resumeCtx();
+    resumeCtx()
 
-    const fadeTime = 0.8;
-
-    if (masterGainRef.value) {
-      fadeTo(masterGainRef.value, enabledRef.value ? volumeRef.value : 0, 0.3);
+    fadeTo(masterGainRef.value, enabledRef.value ? volumeRef.value : 0, 0.2)
+    if (!enabledRef.value) {
+      stopActiveAmbient()
+      return
     }
 
-    if (!enabledRef.value) return;
+    const weather = weatherRef.value
+    const config = configRef.value
+    const rainFactor = Math.min((config.particleCount || 0) / 500, 1)
+    const speedFactor = Math.min((config.speed || 0) / 2, 1)
 
-    const weather = weatherRef.value;
-    const config = configRef.value;
-    const windAbs = Math.abs(config.wind);
-    const particleRatio = Math.min(config.particleCount / 300, 1);
-    const speedRatio = Math.min(config.speed / 5, 1);
-
-    // ── Rain ────────────────────────────────────────
-    if (weather === 'rainy') {
-      ensureStarted(rainRef.value);
-      const rain = rainRef.value!;
-
-      if (config.particleCount === 0) {
-        for (const l of rain.layers) fadeTo(l.gain, 0, fadeTime);
-      } else {
-        const rainFactor = particleRatio * 0.6 + speedRatio * 0.4;
-
-        fadeTo(rain.layers[0].gain, 0.25 * rainFactor + 0.05, fadeTime);
-        fadeTo(rain.layers[1].gain, 0.12 * rainFactor + 0.03, fadeTime);
-
-        rain.layers[0].filter.frequency.setTargetAtTime(
-          2500 + speedRatio * 1500,
-          ctxRef.value.currentTime,
-          0.5
-        );
-      }
-
-      rain.panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, config.wind / 3)), ctxRef.value.currentTime, 0.3);
-    } else if (weather !== 'hail') {
-      if (rainRef.value) {
-        for (const l of rainRef.value.layers) fadeTo(l.gain, 0, fadeTime);
-      }
+    if (weather === 'clear_sky' || weather === 'sunny' || weather === 'cloudy') {
+      void startAmbient('bird-song', birdSongUrl, 0.16 + (weather === 'cloudy' ? 0.02 : 0))
+      return
     }
 
-    // ── Wind (for rainy with wind, snowy, cloudy) ────
-    const needsWind = (weather === 'rainy' && windAbs > 0.5)
-      || weather === 'snowy'
-      || weather === 'cloudy';
-
-    if (needsWind) {
-      ensureStarted(windRef.value);
-      const wind = windRef.value!;
-      let windVol = 0;
-
-      if (weather === 'rainy') {
-        windVol = (windAbs / 3) * 0.2;
-      } else if (weather === 'snowy') {
-        windVol = 0.06 + (windAbs / 3) * 0.1;
-      } else if (weather === 'cloudy') {
-        windVol = 0.04 + (config.speed / 5) * 0.08;
-      }
-
-      fadeTo(wind.layers[0].gain, windVol, fadeTime);
-      fadeTo(wind.layers[1].gain, windVol * 0.3, fadeTime);
-
-      wind.layers[0].filter.frequency.setTargetAtTime(
-        400 + windAbs * 200,
-        ctxRef.value.currentTime,
-        0.5
-      );
-
-      wind.panner.pan.setTargetAtTime(
-        Math.max(-1, Math.min(1, config.wind / 4)),
-        ctxRef.value.currentTime,
-        0.3
-      );
-    } else if (weather !== 'hail' && weather !== 'sandstorm') {
-      if (windRef.value) {
-        for (const l of windRef.value.layers) fadeTo(l.gain, 0, fadeTime);
-      }
+    if (weather === 'light_rain') {
+      void startAmbient('small-rain', smallRainUrl, 0.18 + rainFactor * 0.05 + speedFactor * 0.03)
+      return
     }
 
-    // ── Snow ambient ─────────────────────────────────
-    if (weather === 'snowy') {
-      ensureStarted(snowRef.value);
-
-      if (config.particleCount === 0) {
-        for (const l of snowRef.value!.layers) fadeTo(l.gain, 0, fadeTime);
-      } else {
-        const snowFactor = particleRatio * 0.6 + speedRatio * 0.4;
-        fadeTo(snowRef.value!.layers[0].gain, 0.06 * snowFactor + 0.02, fadeTime);
-
-        snowRef.value!.layers[0].filter.frequency.setTargetAtTime(
-          600 + speedRatio * 400,
-          ctxRef.value.currentTime,
-          0.5
-        );
-      }
-    } else {
-      if (snowRef.value) {
-        for (const l of snowRef.value.layers) fadeTo(l.gain, 0, fadeTime);
-      }
+    if (weather === 'heavy_rain' || weather === 'thunderstorm') {
+      void startAmbient('heavy-rain', heavyRainUrl, 0.24 + rainFactor * 0.08 + speedFactor * 0.05)
+      return
     }
 
-    // ── Hail ambient ─────────────────────────────────
-    if (weather === 'hail') {
-      const hail = hailRef.value;
-      const buf = hailBufferRef.value;
-      if (hail && buf) {
-        if (!hail.started) {
-          const source = ctxRef.value.createBufferSource();
-          source.buffer = buf;
-          source.loop = true;
-          source.connect(hail.gain);
-          source.start();
-          hail.source = source;
-          hail.started = true;
-        }
-        const hailCount = config.hailCount ?? 30;
-        const hailFactor = Math.min(hailCount / 150, 1);
-        fadeTo(hail.gain, 0.3 * hailFactor + 0.1, fadeTime);
-        hail.panner.pan.setTargetAtTime(
-          Math.max(-1, Math.min(1, config.wind / 3)),
-          ctxRef.value.currentTime,
-          0.3
-        );
-      }
+    stopActiveAmbient()
+  }
 
-      ensureStarted(rainRef.value);
-      const rain = rainRef.value!;
-      if (config.particleCount === 0) {
-        for (const l of rain.layers) fadeTo(l.gain, 0, fadeTime);
-      } else {
-        const rainFactor = particleRatio * 0.4 + speedRatio * 0.3;
-        fadeTo(rain.layers[0].gain, 0.15 * rainFactor + 0.03, fadeTime);
-        fadeTo(rain.layers[1].gain, 0.08 * rainFactor + 0.02, fadeTime);
-      }
+  const initAudio = () => {
+    if (initedRef.value) return
+    initedRef.value = true
 
-      const hailCount = config.hailCount ?? 30;
-      const hasHailOrRain = config.particleCount > 0 || hailCount > 0;
-      ensureStarted(windRef.value);
-      if (hasHailOrRain) {
-        fadeTo(windRef.value!.layers[0].gain, 0.1 + windAbs * 0.06, fadeTime);
-        fadeTo(windRef.value!.layers[1].gain, 0.04 + windAbs * 0.02, fadeTime);
-      } else {
-        for (const l of windRef.value!.layers) fadeTo(l.gain, 0, fadeTime);
-      }
-    } else {
-      const hail = hailRef.value;
-      if (hail && hail.started) {
-        fadeTo(hail.gain, 0, fadeTime);
+    const ctx = new AudioContext()
+    ctxRef.value = ctx
+
+    const master = ctx.createGain()
+    master.gain.value = 0
+    master.connect(ctx.destination)
+    masterGainRef.value = master
+
+    void Promise.all([
+      decodeSample(ctx, birdSongUrl),
+      decodeSample(ctx, smallRainUrl),
+      decodeSample(ctx, heavyRainUrl),
+      loadLightningSamples(ctx),
+    ]).then(() => {
+      updateWeatherState()
+    })
+  }
+
+  const resumeAudio = async () => {
+    const ctx = ctxRef.value
+    if (!ctx) return
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume()
+      } catch {
+        // Resume may fail if the browser still considers playback locked.
       }
     }
-
-    // ── Sandstorm ambient ────────────────────────────
-    if (weather === 'sandstorm') {
-      const sand = sandstormRef.value!;
-      const buf = sandstormBufferRef.value;
-      const density = config.sandDensity ?? 0.6;
-
-      if (buf && !sand.started) {
-        const source = ctxRef.value.createBufferSource();
-        source.buffer = buf;
-        source.loop = true;
-        source.connect(sand.gain);
-        source.start();
-        sand.source = source;
-        sand.started = true;
-      }
-
-      const sandGain = Math.min(0.55, 0.32 * density + 0.08 + windAbs * 0.04);
-      fadeTo(sand.gain, sandGain, fadeTime);
-
-      sand.panner.pan.setTargetAtTime(
-        Math.max(-1, Math.min(1, config.wind / 3)),
-        ctxRef.value.currentTime,
-        0.3
-      );
-
-      ensureStarted(windRef.value);
-      fadeTo(windRef.value!.layers[0].gain, 0.15 + density * 0.1, fadeTime);
-      fadeTo(windRef.value!.layers[1].gain, 0.06 + density * 0.04, fadeTime);
-      windRef.value!.layers[0].filter.frequency.setTargetAtTime(
-        500 + windAbs * 200,
-        ctxRef.value.currentTime,
-        0.5
-      );
-    } else {
-      if (sandstormRef.value) fadeTo(sandstormRef.value.gain, 0, fadeTime);
-    }
-  };
+    updateWeatherState()
+  }
 
   const triggerThunder = () => {
-    const ctx = ctxRef.value;
-    const master = masterGainRef.value;
-    if (!ctx || !master || !enabledRef.value) return;
+    const ctx = ctxRef.value
+    const master = masterGainRef.value
+    if (!ctx || !master || !enabledRef.value) return
 
-    const delay = 200 + Math.random() * 1000;
+    const delay = 200 + Math.random() * 1000
     const timerId = setTimeout(() => {
-      thunderTimersRef.value.delete(timerId);
-      if (ctxRef.value && masterGainRef.value) {
-        const activeCtx = ctxRef.value;
-        const activeMaster = masterGainRef.value;
-        const samples = lightningBuffersRef.value;
+      thunderTimersRef.value.delete(timerId)
+      const activeCtx = ctxRef.value
+      const activeMaster = masterGainRef.value
+      const samples = lightningBuffersRef.value
+      if (!activeCtx || !activeMaster || samples.length === 0) return
 
-        if (samples.length > 0) {
-          const buffer = samples[Math.floor(Math.random() * samples.length)];
-          const source = activeCtx.createBufferSource();
-          source.buffer = buffer;
-          source.playbackRate.value = 0.94 + Math.random() * 0.12;
+      const buffer = samples[Math.floor(Math.random() * samples.length)]
+      const source = activeCtx.createBufferSource()
+      source.buffer = buffer
+      source.playbackRate.value = 0.94 + Math.random() * 0.12
 
-          const gain = activeCtx.createGain();
-          gain.gain.value = Math.min(1.2, Math.max(0.2, volumeRef.value * (0.9 + Math.random() * 0.35)));
+      const gain = activeCtx.createGain()
+      gain.gain.value = Math.min(1.2, Math.max(0.2, volumeRef.value * 1.1))
 
-          const panner = activeCtx.createStereoPanner();
-          panner.pan.value = (Math.random() - 0.5) * 0.45;
+      const panner = activeCtx.createStereoPanner()
+      panner.pan.value = (Math.random() - 0.5) * 0.45
 
-          source.connect(gain);
-          gain.connect(panner);
-          panner.connect(activeMaster);
-          source.start();
-          source.onended = () => { try { source.disconnect(); } catch { /* already disconnected */ } };
-        } else {
-          playThunder(activeCtx, activeMaster, volumeRef.value);
-        }
-      }
-    }, delay);
-    thunderTimersRef.value.add(timerId);
-  };
+      source.connect(gain)
+      gain.connect(panner)
+      panner.connect(activeMaster)
+      source.start()
+      source.onended = () => { try { source.disconnect() } catch { /* already disconnected */ } }
+    }, delay)
 
-  // Pause state watcher
+    thunderTimersRef.value.add(timerId)
+  }
+
   watch(pausedRef, (paused) => {
-    updatePauseState(paused);
-  });
+    updatePauseState(paused)
+  })
 
-  // Weather/config/enabled/volume watcher
   watch(
     [weatherRef, configRef, enabledRef, volumeRef],
     () => {
-      updateWeatherState();
+      updateWeatherState()
     },
     { deep: true }
-  );
+  )
 
-  // Cleanup on unmount
   onUnmounted(() => {
-    const thunderTimers = thunderTimersRef.value;
-    for (const id of thunderTimers) clearTimeout(id);
-    thunderTimers.clear();
+    const thunderTimers = thunderTimersRef.value
+    for (const id of thunderTimers) clearTimeout(id)
+    thunderTimers.clear()
+
+    stopActiveAmbient(true)
 
     if (ctxRef.value) {
-      if (sharedNoiseCtx === ctxRef.value) {
-        sharedNoiseBuffer = null;
-        sharedNoiseCtx = null;
-      }
-      if (thunderCache?.ctx === ctxRef.value) {
-        thunderCache = null;
+      for (const [url, entry] of sampleCache.entries()) {
+        if (entry.ctx === ctxRef.value) {
+          sampleCache.delete(url)
+        }
       }
       if (ctxRef.value.state !== 'closed') {
-        ctxRef.value.close();
+        void ctxRef.value.close()
       }
     }
-    initedRef.value = false;
-  });
+    initedRef.value = false
+  })
 
   return {
     initAudio,
     triggerThunder,
     resumeAudio,
-    setWeather: (weather: WeatherType) => { weatherRef.value = weather; },
-    setConfig: (config: WeatherConfig) => { configRef.value = config; },
-    setEnabled: (enabled: boolean) => { enabledRef.value = enabled; },
-    setVolume: (volume: number) => { volumeRef.value = volume; },
-    setPaused: (paused: boolean) => { pausedRef.value = paused; },
-  };
+    setWeather: (weather: WeatherType) => { weatherRef.value = weather },
+    setConfig: (config: WeatherConfig) => { configRef.value = config },
+    setEnabled: (enabled: boolean) => { enabledRef.value = enabled },
+    setVolume: (volume: number) => { volumeRef.value = volume },
+    setPaused: (paused: boolean) => { pausedRef.value = paused },
+  }
 }

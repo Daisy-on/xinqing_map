@@ -1137,6 +1137,15 @@ onMounted(() => {
     return 6000 + extraDelay + Math.random() * 8000;
   };
 
+  // Lens flare / Halo data for sunny weather
+  const halos: {
+    distance: number;
+    size: number;
+    opacity: number;
+    color: string;
+    offsetY: number;
+  }[] = [];
+
   const initParticles = () => {
     rainData.clear();
     splashPool.clear();
@@ -1150,6 +1159,7 @@ onMounted(() => {
     snowPile = null;
     lightnings = [];
     fogs = [];
+    halos.length = 0;
     flashOpacity = 0;
     lightningCount = 0;
 
@@ -1176,6 +1186,18 @@ onMounted(() => {
     } else if (weather === 'sandstorm') {
       sandData.setCount(Math.floor(particleCount * 1.5));
       debrisData.setCount(Math.min(Math.floor(particleCount * 0.12), MAX_DEBRIS));
+    } else if (weather === 'sunny') {
+      // Initialize refined lens flare elements
+      const counts = 6;
+      for (let i = 0; i < counts; i++) {
+        halos.push({
+          distance: 0.2 + i * 0.25 + (Math.random() - 0.5) * 0.1,
+          size: 20 + Math.random() * 60 + (i === 1 ? 80 : 0),
+          opacity: 0.02 + Math.random() * 0.04,
+          color: i % 3 === 0 ? '255, 253, 235' : (i % 3 === 1 ? '255, 249, 196' : '230, 245, 255'),
+          offsetY: (Math.random() - 0.5) * 40
+        });
+      }
     }
   };
 
@@ -1382,6 +1404,12 @@ onMounted(() => {
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
       
+      const sourceX = width * 0.7;
+      const sourceY = -100;
+      const centerY = height / 2;
+      const centerX = width / 2;
+      
+      // 1. Draw Sunbeams (Existing)
       const beamCount = 3;
       const baseAngle = Math.PI / 5 + windVal * 0.1;
       
@@ -1390,13 +1418,14 @@ onMounted(() => {
         const angle = baseAngle + offset;
         const alpha = 0.04 + Math.sin(now * 0.0008 + i) * 0.03;
         
-        const cx = width * 0.7 + Math.sin(now * 0.0003 + i) * 150 - i * width * 0.2;
-        const cy = -100;
+        const cx = sourceX + Math.sin(now * 0.0003 + i) * 150 - i * width * 0.2;
+        const cy = sourceY;
         
+        ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angle);
         
-        const beamWidth = 150 + i * 50;
+        const beamWidth = 150 + i * 80;
         const beamGrad = ctx.createLinearGradient(-beamWidth, 0, beamWidth, 0);
         beamGrad.addColorStop(0, 'rgba(255, 250, 220, 0)');
         beamGrad.addColorStop(0.5, `rgba(255, 245, 200, ${alpha})`);
@@ -1404,10 +1433,45 @@ onMounted(() => {
         
         ctx.fillStyle = beamGrad;
         ctx.fillRect(-beamWidth * 1.5, 0, beamWidth * 3, height * 2.5);
-        
-        ctx.rotate(-angle);
-        ctx.translate(-cx, -cy);
+        ctx.restore();
       }
+
+      // 2. Draw Lens Fare / Halos (New)
+      halos.forEach((halo, idx) => {
+        // Calculate position on the axis from sun to center
+        const dx = (centerX - sourceX) * halo.distance;
+        const dy = (centerY - sourceY) * halo.distance;
+        
+        // Add delicate breathing movement
+        const driftX = Math.sin(now * 0.0004 + idx) * 15;
+        const driftY = Math.cos(now * 0.0005 + idx) * 15 + Math.sin(now * 0.0008) * 10;
+        
+        const hx = sourceX + dx + driftX;
+        const hy = sourceY + dy + driftY + halo.offsetY;
+        
+        const breathing = Math.sin(now * 0.001 + idx) * 0.15 + 0.85;
+        const currentSize = halo.size * breathing;
+        const currentOpacity = halo.opacity * breathing;
+        
+        const grad = ctx.createRadialGradient(hx, hy, 0, hx, hy, currentSize);
+        grad.addColorStop(0.0, `rgba(${halo.color}, ${currentOpacity})`);
+        grad.addColorStop(0.6, `rgba(${halo.color}, ${currentOpacity * 0.4})`);
+        grad.addColorStop(1.0, `rgba(${halo.color}, 0)`);
+        
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(hx, hy, currentSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Optional sharp ring for some halos
+        if (idx === 1 || idx === 3) {
+            ctx.strokeStyle = `rgba(${halo.color}, ${currentOpacity * 0.3})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(hx, hy, currentSize * 0.95, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+      });
       
       ctx.restore();
     }

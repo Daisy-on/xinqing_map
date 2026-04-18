@@ -561,7 +561,7 @@ onMounted(async () => {
 
   if (currentLocation.value) {
     initAudio()
-    setWeather(canvasWeather.value)
+    setWeather(activeWeatherCode.value)
     setConfig(canvasConfig.value)
     void resumeAudio()
     if (activeWeatherCode.value === 'thunderstorm') {
@@ -581,7 +581,7 @@ onMounted(async () => {
 })
 
 watch(activeWeatherCode, (newCode) => {
-  setWeather(canvasWeather.value)
+  setWeather(newCode)
   setConfig(canvasConfig.value)
   if (newCode === 'thunderstorm') {
     triggerThunder()
