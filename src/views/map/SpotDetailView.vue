@@ -174,7 +174,10 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matc
 let resizeTimer = 0
 let cardAnimation: Animation | null = null
 
-const { initAudio, triggerThunder } = useWeatherAudio()
+const { initAudio, triggerThunder, resumeAudio, setWeather, setConfig } = useWeatherAudio()
+const unlockAudioOnFirstGesture = () => {
+  void resumeAudio()
+}
 
 const ENTER_DURATION = 320
 const EXIT_DURATION = 200
@@ -558,10 +561,16 @@ onMounted(async () => {
 
   if (currentLocation.value) {
     initAudio()
+    setWeather(canvasWeather.value)
+    setConfig(canvasConfig.value)
+    void resumeAudio()
     if (activeWeatherCode.value === 'thunderstorm') {
       triggerThunder()
     }
   }
+
+  window.addEventListener('pointerdown', unlockAudioOnFirstGesture, { once: true, passive: true })
+  window.addEventListener('keydown', unlockAudioOnFirstGesture, { once: true })
 
   window.addEventListener('resize', () => {
     window.clearTimeout(resizeTimer)
@@ -572,6 +581,8 @@ onMounted(async () => {
 })
 
 watch(activeWeatherCode, (newCode) => {
+  setWeather(canvasWeather.value)
+  setConfig(canvasConfig.value)
   if (newCode === 'thunderstorm') {
     triggerThunder()
   }
@@ -579,6 +590,8 @@ watch(activeWeatherCode, (newCode) => {
 
 onBeforeUnmount(() => {
   window.clearTimeout(resizeTimer)
+  window.removeEventListener('pointerdown', unlockAudioOnFirstGesture)
+  window.removeEventListener('keydown', unlockAudioOnFirstGesture)
   cancelCardAnimation()
 })
 </script>

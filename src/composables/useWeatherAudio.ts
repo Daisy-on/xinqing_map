@@ -624,8 +624,23 @@ export function useWeatherAudio() {
   const resumeCtx = () => {
     const ctx = ctxRef.value;
     if (ctx && ctx.state === 'suspended') {
-      ctx.resume();
+      void ctx.resume().catch(() => {
+        // Resume may be blocked before first user gesture.
+      });
     }
+  };
+
+  const resumeAudio = async () => {
+    const ctx = ctxRef.value;
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try {
+        await ctx.resume();
+      } catch {
+        // Resume may fail if called before a user gesture.
+      }
+    }
+    updateWeatherState();
   };
 
   const updatePauseState = (paused: boolean) => {
@@ -908,6 +923,7 @@ export function useWeatherAudio() {
   return {
     initAudio,
     triggerThunder,
+    resumeAudio,
     setWeather: (weather: WeatherType) => { weatherRef.value = weather; },
     setConfig: (config: WeatherConfig) => { configRef.value = config; },
     setEnabled: (enabled: boolean) => { enabledRef.value = enabled; },
