@@ -171,14 +171,18 @@ const formatContent = (text: string) => {
           </div>
         </div>
 
-        <!-- 桌面的抽屉吸底按钮 -->
+        <!-- 图片抽屉把手旁边的卡片提示 -->
         <div 
           v-if="letters.length > 2" 
-          class="desktop-drawer-button" 
+          class="drawer-hint-card" 
           @click="isDrawerOpen = true"
         >
-          <div class="drawer-metal-pull"></div>
-          <span class="drawer-label">探索更多信件 (余 {{ letters.length - 2 }} 封)</span>
+          <div class="hint-icon firefly-icon">✨</div>
+          <div class="hint-text">
+            <span class="hint-title">点击查看更多</span>
+            <span class="hint-count">余 {{ letters.length - 2 }} 封信件</span>
+          </div>
+          <div class="hint-arrow">→</div>
         </div>
       </div>
     </main>
@@ -288,6 +292,7 @@ const formatContent = (text: string) => {
   background-repeat: no-repeat;
   padding-bottom: 60px;
   perspective: 1800px;
+  overflow: hidden; /* 防止 3D 层超出容器 */
 }
 
 .desk-surface {
@@ -303,35 +308,54 @@ const formatContent = (text: string) => {
 @media (max-width: 800px) { .desk-surface { transform: rotateX(55deg) rotateZ(-12deg) scale(0.65); } }
 @media (max-width: 500px) { .desk-surface { transform: rotateX(56deg) rotateZ(0deg) scale(0.5); } }
 
-/* 抽屉吸底按钮 */
-.desktop-drawer-button {
-  position: absolute;
-  bottom: 30px; left: 50%;
-  transform: translateX(-50%);
-  width: 240px; height: 50px;
-  border: 2px solid rgba(255,255,255,0.2); 
-  border-radius: 25px;
-  background: rgba(0,0,0,0.4); 
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
-  z-index: 100;
+  /* 抽屉卡片提示 (针对新版背景图片微调位置) */
+  .drawer-hint-card {
+    position: absolute;
+    bottom: 120px; right: 280px; /* 调整至图片中抽屉拉手右侧区域 */
+    display: flex; align-items: center;
+    gap: 12px; padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 50;
+    animation: float-hint 3s infinite ease-in-out;
+    /* 核心修复：取消 3D 转换对该卡片的影响，使其在 2D 合成层显示，防止被背景穿透或遮挡 */
+    transform: translateZ(100px);
+  }
+
+.drawer-hint-card:hover {
+    transform: translateZ(110px) translateY(-5px) scale(1.05);
+    background: #fff;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+  }
+
+.hint-icon { font-size: 20px; }
+.firefly-icon {
+  text-shadow: 0 0 10px rgba(253, 224, 71, 0.8), 0 0 20px rgba(253, 224, 71, 0.4);
+  animation: firefly-glow 2s infinite alternate;
 }
-.desktop-drawer-button:hover {
-  background: rgba(0,0,0,0.5);
-  transform: translateX(-50%) translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+@keyframes firefly-glow {
+  from { opacity: 0.8; filter: drop-shadow(0 0 2px #fde047); }
+  to { opacity: 1; filter: drop-shadow(0 0 8px #fde047); }
 }
-.drawer-metal-pull {
-  width: 40px; height: 6px; position: absolute; top: 10px;
-  background: linear-gradient(180deg, #ececec, #a8a8a8);
-  border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+.hint-text { display: flex; flex-direction: column; }
+.hint-title { font-size: 14px; font-weight: 600; color: #4b5563; }
+.hint-count { font-size: 12px; color: #9ca3af; }
+.hint-arrow { margin-left: 4px; color: #6366f1; font-weight: bold; transition: transform 0.3s; }
+.drawer-hint-card:hover .hint-arrow { transform: translateX(4px); }
+
+@keyframes float-hint {
+  0%, 100% { transform: translateZ(100px) translateY(0); }
+  50% { transform: translateZ(100px) translateY(-8px); }
 }
-.drawer-label { 
-  margin-top: 12px; font-size: 14px; font-weight: 500; color: #fff; 
-  letter-spacing: 1px; 
+
+@media (max-width: 800px) {
+  .drawer-hint-card { bottom: 80px; right: 50%; transform: translateX(50%); }
+  .drawer-hint-card:hover { transform: translateX(50%) translateY(-5px) scale(1.05); }
 }
 
 /* --- 3D 信封样式复用与位置定制 --- */
