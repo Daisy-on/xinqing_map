@@ -550,8 +550,27 @@ if (shouldPlaySplash) {
 
 function restoreMapViewState() {
   if (!map) return
-  updateSvgMask()
-  scheduleLandmarkPixelsUpdate()
+  
+  // 处理 keep-alive 从隐藏恢复到显示时的地图大小和中心点异常问题
+  // 这里使用 setTimeout 等待 DOM 真实渲染完毕，并手动触发 resize 事件使地图重新计算 viewport
+  setTimeout(() => {
+    if (!map) return
+    
+    if (typeof map.checkResize === 'function') {
+      map.checkResize()
+    }
+    
+    // 强制地图重新计算投影和坐标像素映射（解决从其他页面返回时遮罩位置偏移、只显示右下角的问题）
+    const currentCenter = map.getCenter()
+    map.setCenter(currentCenter)
+    window.dispatchEvent(new Event('resize'))
+    
+    // 地图投影更新后，必须延后一帧重新计算覆盖层和地标位置，确保 pointToPixel 拿到正确的视口参数
+    requestAnimationFrame(() => {
+      updateSvgMask()
+      scheduleLandmarkPixelsUpdate()
+    })
+  }, 100)
 }
 
 async function initMapIfNeeded() {
