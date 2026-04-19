@@ -252,18 +252,20 @@ onMounted(() => {
   font-size: 18px;
   color: #333;
   font-weight: 500;
-  margin-bottom: 160px;
+  margin-bottom: 220px;
 }
 
 .mood-circle {
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 0;
+  height: 0;
 }
 
 .mood-item {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -276,11 +278,11 @@ onMounted(() => {
 
 @keyframes bloomOut {
   0% {
-    transform: rotate(var(--target-angle)) translateY(0px) rotate(calc(-1 * var(--target-angle))) scale(0.2);
+    transform: translate(-50%, -50%) rotate(var(--target-angle)) translateY(0px) rotate(calc(-1 * var(--target-angle))) scale(0.2);
     opacity: 0;
   }
   100% {
-    transform: rotate(var(--target-angle)) translateY(-135px) rotate(calc(-1 * var(--target-angle))) scale(1);
+    transform: translate(-50%, -50%) rotate(var(--target-angle)) translateY(-135px) rotate(calc(-1 * var(--target-angle))) scale(1);
     opacity: 1;
   }
 }
