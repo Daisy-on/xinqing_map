@@ -118,7 +118,7 @@ onMounted(() => {
             
             <div class="record-indicator">
               <div v-if="item.hasRecord" class="mood-box" :style="{ backgroundColor: item.emotionTagColor || getMoodById(item.emotionTagId || 6).color }">
-                <span class="mood-icon">{{ getMoodById(item.emotionTagId || 6).icon }}</span>
+                <img :src="getMoodById(item.emotionTagId || 6).icon" class="mood-icon" />
               </div>
               <div v-else-if="!item.isFuture" class="empty-circle"></div>
               <!-- if future, no circle -->
@@ -267,7 +267,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  overflow: hidden;
+}
+
+.mood-icon {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
 }
 
 .fab-container {

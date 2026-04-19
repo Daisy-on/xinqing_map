@@ -130,7 +130,7 @@ onMounted(() => {
                 @click="selectMood(mood.id)"
               >
                 <div class="mood-box" :style="{ backgroundColor: mood.color }">
-                  <span class="mood-emoji">{{ mood.icon }}</span>
+                  <img :src="mood.icon" class="mood-emoji" :alt="mood.name" />
                 </div>
                 <span class="mood-name">{{ mood.name }}</span>
               </div>
@@ -161,7 +161,7 @@ onMounted(() => {
                 </div>
                 <div class="selected-mood" @click="reshowDial">
                   <div class="mood-box" :style="{ backgroundColor: getMoodById(selectedMoodId!).color }">
-                    <span class="mood-emoji">{{ getMoodById(selectedMoodId!).icon }}</span>
+                    <img :src="getMoodById(selectedMoodId!).icon" class="mood-emoji" />
                   </div>
                   <span class="mood-name-pill" :style="{ backgroundColor: getMoodById(selectedMoodId!).color }">
                     {{ getMoodById(selectedMoodId!).name }}
@@ -297,9 +297,14 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 32px;
   box-shadow: inset -2px -2px 6px rgba(0,0,0,0.05), inset 2px 2px 6px rgba(255,255,255,0.4);
   transition: all 0.2s;
+  overflow: hidden;
+}
+.mood-emoji {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
 }
 .mood-name {
   margin-top: 8px;
@@ -376,7 +381,6 @@ onMounted(() => {
   width: 70px;
   height: 70px;
   border-radius: 20px;
-  font-size: 38px;
 }
 .mood-name-pill {
   margin-top: -12px;
