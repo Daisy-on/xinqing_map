@@ -495,11 +495,11 @@ const bubbleStyleByIndex = (index: number) => {
     { top: '10%', left: '4%' },
     { top: '14%', left: '56%' },
     { top: '28%', left: '14%' },
-    { top: '32%', left: '62%' },
+    { top: '30%', left: '60%' },
     { top: '44%', left: '6%' },
     { top: '48%', left: '52%' },
     { top: '62%', left: '20%' },
-    { top: '61%', left: '56%' },
+    { top: '60%', left: '56%' },
     { top: '78%', left: '10%' },
     { top: '78%', left: '60%' },
   ]

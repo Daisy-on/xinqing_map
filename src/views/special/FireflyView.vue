@@ -261,7 +261,7 @@ const formatContent = (text: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 16px;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -311,7 +311,7 @@ const formatContent = (text: string) => {
   /* 抽屉卡片提示 (针对新版背景图片微调位置) */
   .drawer-hint-card {
     position: absolute;
-    bottom: 120px; right: 280px; /* 调整至图片中抽屉拉手右侧区域 */
+    bottom: 100px; right: 480px; /* 调整至图片中抽屉拉手右侧区域 */
     display: flex; align-items: center;
     gap: 12px; padding: 10px 16px;
     background: rgba(255, 255, 255, 0.85);
@@ -386,10 +386,10 @@ const formatContent = (text: string) => {
 
 /* 根据图片微调摆放信件 */
 .is-desktop.pos-0 { 
-  --r: -9deg; top: 260px; left: 30px; transform: rotateZ(var(--r)); 
+  --r: -9deg; top: 290px; left: 30px; transform: rotateZ(var(--r)); 
 }
 .is-desktop.pos-1 { 
-  --r: 8deg; top: 330px; right: 220px; transform: rotateZ(var(--r)); 
+  --r: 8deg; top: 360px; right: 230px; transform: rotateZ(var(--r)); 
 }
 
 /* 极具带入感的悬浮动画 */
