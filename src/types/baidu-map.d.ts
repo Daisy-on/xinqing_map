@@ -36,6 +36,8 @@ declare global {
     pointToPixel(point: BMapGLPoint): { x: number; y: number }
     pointToOverlayPixel(point: BMapGLPoint): { x: number; y: number }
     getCenter(): BMapGLLngLat
+    setCenter(center: BMapGLLngLat | string): void
+    checkResize(): void
     getPanes(): BMapGLPanes
     clearOverlays(): void
   }

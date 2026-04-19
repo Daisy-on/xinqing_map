@@ -1,28 +1,26 @@
-<template>
+﻿<template>
   <div class="splash-screen" :class="{ 'is-hiding': !isVisible }">
-    <!-- Sky & Weather Elements -->
+    <!-- 背景与太阳 -->
     <div class="sky-bg"></div>
     <div class="sun"></div>
+    
+    <!-- 彩虹 -->
     <div class="rainbow-container">
       <div class="rainbow"></div>
     </div>
     
-    <!-- Decorative Clouds treated with SVG noise for realism -->
-    <svg class="cloud-filter" width="0" height="0">
-      <filter id="cloud-fractal">
-        <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" result="noise" />
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="30" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </svg>
+    <!-- 3D 云层穿梭隧道 -->
+    <div class="cloud-tunnel">
+      <div class="cloud t-cloud-1"></div>
+      <div class="cloud t-cloud-2"></div>
+      <div class="cloud t-cloud-3"></div>
+      <div class="cloud t-cloud-4"></div>
+      <div class="cloud t-cloud-5"></div>
+      <div class="cloud t-cloud-6"></div>
+      <div class="cloud t-cloud-7"></div>
+    </div>
 
-    <!-- Cloud layers using the filter -->
-    <div class="cloud cloud-left-1"></div>
-    <div class="cloud cloud-left-2"></div>
-    <div class="cloud cloud-right-1"></div>
-    <div class="cloud cloud-right-2"></div>
-    <div class="cloud cloud-center-block"></div>
-
-    <!-- Center Logo Container -->
+    <!-- 中心地标 -->
     <div class="splash-logo">
       <div class="brand-group">
         <div class="brand-mark">
@@ -32,7 +30,7 @@
           <span class="brand-title">心晴地图</span>
         </div>
       </div>
-      <div class="loading-subtitle">拨开云雾，遇见星晴...</div>
+      <div class="loading-subtitle">拨开云雾，遇见晴空</div>
     </div>
   </div>
 </template>
@@ -44,17 +42,18 @@ const props = defineProps<{
 </script>
 
 <style scoped>
-/* Advanced CSS/SVG Hybrid Splash */
+/* 容器及 3D 视角 */
 .splash-screen {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background-color: #d8e5ec; /* overcast feeling initially */
+  background-color: #a8c8db;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 2s ease;
+  perspective: 600px; /* 开启 3D 景深 */
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 2.5s ease;
 }
 
 .splash-screen.is-hiding {
@@ -62,16 +61,16 @@ const props = defineProps<{
   pointer-events: none;
 }
 
-/* Sky Background - Blue gradient fades in */
+/* 天空渐变变亮 */
 .sky-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #9fd3f4 0%, #dcecfa 50%, #f4f6fa 100%);
+  background: linear-gradient(180deg, #66A6FF 0%, #89F7FE 100%);
   opacity: 0;
-  animation: skyClear 2.5s ease-in-out forwards 0.5s;
+  animation: skyClear 3s ease-in-out forwards 0.5s;
 }
 
-/* The Sun */
+/* 太阳升起 */
 .sun {
   position: absolute;
   top: 50%;
@@ -79,113 +78,103 @@ const props = defineProps<{
   width: 400px;
   height: 400px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 50%, #fff7ce 0%, #ffe98f 20%, transparent 60%);
-  transform: translate(-50%, -10%) scale(0.6);
+  background: radial-gradient(circle at 50% 50%, #fff7ce 0%, #ffde59 20%, transparent 60%);
+  transform: translate(-50%, 0) scale(0.8);
   opacity: 0;
-  animation: sunRise 3s cubic-bezier(0.15, 0.8, 0.2, 1) forwards 1s;
+  animation: sunRise 3.5s cubic-bezier(0.15, 0.8, 0.2, 1) forwards 0.8s;
   pointer-events: none;
 }
 
-/* The Rainbow */
+/* 动态彩虹 */
 .rainbow-container {
   position: absolute;
-  top: -15vh;
+  top: -10vh;
   left: 0;
   right: 0;
-  height: 70vh;
-  overflow: hidden;
+  height: 80vh;
+  display: flex;
+  justify-content: center;
   opacity: 0;
-  animation: fadeInRainbow 4s ease forwards 1.8s;
+  animation: rainbowReveal 4s ease forwards 2s;
   pointer-events: none;
-  transform-origin: center bottom;
-  transform: scale(1.1);
 }
 
 .rainbow {
-  position: absolute;
-  bottom: 0px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 160vw;
-  height: 160vw;
+  width: 140vw;
+  height: 140vw;
   border-radius: 50%;
-  /* 7 distinct bands with mild blend/blur */
   box-shadow: 
-    inset 0 0 0 12px rgba(255, 105, 97, 0.25),
-    inset 0 0 0 24px rgba(255, 180, 128, 0.25),
-    inset 0 0 0 36px rgba(248, 243, 141, 0.25),
-    inset 0 0 0 48px rgba(66, 214, 164, 0.25),
-    inset 0 0 0 60px rgba(8, 202, 209, 0.25),
-    inset 0 0 0 72px rgba(89, 173, 246, 0.25),
-    inset 0 0 0 84px rgba(157, 148, 255, 0.25);
-  filter: blur(14px);
+    inset 0 0 0 16px rgba(255, 105, 97, 0.5),
+    inset 0 0 0 32px rgba(255, 180, 128, 0.5),
+    inset 0 0 0 48px rgba(248, 243, 141, 0.5),
+    inset 0 0 0 64px rgba(66, 214, 164, 0.5),
+    inset 0 0 0 80px rgba(8, 202, 209, 0.5),
+    inset 0 0 0 96px rgba(89, 173, 246, 0.5),
+    inset 0 0 0 112px rgba(157, 148, 255, 0.5);
+  filter: blur(24px);
+  clip-path: inset(100% 0 0 0); /* 初始裁切隐藏 */
+  animation: rainbowGrow 3s cubic-bezier(0.25, 1, 0.5, 1) forwards 2.2s;
 }
 
-/* Cloud base style */
-.cloud-filter {
+/* 云层穿梭隧道 */
+.cloud-tunnel {
   position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
 }
+
 .cloud {
   position: absolute;
-  background: #ffffff;
+  top: 50%;
+  left: 50%;
+  width: 60vw;
+  height: 40vh;
+  background: radial-gradient(circle, #ffffff 20%, rgba(255, 255, 255, 0.6) 60%, transparent 100%);
   border-radius: 50%;
-  filter: url(#cloud-fractal) drop-shadow(0 20px 25px rgba(0,0,0,0.1));
-  opacity: 1;
-  pointer-events: none;
-  box-shadow: inset -20px -20px 60px rgba(0, 0, 0, 0.05); /* Adds volumetric shadow */
+  filter: blur(30px);
+  opacity: 0;
 }
 
-/* Cloud parting logic */
-.cloud-left-1 {
-  width: 600px; height: 350px;
-  top: 5%; left: -20%;
-  animation: cloudPartLeft 3.5s cubic-bezier(0.25, 1, 0.3, 1) forwards 0.3s;
-}
-.cloud-left-2 {
-  width: 500px; height: 400px;
-  bottom: 10%; left: -15%;
-  animation: cloudPartLeft 4s cubic-bezier(0.25, 1, 0.3, 1) forwards 0.5s;
-}
-.cloud-right-1 {
-  width: 550px; height: 300px;
-  top: 15%; right: -15%;
-  animation: cloudPartRight 3.8s cubic-bezier(0.25, 1, 0.3, 1) forwards 0.4s;
-}
-.cloud-right-2 {
-  width: 650px; height: 380px;
-  bottom: -5%; right: -20%;
-  animation: cloudPartRight 4.2s cubic-bezier(0.25, 1, 0.3, 1) forwards 0.6s;
-}
-.cloud-center-block {
-  width: 80vw; height: 60vh;
-  top: 20%; left: 10%;
-  border-radius: 30%;
-  animation: cloudPartUp 3.5s cubic-bezier(0.25, 1, 0.3, 1) forwards 0s;
-  opacity: 0.95;
+/* 核心：穿越云层的 3D 关键帧 */
+@keyframes cloud-pierce {
+  0% { transform: translate3d(var(--cx), var(--cy), -500px) scale(0.4); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translate3d(var(--cx), var(--cy), 800px) scale(3.5); opacity: 0; }
 }
 
-/* Logo Animation Overlay */
+/* 通过改变 --cx 和 --cy 产生不同位置的云朵穿梭 */
+.t-cloud-1 { --cx: -100%; --cy: -80%; animation: cloud-pierce 2.5s ease-in forwards 0.1s; }
+.t-cloud-2 { --cx: 80%; --cy: 80%; animation: cloud-pierce 2.8s ease-in forwards 0.3s; }
+.t-cloud-3 { --cx: -60%; --cy: 100%; animation: cloud-pierce 2.6s ease-in forwards 0.5s; width: 80vw; }
+.t-cloud-4 { --cx: 90%; --cy: -60%; animation: cloud-pierce 3s ease-in forwards 0.7s; height: 50vh; }
+.t-cloud-5 { --cx: -20%; --cy: -130%; animation: cloud-pierce 2.7s ease-in forwards 0.9s; width: 90vw; }
+.t-cloud-6 { --cx: 30%; --cy: 110%; animation: cloud-pierce 2.4s ease-in forwards 1.1s; }
+.t-cloud-7 { --cx: -10%; --cy: 20%; animation: cloud-pierce 2.9s ease-in forwards 1.3s; }
+
+/* Logo 与 Slogan 沉浸式出现 */
 .splash-logo {
   position: relative;
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   opacity: 0;
-  transform: translateY(30px);
-  animation: logoReveal 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 1.5s;
+  transform: translateY(40px);
+  filter: blur(10px);
+  animation: logoReveal 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 2.5s;
 }
 
 .brand-group {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.75);
   padding: 16px 28px;
   border-radius: 28px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
 .brand-mark {
@@ -210,51 +199,47 @@ const props = defineProps<{
 .brand-title {
   font-size: 28px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: 0.5px;
   color: #152844;
 }
 
 .loading-subtitle {
   font-size: 15px;
-  color: #475569;
+  color: #3b5068;
   font-weight: 600;
-  letter-spacing: 3px;
+  letter-spacing: 12px; /* 初始大间距 */
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
+  animation: subtitleFocus 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 2.6s;
 }
 
-/* Animations Core */
+/* 核心动画 */
 @keyframes skyClear {
   0% { opacity: 0; }
   100% { opacity: 1; }
 }
 
 @keyframes sunRise {
-  0% { transform: translate(-50%, -10%) scale(0.6); opacity: 0; }
-  100% { transform: translate(-50%, -60%) scale(1.4); opacity: 1; filter: drop-shadow(0 0 60px rgba(255,233,143,0.4)); }
+  0% { transform: translate(-50%, 10%) scale(0.8); opacity: 0; }
+  100% { transform: translate(-50%, -40%) scale(1.4); opacity: 1; filter: drop-shadow(0 0 80px rgba(255,233,143,0.5)); }
 }
 
-@keyframes fadeInRainbow {
-  0% { opacity: 0; transform: scale(1.0); }
-  50% { opacity: 0.8; transform: scale(1.05); }
-  100% { opacity: 0.6; transform: scale(1.0); }
+@keyframes rainbowReveal {
+  0% { opacity: 0; }
+  100% { opacity: 0.9; }
 }
 
-@keyframes cloudPartLeft {
-  0% { transform: translateX(0) scale(1); opacity: 1; }
-  100% { transform: translateX(-120vw) scale(1.4); opacity: 0; }
-}
-
-@keyframes cloudPartRight {
-  0% { transform: translateX(0) scale(1); opacity: 1; }
-  100% { transform: translateX(120vw) scale(1.4); opacity: 0; }
-}
-
-@keyframes cloudPartUp {
-  0% { transform: translateY(0) scale(1); opacity: 0.95; }
-  100% { transform: translateY(-80vh) scale(2); opacity: 0; }
+@keyframes rainbowGrow {
+  0% { clip-path: inset(100% 0 0 0); transform: scale(0.95); }
+  100% { clip-path: inset(0% 0 0 0); transform: scale(1); }
 }
 
 @keyframes logoReveal {
-  0% { transform: translateY(30px) scale(0.9); opacity: 0; }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
+  0% { transform: translateY(40px); filter: blur(10px); opacity: 0; }
+  100% { transform: translateY(0); filter: blur(0); opacity: 1; }
+}
+
+@keyframes subtitleFocus {
+  0% { letter-spacing: 12px; opacity: 0.5; }
+  100% { letter-spacing: 4px; opacity: 1; }
 }
 </style>

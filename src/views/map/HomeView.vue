@@ -537,7 +537,7 @@ function finishSplash() {
   isSplashHiding.value = true
   setTimeout(() => {
     isSplashVisible.value = false
-  }, 1200)
+  }, 2500) // 整体动画时长变长，这里放宽淡出隐藏的等待时间
 }
 
 if (shouldPlaySplash) {
@@ -644,7 +644,7 @@ async function initMapIfNeeded() {
     bindMapRuntimeEvents()
 
     const splashTimer = shouldPlaySplash
-      ? new Promise((resolve) => setTimeout(resolve, 1200))
+      ? new Promise((resolve) => setTimeout(resolve, 3800)) // 等待开场云层彩虹动画演完再展现地图
       : Promise.resolve()
 
     await Promise.all([
