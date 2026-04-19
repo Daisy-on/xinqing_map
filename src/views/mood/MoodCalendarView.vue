@@ -2,15 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Edit, ArrowRight, DataLine } from '@element-plus/icons-vue'
-import { getMonthCalendar, getTodayStatus } from '@/api/mood'
-import { getMoodById } from '@/utils/moodHelpers'
-import type { MoodDiaryMonthVO } from '@/types/models'
+import { getTodayStatus } from '@/api/mood'
+import { getMoodById, preloadMoodIcons } from '@/utils/moodHelpers'
+import { useMoodStore } from '@/stores/mood'
 import dayjs from 'dayjs'
 
 const router = useRouter()
+const moodStore = useMoodStore()
 
 const currentDate = ref(dayjs())
-const monthData = ref<MoodDiaryMonthVO[]>([])
 const todayStatus = ref(false)
 
 const year = computed(() => currentDate.value.year())
@@ -20,7 +20,7 @@ const monthStr = computed(() => `${year.value}年${month.value}月`)
 const weekDays = ['一', '二', '三', '四', '五', '六', '日']
 
 const paddingDays = computed(() => {
-  const firstItem = monthData.value[0]
+  const firstItem = moodStore.monthData[0]
   if (!firstItem) return []
   const firstDay = dayjs(firstItem.diaryDate).day()
   // day() returns 0 for Sunday. We want Monday=1, Sunday=7
@@ -28,12 +28,8 @@ const paddingDays = computed(() => {
   return Array(padCount).fill(null)
 })
 
-const fetchMonthData = async () => {
-  try {
-    monthData.value = await getMonthCalendar(year.value, month.value)
-  } catch (error) {
-    console.error('Failed to fetch calendar', error)
-  }
+const fetchMonthData = () => {
+  moodStore.fetchMonthData(year.value, month.value)
 }
 
 const checkToday = async () => {
@@ -59,12 +55,13 @@ const isToday = (date: string) => {
   return dayjs(date).isSame(dayjs(), 'day')
 }
 
-const navigateToEdit = (date: string, item: MoodDiaryMonthVO) => {
+const navigateToEdit = (date: string, item: any) => {
   if (item.isFuture) return // cannot edit future
   router.push(`/mood/edit/${date}`)
 }
 
 onMounted(() => {
+  preloadMoodIcons()
   fetchMonthData()
   checkToday()
 })
@@ -72,7 +69,7 @@ onMounted(() => {
 
 <template>
   <div class="calendar-page">
-    <div class="calendar-container">
+    <div class="calendar-container animate-fade-in-up">
       <div class="top-nav">
         <button class="back-btn" @click="router.push('/profile')">
           <el-icon><ArrowLeft /></el-icon>
@@ -98,31 +95,40 @@ onMounted(() => {
           <span v-for="day in weekDays" :key="day" class="week-day">{{ day }}</span>
         </div>
 
-        <div class="days-grid">
-          <div v-for="(__, idx) in paddingDays" :key="'pad-'+idx" class="day-cell empty"></div>
-          
-          <div 
-            v-for="item in monthData" 
-            :key="item.diaryDate"
-            class="day-cell"
-            :class="{
-              'is-today': isToday(item.diaryDate),
-              'is-future': item.isFuture,
-              'has-record': item.hasRecord,
-              'clickable': !item.isFuture
-            }"
-            @click="navigateToEdit(item.diaryDate, item)"
-          >
-            <span class="date-num" v-if="!isToday(item.diaryDate)">{{ dayjs(item.diaryDate).date() }}</span>
-            <span class="date-num today-label" v-else>今天</span>
+        <!-- 增加 loading 填充层，防止切换月份时布局跳动 -->
+        <div class="days-wrapper" :class="{ 'is-loading': moodStore.loading }">
+          <TransitionGroup name="staggered-fade" tag="div" class="days-grid">
+            <div v-for="(__, idx) in paddingDays" :key="'pad-'+idx" class="day-cell empty"></div>
             
-            <div class="record-indicator">
-              <div v-if="item.hasRecord" class="mood-box" :style="{ backgroundColor: item.emotionTagColor || getMoodById(item.emotionTagId || 6).color }">
-                <img :src="getMoodById(item.emotionTagId || 6).icon" class="mood-icon" />
+            <div 
+              v-for="(item, index) in moodStore.monthData" 
+              :key="item.diaryDate"
+              class="day-cell"
+              :style="{ '--delay': index } as any"
+              :class="{
+                'is-today': isToday(item.diaryDate),
+                'is-future': item.isFuture,
+                'has-record': item.hasRecord,
+                'clickable': !item.isFuture
+              }"
+              @click="navigateToEdit(item.diaryDate, item)"
+            >
+              <span class="date-num" v-if="!isToday(item.diaryDate)">{{ dayjs(item.diaryDate).date() }}</span>
+              <span class="date-num today-label" v-else>今天</span>
+              
+              <div class="record-indicator">
+                <div v-if="item.hasRecord" class="mood-box" :style="{ backgroundColor: item.emotionTagColor || getMoodById(item.emotionTagId || 6).color }">
+                  <img :src="getMoodById(item.emotionTagId || 6).icon" class="mood-icon" />
+                </div>
+                <div v-else-if="!item.isFuture" class="empty-circle"></div>
+                <!-- if future, no circle -->
               </div>
-              <div v-else-if="!item.isFuture" class="empty-circle"></div>
-              <!-- if future, no circle -->
             </div>
+          </TransitionGroup>
+
+          <!-- 加载遮罩 -->
+          <div v-if="moodStore.loading" class="loading-overlay">
+             <div class="spinner"></div>
           </div>
         </div>
       </div>
@@ -139,6 +145,70 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* 容器入场动画 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+/* 日历格子交错动画 */
+.staggered-fade-enter-active {
+  transition: all 0.4s ease;
+  transition-delay: calc(var(--delay) * 0.015s);
+}
+.staggered-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(10px);
+}
+
+.days-wrapper {
+  position: relative;
+  min-height: 400px;
+}
+
+.days-wrapper.is-loading .days-grid {
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.4);
+  z-index: 5;
+  border-radius: 12px;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #d97d7a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .calendar-page {
   min-height: 100vh;
   background-color: #fcfcfc;

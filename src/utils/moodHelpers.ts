@@ -27,3 +27,10 @@ export type MoodItem = (typeof MOODS)[number]
 export const getMoodById = (id: number): MoodItem => {
   return MOODS.find((m) => m.id === id) ?? MOODS[3] ?? MOODS[0]!
 }
+
+export const preloadMoodIcons = () => {
+  MOODS.forEach((m) => {
+    const img = new Image()
+    img.src = m.icon
+  })
+}

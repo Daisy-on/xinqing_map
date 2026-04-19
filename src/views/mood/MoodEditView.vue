@@ -4,11 +4,13 @@ import { useRouter, useRoute } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { MOODS, getMoodById } from '@/utils/moodHelpers'
 import { checkInToday, backfillDiary, updateDiary, getDiaryDetail } from '@/api/mood'
+import { useMoodStore } from '@/stores/mood'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
+const moodStore = useMoodStore()
 
 const rawDate = route.params.date as string
 const isToday = dayjs(rawDate).isSame(dayjs(), 'day')
@@ -89,6 +91,7 @@ const handleComplete = async () => {
       await backfillDiary({ diaryDate: rawDate, ...payload })
       ElMessage.success('补卡成功')
     }
+    moodStore.clearCache()
     router.replace('/mood/calendar')
   } catch (error) {
     console.error('Failed to submit diary', error)
