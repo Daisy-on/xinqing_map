@@ -64,7 +64,7 @@
           @click="prevPage" 
           round
         >
-          上一页
+          <el-icon><ArrowLeft /></el-icon> 上一页
         </el-button>
         <span class="page-indicator">{{ currentPage }} / {{ Math.ceil(totalPosts / 10) }}</span>
         <el-button 
@@ -72,7 +72,7 @@
           @click="nextPage" 
           round
         >
-          下一页
+          下一页 <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
     </div>
@@ -140,7 +140,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, CloseBold, UserFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, CloseBold, UserFilled } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
@@ -492,16 +492,16 @@ const likeInBubble = async (post: PostItem, event: MouseEvent) => {
 
 const bubbleStyleByIndex = (index: number) => {
   const presets = [
-    { top: '14%', left: '4%' },
-    { top: '18%', left: '56%' },
-    { top: '34%', left: '14%' },
-    { top: '38%', left: '62%' },
-    { top: '50%', left: '6%' },
-    { top: '56%', left: '52%' },
-    { top: '70%', left: '20%' },
-    { top: '74%', left: '58%' },
-    { top: '86%', left: '10%' },
-    { top: '86%', left: '60%' },
+    { top: '10%', left: '4%' },
+    { top: '14%', left: '56%' },
+    { top: '28%', left: '14%' },
+    { top: '32%', left: '62%' },
+    { top: '44%', left: '6%' },
+    { top: '48%', left: '52%' },
+    { top: '62%', left: '20%' },
+    { top: '61%', left: '56%' },
+    { top: '78%', left: '10%' },
+    { top: '78%', left: '60%' },
   ]
 
   const value = presets[index % presets.length] ?? { top: '26%', left: '10%' }
@@ -517,7 +517,6 @@ const bubbleClassByIndex = (index: number) => {
   const classes = ['bubble-a', 'bubble-b', 'bubble-c']
   return classes[index % classes.length]
 }
-
 const loadLocation = async () => {
   const locations = await fetchLocationList()
   currentLocation.value = locations.find((item) => item.id === spotId.value) ?? null
@@ -695,19 +694,9 @@ onBeforeUnmount(() => {
   gap: 16px;
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(12px);
-  padding: 8px 24px;
-  border-radius: 30px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  padding: 6px 12px;
+  border-radius: 20px;
 }
-
-.page-indicator {
-  font-size: 14px;
-  font-weight: 500;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-}
-
 .bubbles-layer {
   position: absolute;
   inset: 0;

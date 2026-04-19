@@ -335,12 +335,12 @@ const formatContent = (text: string) => {
 
 .hint-icon { font-size: 20px; }
 .firefly-icon {
-  text-shadow: 0 0 10px rgba(253, 224, 71, 0.8), 0 0 20px rgba(253, 224, 71, 0.4);
+  text-shadow: 0 0 15px rgba(253, 224, 71, 0.9), 0 0 30px rgba(253, 224, 71, 0.6);
   animation: firefly-glow 2s infinite alternate;
 }
 @keyframes firefly-glow {
-  from { opacity: 0.8; filter: drop-shadow(0 0 2px #fde047); }
-  to { opacity: 1; filter: drop-shadow(0 0 8px #fde047); }
+  from { opacity: 0.7; filter: drop-shadow(0 0 5px #fde047); transform: scale(0.9); }
+  to { opacity: 1; filter: drop-shadow(0 0 15px #fde047) brightness(1.2); transform: scale(1.1); }
 }
 .hint-text { display: flex; flex-direction: column; }
 .hint-title { font-size: 14px; font-weight: 600; color: #4b5563; }
