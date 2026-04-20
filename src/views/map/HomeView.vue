@@ -968,6 +968,23 @@ onBeforeUnmount(() => {
     width: 36px;
     height: 36px;
   }
+
+  .capsule-entry-btn {
+    right: 16px;
+    bottom: 40px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .capsule-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .capsule-text {
+    font-size: 8px;
+    transform: scale(0.9);
+  }
 }
 
 /* 心情胶囊悬浮按钮 */
