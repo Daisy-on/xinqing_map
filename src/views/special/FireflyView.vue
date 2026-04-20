@@ -399,14 +399,15 @@ const formatContent = (text: string) => {
 }
 
 /* 其他信封组装部分 (背板、纸张等复用原设计) */
-.envelope-back { position: absolute; inset: 0; background: #f0ebe1; border-radius: 6px; }
+.envelope-back { position: absolute; inset: 0; background: #f0ebe1; border-radius: 6px; z-index: 5; }
 .inner-paper {
   position: absolute; top: 10px; left: 15px; right: 15px; bottom: 10px; background: #fffefb;
   border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.02); z-index: 10;
-  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease; transition-delay: 0.3s;
+  /* 阅信动作：当 is-open 时，先等封盖打开(0.6s)再弹出信纸 */
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s, opacity 0.5s ease;
 }
 .paper-preview { margin: 20px; height: 8px; background: #f0f0f0; border-radius: 4px; width: 60%; box-shadow: 0 16px 0 #f0f0f0, 0 32px 0 #f0f0f0; }
-.envelope-wrapper.is-open .inner-paper { transform: translateY(-80px) !important; }
+.envelope-wrapper.is-open .inner-paper { transform: translateY(-80px) !important; z-index: 10; }
 .envelope-pocket {
   position: absolute; bottom: 0; left: 0; width: 0; height: 0; border-style: solid;
   border-width: 100px 160px; border-color: transparent #ede7db #e3dccf #ede7db;
@@ -415,9 +416,23 @@ const formatContent = (text: string) => {
 .envelope-flap {
   position: absolute; top: 0; left: 0; width: 0; height: 0; border-style: solid;
   border-width: 110px 160px 0 160px; border-color: #e6dfd1 transparent transparent transparent;
-  transform-origin: top center; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); z-index: 30; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.03));
+  transform-origin: top center; 
+  /* 封盖动作：开启时长0.6s，关闭时应等待信纸缩回(0.6s)再闭合 */
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0s; 
+  z-index: 30; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.03));
 }
-.envelope-wrapper.is-open .envelope-flap { transform: rotateX(180deg); z-index: 5; }
+.envelope-wrapper.is-open .envelope-flap { 
+  transform: rotateX(180deg); 
+  z-index: 5; 
+  transition-delay: 0s; /* 打开时立即响应 */
+}
+/* 核心逻辑：当 wrapper 不是 is-open (即关闭时) 的延迟处理 */
+.envelope-wrapper:not(.is-open) .envelope-flap {
+  transition-delay: 0.6s; /* 等待信纸缩回动画结束后再合盖 */
+}
+.envelope-wrapper:not(.is-open) .inner-paper {
+  transition-delay: 0s; /* 关闭时信纸立即开始缩回 */
+}
 .stamp {
   position: absolute; bottom: 20px; right: 20px; background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(4px); padding: 6px 12px; border-radius: 12px; font-size: 12px;
