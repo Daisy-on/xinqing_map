@@ -51,7 +51,7 @@
               @click.stop="likeInBubble(post, $event)"
               aria-label="点赞"
             >
-              <span class="bubble-heart" aria-hidden="true">❤</span>
+              <span class="bubble-heart" aria-hidden="true">{{ post.liked ? '❤' : '♡' }}</span>
               <span class="bubble-like-count">{{ post.likeCount ?? 0 }}</span>
             </button>
           </article>
@@ -126,7 +126,7 @@
               @click="likeSelected"
               aria-label="点赞"
             >
-              <span class="heart-icon" aria-hidden="true">❤</span>
+              <span class="heart-icon" aria-hidden="true">{{ selectedPost?.liked ? '❤' : '♡' }}</span>
               <span>{{ selectedLikeCount }}</span>
             </button>
           </footer>
@@ -842,14 +842,40 @@ onBeforeUnmount(() => {
 }
 
 .bubble-like-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.72;
+  opacity: 1;
 }
 
 .bubble-like-btn.liked {
   background: rgba(255, 221, 230, 0.96);
   border-color: rgba(224, 81, 118, 0.52);
   color: #b82e55;
+  animation: liked-pulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.bubble-like-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(224, 81, 118, 0.4) 0%, transparent 70%);
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bubble-like-btn.liked::after {
+  animation: ripple 0.5s ease-out;
+}
+
+@keyframes liked-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
 .bubble-heart {
@@ -1018,12 +1044,30 @@ onBeforeUnmount(() => {
 }
 
 .detail-like-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 1;
 }
 
 .detail-like-btn.liked {
   color: #b73557;
+  animation: liked-pulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.detail-like-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 81, 118, 0.3) 0%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.detail-like-btn.liked::after {
+  animation: ripple 0.5s ease-out;
 }
 
 .heart-icon {

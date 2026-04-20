@@ -31,7 +31,7 @@
           <span class="brand-title">心晴地图</span>
         </div>
       </div>
-      <div class="loading-subtitle">拨开云雾，遇见晴空</div>
+      <div class="loading-subtitle">拨开阴霾，遇见新晴</div>
     </div>
   </div>
 </template>
@@ -66,7 +66,7 @@ const props = defineProps<{
 .sky-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #66A6FF 0%, #89F7FE 100%);
+  background: linear-gradient(180deg, #2e9bef 0%, #dbe0e0 100%);
   opacity: 0;
   animation: skyClear 3s ease-in-out forwards 0.5s;
 }
@@ -101,8 +101,8 @@ const props = defineProps<{
 }
 
 .rainbow {
-  width: 140vw;
-  height: 140vw;
+  width: 100vw;
+  height: 90vw; 
   border-radius: 50%;
   box-shadow: 
     inset 0 0 0 16px rgba(255, 105, 97, 0.4),
@@ -113,7 +113,8 @@ const props = defineProps<{
     inset 0 0 0 96px rgba(89, 173, 246, 0.4),
     inset 0 0 0 112px rgba(157, 148, 255, 0.4);
   filter: blur(28px);
-  clip-path: inset(100% 0 0 0);
+  /* 初始裁剪掉底部一半，只保留拱桥部分 */
+  clip-path: inset(0 0 50% 0);
   animation: rainbowGrow 3s cubic-bezier(0.25, 1, 0.5, 1) forwards 2.2s;
 }
 
@@ -213,8 +214,8 @@ const props = defineProps<{
 }
 
 @keyframes rainbowGrow {
-  0% { clip-path: inset(100% 0 0 0); transform: scale(0.95); }
-  100% { clip-path: inset(0% 0 0 0); transform: scale(1); }
+  0% { clip-path: inset(50% 0 50% 0); transform: scale(0.95); }
+  100% { clip-path: inset(0% 0 50% 0); transform: scale(1); }
 }
 
 @keyframes logoReveal {
