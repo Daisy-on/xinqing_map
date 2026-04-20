@@ -9,15 +9,16 @@
       <div class="rainbow"></div>
     </div>
     
-    <!-- 3D 云层穿梭隧道 -->
-    <div class="cloud-tunnel">
-      <div class="cloud t-cloud-1"></div>
-      <div class="cloud t-cloud-2"></div>
-      <div class="cloud t-cloud-3"></div>
-      <div class="cloud t-cloud-4"></div>
-      <div class="cloud t-cloud-5"></div>
-      <div class="cloud t-cloud-6"></div>
-      <div class="cloud t-cloud-7"></div>
+    <!-- 3D 穿梭 WebM 视频 (替代以前的图片云层) -->
+    <div class="video-container">
+      <video 
+        autoplay 
+        muted 
+        playsinline
+        class="splash-video"
+      >
+        <source src="@/assets/video/output.webm" type="video/webm">
+      </video>
     </div>
 
     <!-- 中心地标 -->
@@ -52,7 +53,7 @@ const props = defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
-  perspective: 600px; /* 开启 3D 景深 */
+  perspective: 800px; /* 增加景深，让穿片感更强 */
   transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 2.5s ease;
 }
 
@@ -104,53 +105,35 @@ const props = defineProps<{
   height: 140vw;
   border-radius: 50%;
   box-shadow: 
-    inset 0 0 0 16px rgba(255, 105, 97, 0.5),
-    inset 0 0 0 32px rgba(255, 180, 128, 0.5),
-    inset 0 0 0 48px rgba(248, 243, 141, 0.5),
-    inset 0 0 0 64px rgba(66, 214, 164, 0.5),
-    inset 0 0 0 80px rgba(8, 202, 209, 0.5),
-    inset 0 0 0 96px rgba(89, 173, 246, 0.5),
-    inset 0 0 0 112px rgba(157, 148, 255, 0.5);
-  filter: blur(24px);
-  clip-path: inset(100% 0 0 0); /* 初始裁切隐藏 */
+    inset 0 0 0 16px rgba(255, 105, 97, 0.4),
+    inset 0 0 0 32px rgba(255, 180, 128, 0.4),
+    inset 0 0 0 48px rgba(248, 243, 141, 0.4),
+    inset 0 0 0 64px rgba(66, 214, 164, 0.4),
+    inset 0 0 0 80px rgba(8, 202, 209, 0.4),
+    inset 0 0 0 96px rgba(89, 173, 246, 0.4),
+    inset 0 0 0 112px rgba(157, 148, 255, 0.4);
+  filter: blur(28px);
+  clip-path: inset(100% 0 0 0);
   animation: rainbowGrow 3s cubic-bezier(0.25, 1, 0.5, 1) forwards 2.2s;
 }
 
-/* 云层穿梭隧道 */
-.cloud-tunnel {
+/* 视频容器 */
+.video-container {
   position: absolute;
   inset: 0;
-  transform-style: preserve-3d;
+  z-index: 5;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cloud {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60vw;
-  height: 40vh;
-  background: radial-gradient(circle, #ffffff 20%, rgba(255, 255, 255, 0.6) 60%, transparent 100%);
-  border-radius: 50%;
-  filter: blur(30px);
-  opacity: 0;
+.splash-video {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  /* 如果导出的 WebM 带 Alpha 透明通道，背景会自动透出底部的彩虹 */
 }
-
-/* 核心：穿越云层的 3D 关键帧 */
-@keyframes cloud-pierce {
-  0% { transform: translate3d(var(--cx), var(--cy), -500px) scale(0.4); opacity: 0; }
-  40% { opacity: 1; }
-  100% { transform: translate3d(var(--cx), var(--cy), 800px) scale(3.5); opacity: 0; }
-}
-
-/* 通过改变 --cx 和 --cy 产生不同位置的云朵穿梭 */
-.t-cloud-1 { --cx: -100%; --cy: -80%; animation: cloud-pierce 2.5s ease-in forwards 0.1s; }
-.t-cloud-2 { --cx: 80%; --cy: 80%; animation: cloud-pierce 2.8s ease-in forwards 0.3s; }
-.t-cloud-3 { --cx: -60%; --cy: 100%; animation: cloud-pierce 2.6s ease-in forwards 0.5s; width: 80vw; }
-.t-cloud-4 { --cx: 90%; --cy: -60%; animation: cloud-pierce 3s ease-in forwards 0.7s; height: 50vh; }
-.t-cloud-5 { --cx: -20%; --cy: -130%; animation: cloud-pierce 2.7s ease-in forwards 0.9s; width: 90vw; }
-.t-cloud-6 { --cx: 30%; --cy: 110%; animation: cloud-pierce 2.4s ease-in forwards 1.1s; }
-.t-cloud-7 { --cx: -10%; --cy: 20%; animation: cloud-pierce 2.9s ease-in forwards 1.3s; }
 
 /* Logo 与 Slogan 沉浸式出现 */
 .splash-logo {
@@ -174,6 +157,7 @@ const props = defineProps<{
   padding: 16px 28px;
   border-radius: 28px;
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
@@ -207,7 +191,7 @@ const props = defineProps<{
   font-size: 15px;
   color: #3b5068;
   font-weight: 600;
-  letter-spacing: 12px; /* 初始大间距 */
+  letter-spacing: 12px;
   text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
   animation: subtitleFocus 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards 2.6s;
 }
