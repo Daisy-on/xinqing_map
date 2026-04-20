@@ -2,8 +2,9 @@
 import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import { ArrowLeft, Microphone, Mute, Promotion } from '@element-plus/icons-vue'
 import { openCapsule, publishCapsule } from '@/api/capsule'
+import { uploadFile } from '@/api/file'
 import type { CapsuleVO } from '@/types/models'
 
 const router = useRouter()
@@ -14,6 +15,16 @@ const isDrawing = ref(false)
 const cooldownTimer = ref(0)
 const capsuleResult = ref<CapsuleVO | null>(null)
 let intervalId: number | null = null
+
+// ==== 语音录制相关状态 ====
+const inputType = ref<'text' | 'voice'>('text')
+const isRecording = ref(false)
+const audioRecord = ref<Blob | null>(null)
+const audioUrl = ref<string>('')
+const recordDuration = ref(0) // 录音时长(秒)
+let recordTimerId: number | null = null
+let mediaRecorder: MediaRecorder | null = null
+let audioChunks: BlobPart[] = []
 
 const startCooldown = () => {
   cooldownTimer.value = 5
@@ -63,21 +74,123 @@ const isPublishing = ref(false)
 
 const goToWrite = () => {
   currentView.value = 'writing'
+  inputType.value = 'text'
+  clearRecording()
+}
+
+// ==== 语音录制逻辑 ====
+const toggleInputType = () => {
+  if (inputType.value === 'text') {
+    inputType.value = 'voice'
+  } else {
+    inputType.value = 'text'
+  }
+}
+
+const clearRecording = () => {
+  if (isRecording.value) stopRecording()
+  audioRecord.value = null
+  if (audioUrl.value) {
+    URL.revokeObjectURL(audioUrl.value)
+    audioUrl.value = ''
+  }
+  recordDuration.value = 0
+  audioChunks = []
+}
+
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    
+    // 优先使用 webm 后端支持，对 Safari 也会自动降级
+    let mimeType = 'audio/webm;codecs=opus'
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'audio/mp4' // iOS Safari fallback
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = '' // Let browser choose default
+      }
+    }
+
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+    audioChunks = []
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data)
+      }
+    }
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || 'audio/webm' })
+      audioRecord.value = blob
+      audioUrl.value = URL.createObjectURL(blob)
+      stream.getTracks().forEach(track => track.stop()) // 停止麦克风流
+    }
+
+    mediaRecorder.start(200) // 切片录制，方便实时获取数据
+    isRecording.value = true
+    recordDuration.value = 0
+    
+    recordTimerId = window.setInterval(() => {
+      recordDuration.value++
+      // 限制 60 秒录制
+      if (recordDuration.value >= 60) {
+        stopRecording()
+        ElMessage.info('最多只能录制60秒哦')
+      }
+    }, 1000)
+
+  } catch (error) {
+    console.error('麦克风访问失败', error)
+    ElMessage.error('无法获取麦克风权限，请检查浏览器设置')
+    inputType.value = 'text'
+  }
+}
+
+const stopRecording = () => {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop()
+  }
+  isRecording.value = false
+  if (recordTimerId) {
+    clearInterval(recordTimerId)
+    recordTimerId = null
+  }
+}
+
+// 格式化时长 (mm:ss)
+const formatDuration = (seconds: number) => {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0')
+  const s = (seconds % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
 }
 
 const handlePublish = async () => {
-  if (!publishForm.content.trim()) {
+  if (inputType.value === 'text' && !publishForm.content.trim()) {
     ElMessage.warning('胶囊内容不能为空哦')
+    return
+  }
+  if (inputType.value === 'voice' && !audioRecord.value) {
+    ElMessage.warning('请先录制一段语音')
     return
   }
 
   isPublishing.value = true
   try {
-    await publishCapsule({ content: publishForm.content, type: 0 })
+    if (inputType.value === 'voice') {
+      const file = new File([audioRecord.value!], `capsule_voice_${Date.now()}.webm`, { type: audioRecord.value!.type })
+      const uploadedUrl = await uploadFile(file)
+      await publishCapsule({ content: uploadedUrl, type: 2 })
+    } else {
+      await publishCapsule({ content: publishForm.content, type: 0 })
+    }
+    
     ElMessage.success('投递成功，温暖已汇入玻璃瓶！')
     publishForm.content = ''
+    clearRecording()
     currentView.value = 'main'
   } catch (error) {
+    console.error('发布失败', error)
   } finally {
     isPublishing.value = false
   }
@@ -85,14 +198,45 @@ const handlePublish = async () => {
 
 const goBack = () => {
   if (['result', 'writing'].includes(currentView.value)) {
+    if (currentView.value === 'writing') {
+      clearRecording()
+    }
     currentView.value = 'main'
   } else {
     router.push('/')
   }
 }
 
+const isPlayingResult = ref(false)
+const resultAudioPlayer = ref<HTMLAudioElement | null>(null)
+
+const togglePlayResult = (url: string) => {
+  if (!resultAudioPlayer.value) {
+    resultAudioPlayer.value = new Audio(url)
+    resultAudioPlayer.value.onended = () => { isPlayingResult.value = false }
+    resultAudioPlayer.value.onpause = () => { isPlayingResult.value = false }
+    resultAudioPlayer.value.onplay = () => { isPlayingResult.value = true }
+  }
+  
+  if (resultAudioPlayer.value.src !== url) {
+    resultAudioPlayer.value.src = url
+  }
+
+  if (isPlayingResult.value) {
+    resultAudioPlayer.value.pause()
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    resultAudioPlayer.value.play()
+  }
+}
+
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
+  clearRecording()
+  if (resultAudioPlayer.value) {
+    resultAudioPlayer.value.pause()
+    resultAudioPlayer.value = null
+  }
 })
 </script>
 
@@ -184,7 +328,18 @@ onUnmounted(() => {
               <div class="capsule-icon"></div>
             </div>
             <div class="card-inner">
-              <p class="content-text">{{ capsuleResult?.content }}</p>
+              <template v-if="capsuleResult?.type === 2">
+                <div class="voice-bubble" @click="togglePlayResult(capsuleResult.content)">
+                  <el-icon class="voice-icon" :class="{ 'is-playing': isPlayingResult }"><Microphone /></el-icon>
+                  <span class="voice-text">{{ isPlayingResult ? '播放中...' : '点击播放语音' }}</span>
+                  <div v-if="isPlayingResult" class="voice-waves">
+                    <span class="wave"></span><span class="wave"></span><span class="wave"></span>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <p class="content-text">{{ capsuleResult?.content }}</p>
+              </template>
               <div class="card-footer">
                 <span class="author">— {{ capsuleResult?.creatorName || '匿名' }}</span>
               </div>
@@ -197,14 +352,49 @@ onUnmounted(() => {
         <div v-else-if="currentView === 'writing'" class="view-writing">
           <div class="writing-card">
             <div class="card-deco"><div class="capsule-icon write-mode"></div></div>
-            <h3 class="writing-title">装填胶囊</h3>
-            <textarea 
-              v-model="publishForm.content" 
-              class="custom-textarea"
-              placeholder="写下你的小秘密，封装进胶囊..."
-              maxlength="500"
-            ></textarea>
-            <div class="word-limit">{{ publishForm.content.length }}/500</div>
+            <h3 class="writing-title">
+              装填胶囊
+              <el-button class="type-switch-btn" size="small" type="primary" link @click="toggleInputType">
+                切换为{{ inputType === 'text' ? '语音' : '文字' }}
+              </el-button>
+            </h3>
+
+            <!-- 文字输入 -->
+            <template v-if="inputType === 'text'">
+              <textarea 
+                v-model="publishForm.content" 
+                class="custom-textarea"
+                placeholder="写下你的心情或小秘密..."
+                maxlength="500"
+              ></textarea>
+              <div class="word-limit">{{ publishForm.content.length }}/500</div>
+            </template>
+
+            <!-- 语音输入 -->
+            <template v-else>
+              <div class="voice-recorder-container">
+                <div class="voice-status" :class="{ 'is-recording': isRecording }">
+                  <span v-if="!isRecording && !audioRecord">点击底部按钮开始录音</span>
+                  <span v-else-if="isRecording" class="recording-time">{{ formatDuration(recordDuration) }}</span>
+                  <span v-else class="audio-played-status">
+                    录音完成，可试听或重新录制 ({{ formatDuration(recordDuration) }})
+                  </span>
+                </div>
+                
+                <div class="voice-controls">
+                  <button v-if="audioRecord && !isRecording" class="btn-voice-sec" @click="clearRecording">重录</button>
+                  <button 
+                    class="btn-voice-main" 
+                    :class="{ 'recording': isRecording }"
+                    @click="isRecording ? stopRecording() : startRecording()"
+                  >
+                    <el-icon><Microphone v-if="!isRecording" /><Mute v-else /></el-icon>
+                  </button>
+                  <button v-if="audioRecord && !isRecording" class="btn-voice-sec" @click="togglePlayResult(audioUrl)">试听</button>
+                </div>
+              </div>
+            </template>
+
             <button 
               class="btn-publish" 
               :class="{ 'is-loading': isPublishing }"
@@ -720,11 +910,168 @@ onUnmounted(() => {
 }
 
 .writing-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-size: 20px;
   font-weight: 600;
   margin-bottom: 24px;
   color: #1e293b;
   text-align: center;
+}
+
+.type-switch-btn {
+  margin-left: 12px;
+  font-size: 14px;
+}
+
+/* 语音控制区样式 */
+.voice-recorder-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+  min-height: 180px;
+}
+
+.voice-status {
+  font-size: 15px;
+  color: #64748b;
+  margin-bottom: 24px;
+  min-height: 24px;
+}
+
+.voice-status.is-recording .recording-time {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 18px;
+  animation: pulse-recording 1s infinite;
+}
+
+.audio-played-status {
+  color: #38bdf8;
+  font-weight: 500;
+}
+
+@keyframes pulse-recording {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.voice-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.btn-voice-main {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  color: white;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(129, 140, 248, 0.4);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-voice-main:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 28px rgba(129, 140, 248, 0.5);
+}
+
+.btn-voice-main.recording {
+  background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%);
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.4);
+  animation: ripple-recording 1.5s infinite;
+}
+
+@keyframes ripple-recording {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+  70% { box-shadow: 0 0 0 16px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+
+.btn-voice-sec {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  background: white;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-voice-sec:hover {
+  background: #f8fafc;
+  color: #38bdf8;
+  border-color: #38bdf8;
+}
+
+/* 语音气泡组件 */
+.voice-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 12px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.voice-bubble:hover {
+  background: #dbeafe;
+  transform: translateY(-2px);
+}
+
+.voice-icon {
+  font-size: 20px;
+  color: #3b82f6;
+}
+
+.voice-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1e3a8a;
+  min-width: 100px;
+  text-align: left;
+}
+
+.voice-waves {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+  margin-left: 4px;
+}
+
+.wave {
+  width: 3px;
+  height: 4px;
+  background-color: #3b82f6;
+  border-radius: 3px;
+  animation: wave-bounce 1s ease-in-out infinite;
+}
+
+.wave:nth-child(2) { animation-delay: 0.2s; }
+.wave:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes wave-bounce {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
 }
 
 .custom-textarea {
