@@ -48,12 +48,23 @@ const goToLetter = () => {
   height: 12px;
   background-color: #e4ff00;
   border-radius: 50%;
-  left: -20px;
-  bottom: 20%;
+  left: 50%;
+  top: 50%;
+  margin-left: -6px;
+  margin-top: -6px;
   box-shadow: 0 0 15px 4px rgba(228, 255, 0, 0.8),
               0 0 30px 8px rgba(228, 255, 0, 0.4);
-  animation: flightPath 4s cubic-bezier(0.25, 1, 0.5, 1) forwards,
-             glowPulse 1.5s infinite alternate;
+  /* 
+     串联动画：
+     1. flightPath: 飞入并穿透中心 (执行 3s)
+     2. agileOrbit: 3s 后开启不规则多维旋转
+     3. glowPulse: 持续的发光呼吸感
+  */
+  animation: 
+    flightPath 3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    agileOrbit 12s 3s infinite ease-in-out,
+    glowPulse 1.5s infinite alternate;
+  z-index: 10000;
 }
 
 .delivery-popup {
@@ -61,28 +72,31 @@ const goToLetter = () => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 24px;
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.85); /* 高不透明度浅色背景 */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 32px;
+  border-radius: 24px;
   text-align: center;
   pointer-events: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  color: #fff;
-  animation: slideUp 0.8s 2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+  color: #1e293b; /* 深色文字确保易读性 */
+  z-index: 9999;
+  animation: slideUp 0.8s 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .delivery-popup h3 {
-  margin: 0 0 8px;
-  font-weight: 600;
-  font-size: 1.1rem;
+  margin: 0 0 10px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #0f172a;
 }
 .delivery-popup p {
-  margin: 0 0 20px;
-  font-size: 0.9rem;
-  opacity: 0.9;
+  margin: 0 0 24px;
+  font-size: 0.95rem;
+  color: #64748b; /* 优雅的次要文字颜色 */
+  line-height: 1.5;
 }
 
 .actions {
@@ -92,33 +106,56 @@ const goToLetter = () => {
 }
 .actions button {
   border: none;
-  padding: 8px 16px;
-  border-radius: 12px;
+  padding: 10px 24px;
+  border-radius: 14px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-read {
-  background: #e4ff00;
-  color: #333;
-  box-shadow: 0 4px 12px rgba(228, 255, 0, 0.3);
-}
-.btn-read:active { transform: scale(0.96); }
-.btn-later {
-  background: rgba(255, 255, 255, 0.1);
+  background: #38bdf8; /* 改为品牌蓝，对比度更佳且更治愈 */
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+}
+.btn-read:hover {
+  background: #0ea5e9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.35);
+}
+.btn-read:active { transform: translateY(0) scale(0.98); }
+
+.btn-later {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.btn-later:hover {
+  background: #e2e8f0;
+  color: #475569;
 }
 
 @keyframes flightPath {
-  0% { transform: translate(0, 0) scale(0.5); }
-  50% { transform: translate(45vw, -30vh) scale(1.2); }
-  100% { transform: translate(50vw, -45vh) scale(1); opacity: 0; }
+  0% { transform: translate(-55vw, 40vh) scale(0.3); opacity: 0; }
+  35% { opacity: 1; transform: translate(-10vw, 5vh) scale(1.3); }
+  65% { transform: translate(0, 0) scale(0.7); filter: blur(1px); } /* 穿透中心 */
+  100% { transform: translate(160px, -120px) scale(1.1); opacity: 1; }
 }
+
+@keyframes agileOrbit {
+  0% { transform: translate(160px, -120px); }
+  25% { transform: translate(-180px, -80px) rotate(-15deg) scale(0.9); }
+  45% { transform: translate(0, 0) scale(1.4); filter: brightness(1.5) blur(0); } /* 再次穿梭中心 */
+  70% { transform: translate(140px, 100px) rotate(15deg) scale(0.8); }
+  90% { transform: translate(-120px, 110px) scale(1); }
+  100% { transform: translate(160px, -120px); }
+}
+
 @keyframes glowPulse {
-  from { opacity: 0.7; box-shadow: 0 0 10px 2px rgba(228, 255, 0, 0.8); }
-  to { opacity: 1; box-shadow: 0 0 20px 6px rgba(228, 255, 0, 1), 0 0 40px 10px rgba(228, 255, 0, 0.4); }
+  from { opacity: 0.8; box-shadow: 0 0 15px 4px rgba(228, 255, 0, 0.7); }
+  to { opacity: 1; box-shadow: 0 0 25px 8px rgba(228, 255, 0, 1), 0 0 45px 12px rgba(228, 255, 0, 0.3); }
 }
+
 @keyframes slideUp {
   0% { transform: translate(-50%, -40%); opacity: 0; filter: blur(4px); }
   100% { transform: translate(-50%, -50%); opacity: 1; filter: blur(0); }
