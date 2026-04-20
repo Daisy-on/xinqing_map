@@ -24,9 +24,7 @@
     <!-- 中心地标 -->
     <div class="splash-logo">
       <div class="brand-group">
-        <div class="brand-mark">
-          <div class="brand-core"></div>
-        </div>
+        <img src="@/assets/iocn/logo.png" class="brand-logo-img" alt="心晴地图 Logo" />
         <div class="brand-text-wrap">
           <span class="brand-title">心晴地图</span>
         </div>
@@ -155,30 +153,17 @@ const props = defineProps<{
   align-items: center;
   gap: 12px;
   background: rgba(255, 255, 255, 0.75);
-  padding: 16px 28px;
+  padding: 12px 28px;
   border-radius: 28px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
-.brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  position: relative;
-  background: linear-gradient(145deg, #ff6f4a 0%, #ff9a44 60%, #ffd166 100%);
-  box-shadow: 0 6px 14px rgba(255, 111, 74, 0.35);
-}
-
-.brand-core {
-  position: absolute;
-  top: 13px;
-  left: 13px;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 35%, #fffad8 0%, #ffe27b 40%, #ffc145 100%);
+.brand-logo-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
 }
 
 .brand-title {

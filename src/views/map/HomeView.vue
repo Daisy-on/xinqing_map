@@ -3,9 +3,7 @@
   <main class="home-view">
     <header class="top-nav-bar">
       <button class="project-brand" type="button" @click="router.push('/')">
-        <span class="brand-mark" aria-hidden="true">
-          <span class="brand-core"></span>
-        </span>
+        <img src="@/assets/iocn/logo.png" class="brand-logo-img" alt="Logo" />
         <span class="brand-text-wrap">
           <span class="brand-title">心晴地图</span>
           <span class="brand-subtitle">XINQING MAP</span>
@@ -811,23 +809,10 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  position: relative;
-  background: linear-gradient(145deg, #ff6f4a 0%, #ff9a44 60%, #ffd166 100%);
-  box-shadow: 0 6px 14px rgba(255, 111, 74, 0.35);
-}
-
-.brand-core {
-  position: absolute;
-  top: 9px;
-  left: 9px;
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 35% 35%, #fffad8 0%, #ffe27b 40%, #ffc145 100%);
+.brand-logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .brand-text-wrap {
@@ -917,16 +902,9 @@ onBeforeUnmount(() => {
     padding: 10px 14px;
   }
 
-  .brand-mark {
-    width: 30px;
-    height: 30px;
-  }
-
-  .brand-core {
-    top: 8px;
-    left: 8px;
-    width: 14px;
-    height: 14px;
+  .brand-logo-img {
+    width: 32px;
+    height: 32px;
   }
 
   .brand-title {
