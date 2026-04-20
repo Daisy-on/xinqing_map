@@ -29,17 +29,6 @@
           </div>
 
           <div class="actions-area" v-if="isLoggedIn">
-            <div class="primary-actions">
-              <el-button class="edit-btn trend-btn" round @click="emit('mood-trend')">心情趋势</el-button>
-              <el-button class="edit-btn mood-btn" round @click="emit('mood-calendar')">心情打卡</el-button>
-              <div class="firefly-icon-btn-wrapper">
-                <el-button class="icon-btn firefly-btn" circle @click="emit('firefly')">
-                  <img class="firefly-svg-icon" :src="fireflyIcon" alt="" aria-hidden="true" />
-                </el-button>
-                <span v-if="hasUnreadLetter" class="glowing-red-dot"></span>
-              </div>
-            </div>
-
             <el-dropdown class="profile-more-dropdown" trigger="click" @command="onProfileActionCommand">
               <button type="button" class="profile-more-trigger" aria-label="更多操作">
                 <el-icon><MoreFilled /></el-icon>
@@ -60,7 +49,6 @@
 
 <script setup lang="ts">
 import { ArrowLeft, MoreFilled, UserFilled } from '@element-plus/icons-vue'
-import fireflyIcon from '@/assets/iocn/yinghuochong.svg'
 import type { User } from '@/types/models'
 
 interface ProfileActionEventMap {
@@ -71,16 +59,12 @@ interface ProfileActionEventMap {
 defineProps<{
   isLoggedIn: boolean
   userInfo: User | null
-  hasUnreadLetter: boolean
 }>()
 
 const emit = defineEmits<{
   (event: 'back'): void
   (event: 'avatar-click'): void
   (event: 'login'): void
-  (event: 'mood-trend'): void
-  (event: 'mood-calendar'): void
-  (event: 'firefly'): void
   (event: 'profile-action', action: 'edit-profile' | 'logout'): void
 }>()
 

@@ -1,8 +1,27 @@
 <template>
   <div class="content-area">
-    <div class="section-title-row">
-      <h2 class="section-title">我的动态</h2>
-      <span class="section-count">{{ posts.length }}</span>
+    <div class="section-title-row qq-space-nav">
+      <div class="nav-item active">
+        <span class="nav-value count">{{ posts.length }}</span>
+        <span class="nav-label">我的动态</span>
+      </div>
+      <div class="nav-actions">
+        <div class="nav-item" @click="emit('mood-trend')">
+          <el-icon class="nav-value icon"><DataLine /></el-icon>
+          <span class="nav-label">心情趋势</span>
+        </div>
+        <div class="nav-item" @click="emit('mood-calendar')">
+          <el-icon class="nav-value icon"><Calendar /></el-icon>
+          <span class="nav-label">心情打卡</span>
+        </div>
+        <div class="nav-item firefly-action" @click="emit('firefly')">
+          <div class="nav-value icon firefly-icon-btn-wrapper">
+            <img src="@/assets/iocn/yinghuochong.svg" class="firefly-svg-icon" alt="" />
+            <span v-if="hasUnreadLetter" class="glowing-red-dot"></span>
+          </div>
+          <span class="nav-label">心遇</span>
+        </div>
+      </div>
     </div>
 
     <div class="grid-list">
@@ -58,19 +77,23 @@
 </template>
 
 <script setup lang="ts">
-import { EditPen, Lock, Location, MoreFilled } from '@element-plus/icons-vue'
+import { EditPen, Lock, Location, MoreFilled, DataLine, Calendar } from '@element-plus/icons-vue'
 import type { UserPostItem } from '@/api/user'
 
 const props = defineProps<{
   posts: UserPostItem[]
   loading: boolean
   deletingPostIds: number[]
+  hasUnreadLetter: boolean
 }>()
 
 const emit = defineEmits<{
   (event: 'open-post', postId: number): void
   (event: 'edit-post', post: UserPostItem): void
   (event: 'delete-post', post: UserPostItem): void
+  (event: 'mood-trend'): void
+  (event: 'mood-calendar'): void
+  (event: 'firefly'): void
 }>()
 
 const isPostDeleting = (postId: number) => props.deletingPostIds.includes(postId)
@@ -84,25 +107,124 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
 
 <style scoped>
 .section-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
   margin-bottom: 24px;
 }
 
-.section-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 500;
-  color: #333;
-  letter-spacing: 0.1em;
+.qq-space-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--el-bg-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-.section-count {
-  font-size: 15px;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.nav-item:hover {
+  opacity: 0.8;
+}
+
+.nav-item.active .nav-value {
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+.nav-item.active .nav-label {
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+}
+
+.nav-value {
+  font-size: 18px;
+  color: var(--el-text-color-regular);
+  margin-bottom: 4px;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-value.count {
+  font-family: var(--el-font-family);
+  font-size: 20px;
+}
+
+.nav-value.icon {
+  font-size: 22px;
+}
+
+.nav-label {
+  font-size: 12px;
   color: var(--el-text-color-secondary);
-  font-weight: 400;
+}
+
+.firefly-icon-btn-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.firefly-svg-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.glowing-red-dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  background-color: #ff4757;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.6);
+  animation: red-pulse 1.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes red-pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .qq-space-nav {
+    padding: 10px 12px;
+  }
+  .nav-actions {
+    gap: 16px;
+  }
+  .nav-value.count {
+    font-size: 18px;
+  }
+  .nav-value.icon {
+    font-size: 20px;
+  }
+  .nav-label {
+    font-size: 11px;
+  }
+  .firefly-svg-icon {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .content-area {

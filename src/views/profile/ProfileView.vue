@@ -3,13 +3,9 @@
     <ProfileHeaderSection
       :is-logged-in="isLoggedIn"
       :user-info="userInfo"
-      :has-unread-letter="letterStore.hasUnreadLetter"
       @back="handleBack"
       @avatar-click="handleAvatarClick"
       @login="handleLoginEntry"
-      @mood-trend="handleMoodTrend"
-      @mood-calendar="handleMoodCalendar"
-      @firefly="handleFireflyClick"
       @profile-action="onProfileActionCommand"
     />
 
@@ -24,9 +20,13 @@
         :posts="userPosts"
         :loading="loadingPosts"
         :deleting-post-ids="deletingPostIds"
+        :has-unread-letter="letterStore.hasUnreadLetter"
         @open-post="handleOpenPost"
         @edit-post="handleEditPost"
         @delete-post="handleDeletePost"
+        @mood-trend="handleMoodTrend"
+        @mood-calendar="handleMoodCalendar"
+        @firefly="handleFireflyClick"
       />
     </div>
   </div>
