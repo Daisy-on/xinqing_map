@@ -34,7 +34,7 @@
               <el-button class="edit-btn mood-btn" round @click="emit('mood-calendar')">心情打卡</el-button>
               <div class="firefly-icon-btn-wrapper">
                 <el-button class="icon-btn firefly-btn" circle @click="emit('firefly')">
-                  <el-icon><MagicStick /></el-icon>
+                  <img class="firefly-svg-icon" :src="fireflyIcon" alt="" aria-hidden="true" />
                 </el-button>
                 <span v-if="hasUnreadLetter" class="glowing-red-dot"></span>
               </div>
@@ -59,7 +59,8 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeft, MagicStick, MoreFilled, UserFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, MoreFilled, UserFilled } from '@element-plus/icons-vue'
+import fireflyIcon from '@/assets/iocn/yinghuochong.svg'
 import type { User } from '@/types/models'
 
 interface ProfileActionEventMap {
@@ -274,6 +275,13 @@ const onProfileActionCommand = (command: string | number | Record<string, unknow
 .firefly-icon-btn-wrapper {
   position: relative;
   display: inline-flex;
+}
+
+.firefly-svg-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  object-fit: contain;
 }
 
 .glowing-red-dot {

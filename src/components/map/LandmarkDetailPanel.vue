@@ -138,7 +138,7 @@ const viewPosts = () => {
 
 .drawer-header {
   position: relative;
-  height: 240px;
+  height: 300px;
   background-color: #f5f7fa;
 }
 

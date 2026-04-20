@@ -13,14 +13,14 @@
       <div class="nav-right-actions">
         <button class="feature-link firefly-link" type="button" @click="handleFireflyClick">
           <div class="firefly-icon-wrapper">
-            <el-icon :size="18"><MagicStick /></el-icon>
-            <span>萤火虫</span>
+            <img class="nav-icon firefly-nav-icon" :src="fireflyIcon" alt="" aria-hidden="true" />
+            <span class="nav-label">萤火虫</span>
             <span v-if="letterStore.hasUnreadLetter" class="glowing-red-dot"></span>
           </div>
         </button>
 
         <button class="feature-link xiaoban-link" type="button" @click="handleXiaobanClick">
-          <el-icon :size="18"><ChatDotRound /></el-icon>
+          <img class="nav-icon xiaoban-nav-icon" :src="xiaobanIcon" alt="" aria-hidden="true" />
           <span>小伴</span>
         </button>
 
@@ -61,7 +61,7 @@
 
     <!-- 心情胶囊入口悬浮图标 -->
     <button class="capsule-entry-btn" type="button" @click="router.push('/capsule')">
-      <el-icon :size="24"><LocationInformation /></el-icon>
+      <img class="capsule-icon" :src="capsuleIcon" alt="" aria-hidden="true" />
       <span class="capsule-text">心情胶囊</span>
     </button>
   </main>
@@ -76,7 +76,10 @@ import { loadBaiduMapGL } from '@/utils/baiduMapLoader'
 import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
-import { ChatDotRound, UserFilled, LocationInformation, MagicStick } from '@element-plus/icons-vue'
+import { UserFilled } from '@element-plus/icons-vue'
+import fireflyIcon from '@/assets/iocn/yinghuochong.svg'
+import xiaobanIcon from '@/assets/iocn/xiaoban.svg'
+import capsuleIcon from '@/assets/iocn/niudanji.svg'
 import type { Location, LocationDetail, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
 import { useLetterStore } from '@/stores/letter'
@@ -847,6 +850,9 @@ onBeforeUnmount(() => {
   cursor: pointer;
   color: #172b45;
   transition: color 0.2s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .feature-link:hover {
@@ -862,8 +868,28 @@ onBeforeUnmount(() => {
 }
 
 .firefly-link {
+  width: 56px;
+  flex-direction: column;
+  gap: 2px;
   font-size: 16px;
   font-weight: 600;
+}
+
+.nav-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.firefly-nav-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.nav-label {
+  font-size: 11px;
+  line-height: 1;
 }
 
 .xiaoban-link {
@@ -877,8 +903,9 @@ onBeforeUnmount(() => {
   font-weight: 600;
 }
 
-.xiaoban-link .el-icon {
-  color: #284e97;
+.xiaoban-nav-icon {
+  width: 18px;
+  height: 18px;
 }
 
 .avatar-entry {
@@ -953,6 +980,13 @@ onBeforeUnmount(() => {
   transition: all 0.3s ease;
 }
 
+.capsule-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
 .capsule-entry-btn:hover {
   transform: translateY(-4px) scale(1.05);
   box-shadow: 0 6px 20px rgba(116, 235, 213, 0.6);
@@ -967,8 +1001,9 @@ onBeforeUnmount(() => {
 .firefly-icon-wrapper {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .glowing-red-dot {
