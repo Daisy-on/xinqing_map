@@ -21,7 +21,7 @@
 
         <button class="feature-link xiaoban-link" type="button" @click="handleXiaobanClick">
           <img class="nav-icon xiaoban-nav-icon" :src="xiaobanIcon" alt="" aria-hidden="true" />
-          <span>小伴</span>
+          <span>心遇</span>
         </button>
 
         <button class="avatar-entry" type="button" aria-label="个人中心" @click="handleProfileEntry">
@@ -938,9 +938,21 @@ onBeforeUnmount(() => {
     font-size: 17px;
   }
 
-  .brand-subtitle,
-  .firefly-link {
+  .brand-subtitle {
     display: none;
+  }
+
+  .firefly-link {
+    width: 48px;
+  }
+
+  .firefly-nav-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .nav-label {
+    font-size: 10px;
   }
 
   .nav-right-actions {

@@ -20,7 +20,7 @@ const checkTimeWindow = () => {
     systemTimeMsg.value = '匹配窗口开放中 (08:00 - 23:00)';
   } else {
     isOpenTime.value = false;
-    systemTimeMsg.value = '小伴休息中了，请在 08:00 - 23:00 来找我吧';
+    systemTimeMsg.value = '小伴休息中，请在 08:00 - 23:00 来找我吧';
   }
 };
 
@@ -63,7 +63,7 @@ const handleCancelMatch = () => {
     <!-- Header -->
     <header class="match-header">
       <el-icon class="back-btn" @click="handleBack"><ArrowLeft /></el-icon>
-      <h2>小伴</h2>
+      <h2>心遇</h2>
       <div class="placeholder"></div>
     </header>
 
