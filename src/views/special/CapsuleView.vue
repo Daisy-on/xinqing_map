@@ -2,7 +2,7 @@
 import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Microphone, Mute, Promotion } from '@element-plus/icons-vue'
+import { ArrowLeft, Microphone, Mute, Promotion, RefreshRight, VideoPause } from '@element-plus/icons-vue'
 import { openCapsule, publishCapsule } from '@/api/capsule'
 import { uploadFile } from '@/api/file'
 import type { CapsuleVO } from '@/types/models'
@@ -79,14 +79,6 @@ const goToWrite = () => {
 }
 
 // ==== 语音录制逻辑 ====
-const toggleInputType = () => {
-  if (inputType.value === 'text') {
-    inputType.value = 'voice'
-  } else {
-    inputType.value = 'text'
-  }
-}
-
 const clearRecording = () => {
   if (isRecording.value) stopRecording()
   audioRecord.value = null
@@ -352,12 +344,26 @@ onUnmounted(() => {
         <div v-else-if="currentView === 'writing'" class="view-writing">
           <div class="writing-card">
             <div class="card-deco"><div class="capsule-icon write-mode"></div></div>
-            <h3 class="writing-title">
-              装填胶囊
-              <el-button class="type-switch-btn" size="small" type="primary" link @click="toggleInputType">
-                切换为{{ inputType === 'text' ? '语音' : '文字' }}
-              </el-button>
-            </h3>
+            
+            <div class="writing-header">
+              <h3 class="writing-title">装填胶囊</h3>
+              <div class="segmented-control">
+                <div 
+                  class="segment-bg" 
+                  :style="{ transform: `translateX(${inputType === 'text' ? '0' : '100%'})` }"
+                ></div>
+                <button 
+                  class="segment-item" 
+                  :class="{ active: inputType === 'text' }"
+                  @click="inputType = 'text'"
+                >文字</button>
+                <button 
+                  class="segment-item" 
+                  :class="{ active: inputType === 'voice' }"
+                  @click="inputType = 'voice'"
+                >语音</button>
+              </div>
+            </div>
 
             <!-- 文字输入 -->
             <template v-if="inputType === 'text'">
@@ -374,23 +380,25 @@ onUnmounted(() => {
             <template v-else>
               <div class="voice-recorder-container">
                 <div class="voice-status" :class="{ 'is-recording': isRecording }">
-                  <span v-if="!isRecording && !audioRecord">点击底部按钮开始录音</span>
+                  <span v-if="!isRecording && !audioRecord">准备就绪</span>
                   <span v-else-if="isRecording" class="recording-time">{{ formatDuration(recordDuration) }}</span>
-                  <span v-else class="audio-played-status">
-                    录音完成，可试听或重新录制 ({{ formatDuration(recordDuration) }})
+                  <span v-else class="audio-played-status" @click="togglePlayResult(audioUrl)">
+                    {{ isPlayingResult ? '正在试听...' : '试听录音' }} ({{ formatDuration(recordDuration) }})
                   </span>
                 </div>
                 
                 <div class="voice-controls">
-                  <button v-if="audioRecord && !isRecording" class="btn-voice-sec" @click="clearRecording">重录</button>
+                  <button v-if="audioRecord && !isRecording" class="btn-voice-sec" @click="clearRecording" title="重录">
+                    <el-icon><RefreshRight /></el-icon>
+                  </button>
                   <button 
                     class="btn-voice-main" 
                     :class="{ 'recording': isRecording }"
                     @click="isRecording ? stopRecording() : startRecording()"
                   >
-                    <el-icon><Microphone v-if="!isRecording" /><Mute v-else /></el-icon>
+                    <el-icon><Microphone v-if="!isRecording" /><VideoPause v-else /></el-icon>
                   </button>
-                  <button v-if="audioRecord && !isRecording" class="btn-voice-sec" @click="togglePlayResult(audioUrl)">试听</button>
+                  <div v-if="audioRecord && !isRecording" class="btn-voice-sec-placeholder"></div>
                 </div>
               </div>
             </template>
@@ -859,6 +867,67 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
+/* 语音气泡样式 - 结果展示页 */
+.voice-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 14px 24px;
+  border-radius: 16px;
+  cursor: pointer;
+  margin: 20px auto;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.voice-bubble:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.voice-icon {
+  font-size: 20px;
+  color: #64748b;
+  transition: color 0.3s;
+}
+
+.voice-icon.is-playing {
+  color: #3b82f6;
+}
+
+.voice-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.voice-waves {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.wave {
+  width: 3px;
+  height: 6px;
+  background-color: #3b82f6;
+  border-radius: 3px;
+  animation: wave-bounce 0.8s ease-in-out infinite;
+}
+
+.wave:nth-child(2) { animation-delay: 0.15s; }
+.wave:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes wave-bounce {
+  0%, 100% { height: 6px; }
+  50% { height: 16px; }
+}
+
 .card-footer {
   margin-top: 24px;
 }
@@ -909,20 +978,62 @@ onUnmounted(() => {
   background: linear-gradient(180deg, #38bdf8 50%, #e2e8f0 50%);
 }
 
-.writing-title {
+.writing-header {
+  margin-bottom: 32px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: #1e293b;
-  text-align: center;
+  gap: 16px;
 }
 
-.type-switch-btn {
-  margin-left: 12px;
+.writing-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+/* 分段选择器样式 */
+.segmented-control {
+  display: flex;
+  position: relative;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 20px;
+  width: 160px;
+  height: 40px;
+}
+
+.segment-bg {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.segment-item {
+  flex: 1;
+  position: relative;
+  z-index: 2;
+  border: none;
+  background: none;
   font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.segment-item.active {
+  color: #0f172a;
+  font-weight: 600;
 }
 
 /* 语音控制区样式 */
@@ -931,147 +1042,108 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 30px 0;
-  min-height: 180px;
+  padding: 24px 0;
+  min-height: 160px;
 }
 
 .voice-status {
-  font-size: 15px;
-  color: #64748b;
-  margin-bottom: 24px;
-  min-height: 24px;
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 32px;
+  min-height: 20px;
 }
 
 .voice-status.is-recording .recording-time {
   color: #ef4444;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 20px;
+  font-family: monospace;
   animation: pulse-recording 1s infinite;
 }
 
 .audio-played-status {
-  color: #38bdf8;
+  color: #3b82f6;
   font-weight: 500;
+  cursor: pointer;
+  padding: 6px 16px;
+  background: #eff6ff;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.audio-played-status:hover {
+  background: #dbeafe;
 }
 
 @keyframes pulse-recording {
   0% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.6; }
   100% { opacity: 1; }
 }
 
 .voice-controls {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .btn-voice-main {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
-  color: white;
-  font-size: 32px;
+  background: #f8fafc;
+  color: #3b82f6;
+  font-size: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(129, 140, 248, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .btn-voice-main:hover {
   transform: scale(1.05);
-  box-shadow: 0 12px 28px rgba(129, 140, 248, 0.5);
+  background: #eff6ff;
 }
 
 .btn-voice-main.recording {
-  background: linear-gradient(135deg, #ef4444 0%, #f43f5e 100%);
-  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.4);
-  animation: ripple-recording 1.5s infinite;
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.1);
+  animation: ripple-red 1.5s infinite;
 }
 
-@keyframes ripple-recording {
-  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
-  70% { box-shadow: 0 0 0 16px rgba(244, 63, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+@keyframes ripple-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .btn-voice-sec {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  border: 1px solid rgba(129, 140, 248, 0.3);
+  border: 1px solid #e2e8f0;
   background: white;
   color: #64748b;
-  font-size: 14px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-voice-sec:hover {
   background: #f8fafc;
-  color: #38bdf8;
-  border-color: #38bdf8;
+  color: #ef4444;
+  border-color: #fecaca;
 }
 
-/* 语音气泡组件 */
-.voice-bubble {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  padding: 12px 20px;
-  border-radius: 20px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.voice-bubble:hover {
-  background: #dbeafe;
-  transform: translateY(-2px);
-}
-
-.voice-icon {
-  font-size: 20px;
-  color: #3b82f6;
-}
-
-.voice-text {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1e3a8a;
-  min-width: 100px;
-  text-align: left;
-}
-
-.voice-waves {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 16px;
-  margin-left: 4px;
-}
-
-.wave {
-  width: 3px;
-  height: 4px;
-  background-color: #3b82f6;
-  border-radius: 3px;
-  animation: wave-bounce 1s ease-in-out infinite;
-}
-
-.wave:nth-child(2) { animation-delay: 0.2s; }
-.wave:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes wave-bounce {
-  0%, 100% { height: 4px; }
-  50% { height: 14px; }
+.btn-voice-sec-placeholder {
+  width: 40px;
 }
 
 .custom-textarea {
@@ -1103,33 +1175,43 @@ onUnmounted(() => {
   text-align: right;
   font-size: 12px;
   color: #94a3b8;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .btn-publish {
   width: 100%;
-  margin-top: 24px;
-  padding: 14px 0;
+  margin-top: 32px;
+  padding: 16px 0;
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+  border-radius: 28px;
+  background: #38bdf8;
   color: #fff;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 8px 16px rgba(56, 189, 248, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 16px rgba(56, 189, 248, 0.25);
 }
 
-.btn-publish:hover {
+.btn-publish:hover:not(:disabled) {
+  background: #0ea5e9;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(56, 189, 248, 0.4);
+  box-shadow: 0 10px 24px rgba(56, 189, 248, 0.35);
+}
+
+.btn-publish:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-publish:disabled {
+  background: #cbd5e1;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-publish.is-loading {
-  background: #cbd5e1;
-  box-shadow: none;
+  background: #7dd3fc;
   cursor: wait;
-  transform: none;
 }
 </style>
