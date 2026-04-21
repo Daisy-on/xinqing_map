@@ -4,6 +4,8 @@
     :direction="drawerDirection"
     :size="drawerSize"
     :with-header="false"
+    :append-to-body="true"
+    :lock-scroll="true"
     class="landmark-detail-drawer"
   >
     <div v-if="landmark || landmarkDetail" class="drawer-content">
@@ -93,13 +95,14 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateWidth)
+  unlockPageScroll()
 })
 
-// PC: ltr, Mobile: btt
 const isMobile = computed(() => windowWidth.value < 768)
-const drawerDirection = computed(() => isMobile.value ? 'btt' : 'ltr')
-const drawerSize = computed(() => isMobile.value ? '60%' : '400px')
+const drawerDirection = computed(() => 'ltr')
+const drawerSize = computed(() => isMobile.value ? '100vw' : '400px')
 const imageLoadFailed = ref(false)
+let lockedScrollTop = 0
 
 const displayName = computed(() => props.landmarkDetail?.name ?? props.landmark?.name ?? '未命名地点')
 const displayWeatherText = computed(() => props.landmarkDetail?.weatherText ?? props.landmark?.weatherText ?? '未知天气')
@@ -112,6 +115,48 @@ const targetSpotId = computed(() => props.landmarkDetail?.id ?? props.landmark?.
 watch(displayImage, () => {
   imageLoadFailed.value = false
 })
+
+function lockPageScroll() {
+  if (!isMobile.value) return
+  lockedScrollTop = window.scrollY || window.pageYOffset || 0
+
+  document.documentElement.style.overflow = 'hidden'
+  document.body.style.overflow = 'hidden'
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${lockedScrollTop}px`
+  document.body.style.left = '0'
+  document.body.style.right = '0'
+  document.body.style.width = '100%'
+  document.body.style.touchAction = 'none'
+}
+
+function unlockPageScroll() {
+  document.documentElement.style.overflow = ''
+  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.left = ''
+  document.body.style.right = ''
+  document.body.style.width = ''
+  document.body.style.touchAction = ''
+
+  if (lockedScrollTop > 0) {
+    window.scrollTo(0, lockedScrollTop)
+    lockedScrollTop = 0
+  }
+}
+
+watch(
+  drawerVisible,
+  (visible) => {
+    if (visible) {
+      lockPageScroll()
+      return
+    }
+    unlockPageScroll()
+  },
+  { immediate: true },
+)
 
 function handleImageError() {
   imageLoadFailed.value = true
@@ -134,6 +179,8 @@ const viewPosts = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .drawer-header {
@@ -186,6 +233,8 @@ const viewPosts = () => {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .title {
@@ -234,11 +283,72 @@ const viewPosts = () => {
   padding: 0 !important;
   overflow: hidden;
 }
-/* 适配移动端圆角 */
+/* 适配移动端全屏 */
 @media screen and (max-width: 767px) {
-  .landmark-detail-drawer {
-    border-top-left-radius: 16px !important;
-    border-top-right-radius: 16px !important;
+  .landmark-detail-drawer,
+  .landmark-detail-drawer.el-drawer,
+  .landmark-detail-drawer .el-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    max-height: 100dvh !important;
+    height: 100dvh !important;
+    top: 0 !important;
+    bottom: auto !important;
+    left: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .landmark-detail-drawer .el-drawer__body,
+  .landmark-detail-drawer.el-drawer .el-drawer__body {
+    height: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-content {
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  .drawer-header {
+    height: 34dvh;
+    max-height: 240px;
+    min-height: 180px;
+  }
+
+  .drawer-body {
+    padding: 16px 16px 12px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .tags {
+    margin-bottom: 16px;
+  }
+
+  .description {
+    font-size: 14px;
+    line-height: 1.58;
+  }
+
+  .drawer-footer {
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    box-shadow: 0 -8px 18px rgba(15, 23, 42, 0.06);
+  }
+
+  .action-btn {
+    height: 44px;
+    font-size: 15px;
   }
 }
 </style>
