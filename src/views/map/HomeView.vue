@@ -5,8 +5,8 @@
       <button class="project-brand" type="button" @click="router.push('/')">
         <img src="@/assets/iocn/logo.png" class="brand-logo-img" alt="Logo" />
         <span class="brand-text-wrap">
-          <span class="brand-title">心晴地图</span>
-          <span class="brand-subtitle">XINQING MAP</span>
+          <span class="brand-title">心晴</span>
+          <span class="brand-subtitle">XINQING</span>
         </span>
       </button>
 
@@ -62,7 +62,7 @@
     <!-- 心情胶囊入口悬浮图标 -->
     <button class="capsule-entry-btn" type="button" @click="router.push('/capsule')">
       <img class="capsule-icon" :src="capsuleIcon" alt="" aria-hidden="true" />
-      <span class="capsule-text">心情胶囊</span>
+      <span class="capsule-text">心晴胶囊</span>
     </button>
   </main>
 </template>

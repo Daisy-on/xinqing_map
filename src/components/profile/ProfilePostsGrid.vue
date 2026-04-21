@@ -36,7 +36,6 @@
           <div class="header-left">
             <span class="date">{{ post.createTime.slice(5, 10).replace('-', '月') }}日</span>
             <span class="time">{{ post.createTime.slice(11, 16) }}</span>
-            <span class="privacy-tag"><el-icon><Lock /></el-icon> 仅自己可见</span>
           </div>
           <div class="header-actions" @click.stop>
             <button class="edit-post-btn" type="button" :aria-label="`编辑帖子 ${post.id}`" @click="emit('edit-post', post)">

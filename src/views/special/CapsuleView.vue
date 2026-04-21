@@ -562,7 +562,7 @@ onUnmounted(() => {
 
 .bottle-neck {
   width: 44px;
-  height: 30px;
+  height: 50px;
   background: rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.7);
   border-bottom: none;
@@ -575,7 +575,7 @@ onUnmounted(() => {
 
 .bottle-body {
   width: 120px;
-  height: 150px;
+  height: 136px;
   background: rgba(255, 255, 255, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.7);
   border-radius: 46px 46px 20px 20px / 60px 60px 20px 20px;
