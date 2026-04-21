@@ -13,50 +13,52 @@
     </div>
 
     <div class="scatter-container" :class="{ blurred: !!selectedPost }">
-      <article v-if="isLoadingPosts" class="post-bubble empty-bubble">
-        <span class="bubble-tag" style="background-color: #6AA6FF">加载中</span>
-        <p class="bubble-content">正在加载帖子...</p>
-      </article>
-      <article v-else-if="posts.length === 0" class="post-bubble empty-bubble">
-        <span class="bubble-tag" style="background-color: #6AA6FF">提示</span>
-        <p class="bubble-content">这里还没有留言，发一条成为第一位吧。</p>
-      </article>
+      <div class="scroll-wrapper">
+        <article v-if="isLoadingPosts" class="post-bubble empty-bubble">
+          <span class="bubble-tag" style="background-color: #6AA6FF">加载中</span>
+          <p class="bubble-content">正在加载帖子...</p>
+        </article>
+        <article v-else-if="posts.length === 0" class="post-bubble empty-bubble">
+          <span class="bubble-tag" style="background-color: #6AA6FF">提示</span>
+          <p class="bubble-content">这里还没有留言，发一条成为第一位吧。</p>
+        </article>
 
-      <transition :name="slideDirection">
-        <div v-if="posts.length > 0" class="bubbles-layer" :key="currentPage">
-          <article
-            v-for="(post, index) in posts"
-            :key="post.id"
-            class="post-bubble"
-            :class="bubbleClassByIndex(index)"
-            :style="bubbleStyleByIndex(index)"
-            role="button"
-            tabindex="0"
-            @click="openPost(post, $event)"
-            @keydown.enter.prevent="openPost(post, $event)"
-            @keydown.space.prevent="openPost(post, $event)"
-          >
-            <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
-              {{ post.emotionTagName || '心情' }}
-            </span>
-            <p class="bubble-content">{{ post.content }}</p>
-            <time class="bubble-time">
-              编辑于{{ formatPostTime(post.updateTime || post.createTime) }}
-            </time>
-            <button
-              type="button"
-              class="bubble-like-btn"
-              :class="{ liked: !!post.liked }"
-              :disabled="isPostLiking(post.id)"
-              @click.stop="likeInBubble(post, $event)"
-              aria-label="点赞"
+        <transition :name="slideDirection">
+          <div v-if="posts.length > 0" class="bubbles-layer" :key="currentPage">
+            <article
+              v-for="(post, index) in posts"
+              :key="post.id"
+              class="post-bubble"
+              :class="bubbleClassByIndex(index)"
+              :style="bubbleStyleByIndex(index)"
+              role="button"
+              tabindex="0"
+              @click="openPost(post, $event)"
+              @keydown.enter.prevent="openPost(post, $event)"
+              @keydown.space.prevent="openPost(post, $event)"
             >
-              <span class="bubble-heart" aria-hidden="true">{{ post.liked ? '❤' : '♡' }}</span>
-              <span class="bubble-like-count">{{ post.likeCount ?? 0 }}</span>
-            </button>
-          </article>
-        </div>
-      </transition>
+              <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
+                {{ post.emotionTagName || '心情' }}
+              </span>
+              <p class="bubble-content">{{ post.content }}</p>
+              <time class="bubble-time">
+                编辑于{{ formatPostTime(post.updateTime || post.createTime) }}
+              </time>
+              <button
+                type="button"
+                class="bubble-like-btn"
+                :class="{ liked: !!post.liked }"
+                :disabled="isPostLiking(post.id)"
+                @click.stop="likeInBubble(post, $event)"
+                aria-label="点赞"
+              >
+                <span class="bubble-heart" aria-hidden="true">{{ post.liked ? '❤' : '♡' }}</span>
+                <span class="bubble-like-count">{{ post.likeCount ?? 0 }}</span>
+              </button>
+            </article>
+          </div>
+        </transition>
+      </div>
       
       <div v-if="totalPosts > 10" class="pagination-controls">
         <el-button 
@@ -495,9 +497,9 @@ const bubbleStyleByIndex = (index: number) => {
     { top: '10%', left: '4%' },
     { top: '14%', left: '56%' },
     { top: '28%', left: '14%' },
-    { top: '30%', left: '60%' },
+    { top: '30%', left: '64%' },
     { top: '44%', left: '6%' },
-    { top: '48%', left: '52%' },
+    { top: '46%', left: '52%' },
     { top: '62%', left: '20%' },
     { top: '60%', left: '56%' },
     { top: '78%', left: '10%' },
@@ -677,6 +679,15 @@ onBeforeUnmount(() => {
   height: 100%;
   z-index: 6;
   transition: filter 300ms cubic-bezier(0.25, 1, 0.5, 1), transform 300ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.scroll-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 .scatter-container.blurred {
@@ -1086,6 +1097,54 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 767px) {
+  .bubbles-layer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 80px 16px 120px;
+    height: auto;
+    min-height: 100%;
+  }
+
+  .post-bubble {
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100%;
+    max-width: 340px;
+    margin: 0;
+  }
+
+  /* 在移动端单列下保持轻微错乱感 */
+  .post-bubble:nth-child(odd) {
+    align-self: flex-start;
+    transform: rotate(-1.5deg) !important;
+  }
+
+  .post-bubble:nth-child(even) {
+    align-self: flex-end;
+    transform: rotate(1.2deg) !important;
+  }
+
+  .post-bubble:hover {
+    transform: translateY(-2px) scale(1.01) !important;
+  }
+
+  .pagination-controls {
+    bottom: 20px;
+    width: calc(100% - 6rem);
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 16px;
+  }
+
+  .page-indicator {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
   .page-title {
     font-size: 16px;
     max-width: 44vw;
@@ -1099,10 +1158,6 @@ onBeforeUnmount(() => {
     height: 34px;
     border-radius: 999px;
     font-size: 13px;
-  }
-
-  .post-bubble {
-    width: min(260px, 66vw);
   }
 
   .detail-veil {
