@@ -268,7 +268,6 @@ onUnmounted(() => {
                 <div class="capsule mini c-5"></div>
                 <div class="capsule mini c-6"></div>
               </div>
-              <div class="bottle-reflection"></div>
             </div>
             <div class="bottle-shadow"></div>
           </div>
@@ -303,7 +302,6 @@ onUnmounted(() => {
                 <div class="capsule mini b-4"></div>
                 <div class="capsule mini b-5"></div>
               </div>
-              <div class="bottle-reflection"></div>
             </div>
             <div class="bottle-shadow"></div>
             <!-- 倒出并在屏幕中间展示的这一颗 -->
@@ -546,7 +544,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform-origin: center bottom;
+  transform-origin: center center; /* 将旋转中心点从 bottom 改为 center，旋转更自然 */
+  transition: transform 0.5s ease;
 }
 
 .bottle-cork {
@@ -579,7 +578,7 @@ onUnmounted(() => {
   height: 150px;
   background: rgba(255, 255, 255, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.7);
-  border-radius: 40px 40px 20px 20px;
+  border-radius: 46px 46px 20px 20px / 60px 60px 20px 20px;
   z-index: 1;
   position: relative;
   backdrop-filter: blur(6px);
@@ -588,20 +587,6 @@ onUnmounted(() => {
     inset -10px -20px 30px rgba(0,0,0,0.05),
     0 15px 30px rgba(0,0,0,0.1);
   overflow: hidden; /* 保证里面的胶囊在体内 */
-}
-
-/* 玻璃高光反光 */
-.bottle-reflection {
-  position: absolute;
-  top: 40px;
-  left: 20px;
-  width: 15px;
-  height: 110px;
-  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
-  border-radius: 50%;
-  transform: rotate(4deg);
-  z-index: 3;
-  pointer-events: none;
 }
 
 .bottle-shadow {
@@ -654,8 +639,8 @@ onUnmounted(() => {
 .b-5 { left: 50px; bottom: 30px; animation: rattle 0.45s infinite alternate; background: linear-gradient(180deg, #c7d2fe 50%, #fff 50%); }
 
 @keyframes rattle {
-  0% { transform: translateY(0) rotate(0deg); }
-  100% { transform: translateY(-30px) rotate(45deg); }
+  0% { transform: translateY(0) translateX(0) rotate(0deg); }
+  100% { transform: translateY(-20px) translateX(10px) rotate(30deg); }
 }
 
 /* === 摇晃及倒出动画 === */
@@ -688,52 +673,44 @@ onUnmounted(() => {
   animation: dropOut 4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* 玻璃瓶主体运动：上移 -> 拔瓶盖 -> 摇晃 -> 逆时针倒出 -> 缓慢淡出 */
+/* 玻璃瓶主体运动：上移 -> 摇晃 -> 平滑倾倒倒出 -> 缓慢淡退 */
 @keyframes pourSequence {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  8% { transform: translateY(-60px) rotate(0deg); opacity: 1; } 
-  14% { transform: translateY(-60px) rotate(20deg); opacity: 1; }
-  18% { transform: translateY(-60px) rotate(-15deg); opacity: 1; }
-  22% { transform: translateY(-60px) rotate(10deg); opacity: 1; }
-  26% { transform: translateY(-60px) rotate(-5deg); opacity: 1; }
-  32% { transform: translateY(-60px) rotate(0deg); opacity: 1; }
-  45% { transform: translateY(-40px) translateX(-50px) rotate(-130deg); opacity: 1; }
-  60% { transform: translateY(-40px) translateX(-50px) rotate(-130deg); opacity: 1; }
-  85% { transform: translateY(20px) translateX(-50px) rotate(-130deg); opacity: 0; }
-  100% { transform: translateY(20px) translateX(-50px) rotate(-130deg); opacity: 0; }
+  15% { transform: translateY(-220px) rotate(0deg); opacity: 1; } 
+  25% { transform: translateY(-220px) rotate(12deg); opacity: 1; }
+  35% { transform: translateY(-220px) rotate(-10deg); opacity: 1; }
+  42% { transform: translateY(-220px) rotate(6deg); opacity: 1; }
+  48% { transform: translateY(-220px) rotate(0deg); opacity: 1; }
+  65% { transform: translateY(-160px) translateX(-40px) rotate(-135deg); opacity: 1; }
+  85% { transform: translateY(-160px) translateX(-40px) rotate(-135deg); opacity: 1; }
+  100% { transform: translateY(-150px) translateX(-50px) rotate(-140deg); opacity: 0; }
 }
 
 @keyframes shadowLift {
   0% { transform: translateX(-50%) scale(1); opacity: 1; }
-  8% { transform: translateX(-50%) scale(0.6); opacity: 0.3; } /* 阴影变小变淡，产生悬浮感 */
-  32% { transform: translateX(-50%) scale(0.6); opacity: 0.3; }
-  45% { transform: translateX(-20%) scale(0.3); opacity: 0.1; }
-  85% { transform: translateX(-20%) scale(0.3); opacity: 0; }
-  100% { transform: translateX(-20%) scale(0.3); opacity: 0; }
+  15% { transform: translateX(-50%) scale(0.4); opacity: 0.1; } 
+  48% { transform: translateX(-50%) scale(0.4); opacity: 0.1; }
+  65% { transform: translateX(-30%) scale(0.25); opacity: 0.05; }
+  85% { transform: translateX(-30%) scale(0.25); opacity: 0.05; }
+  100% { transform: translateX(-40%) scale(0.1); opacity: 0; }
 }
 
 @keyframes popCork {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  6% { transform: translateY(-30px) translateX(20px) rotate(45deg); opacity: 1; } /* 提早拔开塞子 */
-  12% { transform: translateY(-20px) translateX(40px) rotate(90deg); opacity: 0; } /* 瓶盖飞走并隐藏 */
-  100% { transform: translateY(-20px) translateX(40px) rotate(90deg); opacity: 0; }
+  60% { transform: translateY(0) rotate(0deg); opacity: 1; } 
+  68% { transform: translateY(-30px) translateX(20px) rotate(45deg); opacity: 1; } 
+  75% { transform: translateY(-40px) translateX(40px) rotate(90deg); opacity: 0; }
+  100% { transform: translateY(-40px) translateX(40px) rotate(90deg); opacity: 0; }
 }
 
 @keyframes dropOut {
-  0%, 42% { opacity: 0; transform: translate(-80px, -20px) rotate(-120deg) scale(0.5); }
-  45% { opacity: 1; transform: translate(-80px, -20px) rotate(-120deg) scale(0.8); } /* 飞出 */
-  55% { opacity: 1; transform: translate(0, 80px) rotate(-15deg) scale(1.5); } /* 落在正中间稍微偏下 */
-  60% { opacity: 1; transform: translate(0, 70px) rotate(5deg) scale(1.5); } /* 弹起回落 Q弹 */
-  65% { opacity: 1; transform: translate(0, 80px) rotate(0deg) scale(1.5); }
-  83% { opacity: 1; transform: translate(0, 80px) rotate(0deg) scale(1.5); }
-  100% { opacity: 0; transform: translate(0, 80px) rotate(0deg) scale(2.5); } /* 随瓶子隐去，此时胶囊放大准备打开内容卡片 */
-}
-
-@keyframes dropOut {
-  0%, 75% { opacity: 0; transform: translateY(0) scale(1); }
-  80% { opacity: 1; transform: translateY(-40px) scale(1.2); }
-  95% { opacity: 1; transform: translateY(-200px) scale(3); } /* 相对倒立的瓶子方向，也就是向下落 */
-  100% { opacity: 0; transform: translateY(-300px) scale(5); }
+  /* 初始不可见，位置计算为瓶子倾斜135度后，瓶口处的 offset */
+  0%, 65% { opacity: 0; transform: translate(-50px, -200px) rotate(-135deg) scale(0.5); }
+  68% { opacity: 1; transform: translate(-70px, -190px) rotate(-135deg) scale(0.8); }
+  82% { opacity: 1; transform: translate(-20px, -60px) rotate(-30deg) scale(1.2); }
+  88% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1.5); }
+  98% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1.5); }
+  100% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(2.5); }
 }
 
 /* === 文字与按钮区 === */
