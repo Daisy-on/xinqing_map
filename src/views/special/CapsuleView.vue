@@ -677,10 +677,13 @@ onUnmounted(() => {
 @keyframes pourSequence {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
   15% { transform: translateY(-220px) rotate(0deg); opacity: 1; } 
-  25% { transform: translateY(-220px) rotate(12deg); opacity: 1; }
-  35% { transform: translateY(-220px) rotate(-10deg); opacity: 1; }
-  42% { transform: translateY(-220px) rotate(6deg); opacity: 1; }
-  48% { transform: translateY(-220px) rotate(0deg); opacity: 1; }
+  20% { transform: translateY(-220px) rotate(25deg); opacity: 1; }
+  25% { transform: translateY(-220px) rotate(-20deg); opacity: 1; }
+  30% { transform: translateY(-220px) rotate(25deg); opacity: 1; }
+  35% { transform: translateY(-220px) rotate(-20deg); opacity: 1; }
+  40% { transform: translateY(-220px) rotate(15deg); opacity: 1; }
+  45% { transform: translateY(-220px) rotate(-10deg); opacity: 1; }
+  50% { transform: translateY(-220px) rotate(0deg); opacity: 1; }
   65% { transform: translateY(-160px) translateX(-40px) rotate(-135deg); opacity: 1; }
   85% { transform: translateY(-160px) translateX(-40px) rotate(-135deg); opacity: 1; }
   100% { transform: translateY(-150px) translateX(-50px) rotate(-140deg); opacity: 0; }
@@ -706,7 +709,7 @@ onUnmounted(() => {
 @keyframes dropOut {
   /* 初始不可见，位置计算为瓶子倾斜135度后，瓶口处的 offset */
   0%, 65% { opacity: 0; transform: translate(-50px, -200px) rotate(-135deg) scale(0.5); }
-  68% { opacity: 1; transform: translate(-70px, -190px) rotate(-135deg) scale(0.8); }
+  68% { opacity: 1; transform: translate(-120px, -100px) rotate(-135deg) scale(0.8); }
   82% { opacity: 1; transform: translate(-20px, -60px) rotate(-30deg) scale(1.2); }
   88% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1.5); }
   98% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1.5); }
