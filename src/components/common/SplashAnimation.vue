@@ -17,7 +17,7 @@
         playsinline
         class="splash-video"
       >
-        <source src="@/assets/video/output.webm" type="video/webm">
+        <source src="@/assets/video/splash.webm" type="video/webm">
       </video>
     </div>
 
@@ -26,7 +26,7 @@
       <div class="brand-group">
         <img src="@/assets/iocn/logo.png" class="brand-logo-img" alt="心晴地图 Logo" />
         <div class="brand-text-wrap">
-          <span class="brand-title">心晴地图</span>
+          <span class="brand-title">心晴</span>
         </div>
       </div>
       <div class="loading-subtitle">拨开阴霾，遇见新晴</div>

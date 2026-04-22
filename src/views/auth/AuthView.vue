@@ -3,7 +3,7 @@
     <div class="auth-split">
       <!-- 左侧品牌与情绪可视化区 -->
       <section class="auth-visual">
-        <div class="visual-bg"></div>
+        <video class="visual-bg" :src="authVideo" autoplay muted loop playsinline preload="auto"></video>
         <div class="blobs">
           <div class="blob blob-1"></div>
           <div class="blob blob-2"></div>
@@ -16,7 +16,7 @@
         </el-button>
 
         <div class="visual-content">
-          <h1>心晴地图</h1>
+          <h1>心晴</h1>
           <p>记录心情，连接地点，留下你的此刻。</p>
         </div>
       </section>
@@ -25,8 +25,8 @@
       <main class="auth-panel">
         <div class="auth-card">
           <div class="auth-header">
-            <h2>{{ mode === 'login' ? '欢迎回来!' : '开启心情之旅' }}</h2>
-            <p>{{ mode === 'login' ? '请输入账号密码登录你的心晴地图' : '只需几步，就可以创建你的账号' }}</p>
+            <h2>{{ mode === 'login' ? 'Hi~欢迎回来!' : '开启心晴之旅' }}</h2>
+            <p>{{ mode === 'login' ? '请输入账号密码登录' : '只需几步，就可以创建你的账号' }}</p>
           </div>
 
           <div class="mode-tabs">
@@ -138,6 +138,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { loginUser, registerUser } from '@/api/user'
 import { setAuthSession } from '@/utils/auth'
+import authVideo from '@/assets/video/auth.webm'
 
 type AuthMode = 'login' | 'register'
 
@@ -272,7 +273,12 @@ async function handleRegister() {
 .visual-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, #e5d4ff 0%, #a6d6ff 58%, #c5ecff 100%);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: #0f172a;
+  filter: brightness(0.88) saturate(1.05);
   z-index: 0;
 }
 
@@ -326,9 +332,7 @@ async function handleRegister() {
 .visual-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.06);
   z-index: 2;
 }
 

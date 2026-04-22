@@ -17,12 +17,12 @@ const systemTimeMsg = ref('');
 const checkTimeWindow = () => {
   const now = new Date();
   const hours = now.getHours();
-  if (hours >= 8 && hours < 23) {
+  if (hours >= 20 && hours < 23) {
     isOpenTime.value = true;
-    systemTimeMsg.value = '匹配窗口开放中 (22:00 - 23:00)';
+    systemTimeMsg.value = '匹配窗口开放中 (20:00 - 23:00)';
   } else {
     isOpenTime.value = false;
-    systemTimeMsg.value = '小伴休息中，请在 22:00 - 23:00 来找我吧';
+    systemTimeMsg.value = '小伴休息中，请在 20:00 - 23:00 来找我吧';
   }
 };
 
