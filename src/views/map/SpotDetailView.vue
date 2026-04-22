@@ -833,33 +833,34 @@ onBeforeUnmount(() => {
   right: 12px;
   bottom: 10px;
   border: none;
-  background: rgba(255, 240, 244, 0.78);
-  color: #c43b62;
+  background: transparent;
+  color: #2d4258;
   border-radius: 999px;
   min-height: 26px;
-  padding: 0 8px;
+  padding: 0 4px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(188, 75, 109, 0.08);
-  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+  transition: transform 160ms ease, color 160ms ease, opacity 160ms ease;
 }
 
 .bubble-like-btn:hover {
   transform: translateY(-1px);
-  background: rgba(255, 230, 236, 0.98);
-  box-shadow: 0 4px 10px rgba(188, 75, 109, 0.12);
+  color: #c43b62;
+}
+
+.bubble-like-btn:active {
+  transform: scale(0.9);
 }
 
 .bubble-like-btn:disabled {
-  opacity: 1;
+  opacity: 0.6;
 }
 
 .bubble-like-btn.liked {
-  background: rgba(255, 221, 230, 0.96);
-  border-color: rgba(224, 81, 118, 0.52);
-  color: #b82e55;
+  background: transparent;
+  color: #c43b62;
   animation: liked-pulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -914,7 +915,8 @@ onBeforeUnmount(() => {
   position: relative;
   width: min(680px, 100%);
   max-height: min(78vh, 820px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.32);
   background: rgba(247, 252, 255, 0.9);
@@ -924,10 +926,30 @@ onBeforeUnmount(() => {
   transform-origin: top left;
   will-change: transform, opacity;
   transition: box-shadow 240ms ease;
+  overscroll-behavior: contain;
+}
+
+/* 隐藏横向滚动条 */
+.detail-card::-webkit-scrollbar {
+  width: 6px;
+}
+
+.detail-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-card::-webkit-scrollbar-thumb {
+  background: rgba(44, 71, 99, 0.15);
+  border-radius: 10px;
+}
+
+.detail-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(44, 71, 99, 0.25);
 }
 
 .detail-card.shared-animating {
   pointer-events: none;
+  overflow: hidden;
 }
 
 .detail-close {
@@ -1047,43 +1069,66 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 7px;
   cursor: pointer;
-  transition: transform 180ms ease, color 180ms ease, opacity 180ms ease;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), color 0.18s ease;
+  position: relative;
 }
 
 .detail-like-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+}
+
+.detail-like-btn:active {
+  transform: translateY(0) scale(0.92);
 }
 
 .detail-like-btn:disabled {
-  opacity: 1;
+  opacity: 0.6;
 }
 
 .detail-like-btn.liked {
   color: #b73557;
-  animation: liked-pulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.detail-like-btn.liked .heart-icon {
+  animation: heart-bounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .detail-like-btn::after {
   content: "";
   position: absolute;
   top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
+  left: 10px; /* 精确对应 heart-icon 的中心位置 */
+  width: 20px;
+  height: 20px;
   transform: translate(-50%, -50%) scale(0);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(224, 81, 118, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(224, 81, 118, 0.5) 0%, rgba(224, 81, 118, 0.2) 40%, transparent 75%);
   opacity: 0;
   pointer-events: none;
+  z-index: -1;
 }
 
 .detail-like-btn.liked::after {
-  animation: ripple 0.5s ease-out;
+  animation: ripple-center 0.55s ease-out;
 }
 
 .heart-icon {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1;
+  display: inline-block;
+  will-change: transform;
+}
+
+@keyframes heart-bounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.45); }
+  65% { transform: scale(0.85); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ripple-center {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
 }
 
 .veil-fade-enter-active,
