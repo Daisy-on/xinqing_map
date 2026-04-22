@@ -1,13 +1,13 @@
-import kaixin from '@/assets/iocn/emoji/1kaixin.png'
-import qidai from '@/assets/iocn/emoji/2qidai.png'
-import shiran from '@/assets/iocn/emoji/3shiran.png'
-import pingjing from '@/assets/iocn/emoji/4pingjing.png'
-import xiangjia from '@/assets/iocn/emoji/5xiangjia.png'
-import pibei from '@/assets/iocn/emoji/6pibei.png'
-import gudu from '@/assets/iocn/emoji/7gudu.png'
-import weiqv from '@/assets/iocn/emoji/8weiqv.png'
-import jiaolv from '@/assets/iocn/emoji/9jiaolv.png'
-import fanzao from '@/assets/iocn/emoji/10fanzao.png'
+import kaixin from '@/assets/icon/emoji/1kaixin.png'
+import qidai from '@/assets/icon/emoji/2qidai.png'
+import shiran from '@/assets/icon/emoji/3shiran.png'
+import pingjing from '@/assets/icon/emoji/4pingjing.png'
+import xiangjia from '@/assets/icon/emoji/5xiangjia.png'
+import pibei from '@/assets/icon/emoji/6pibei.png'
+import gudu from '@/assets/icon/emoji/7gudu.png'
+import weiqv from '@/assets/icon/emoji/8weiqv.png'
+import jiaolv from '@/assets/icon/emoji/9jiaolv.png'
+import fanzao from '@/assets/icon/emoji/10fanzao.png'
 
 export const MOODS = [
   { id: 1, name: '开心', color: '#FFD93D', icon: kaixin },

@@ -16,7 +16,7 @@
         </div>
         <div class="nav-item firefly-action" @click="emit('firefly')">
           <div class="nav-value icon firefly-icon-btn-wrapper">
-            <img src="@/assets/iocn/yinghuochong.svg" class="firefly-svg-icon" alt="" />
+            <img src="@/assets/icon/yinghuochong.svg" class="firefly-svg-icon" alt="" />
             <span v-if="hasUnreadLetter" class="glowing-red-dot"></span>
           </div>
           <span class="nav-label">心遇</span>

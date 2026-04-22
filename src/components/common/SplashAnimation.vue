@@ -24,7 +24,7 @@
     <!-- 中心地标 -->
     <div class="splash-logo">
       <div class="brand-group">
-        <img src="@/assets/iocn/logo.png" class="brand-logo-img" alt="心晴地图 Logo" />
+        <img src="@/assets/icon/logo.png" class="brand-logo-img" alt="心晴地图 Logo" />
         <div class="brand-text-wrap">
           <span class="brand-title">心晴</span>
         </div>

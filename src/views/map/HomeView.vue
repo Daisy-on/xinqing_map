@@ -3,7 +3,7 @@
   <main class="home-view">
     <header class="top-nav-bar">
       <button class="project-brand" type="button" @click="router.push('/')">
-        <img src="@/assets/iocn/logo.png" class="brand-logo-img" alt="Logo" />
+        <img src="@/assets/icon/logo.png" class="brand-logo-img" alt="Logo" />
         <span class="brand-text-wrap">
           <span class="brand-title">心晴</span>
           <span class="brand-subtitle">XINQING</span>
@@ -77,9 +77,9 @@ import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
 import { UserFilled } from '@element-plus/icons-vue'
-import fireflyIcon from '@/assets/iocn/yinghuochong.svg'
-import xiaobanIcon from '@/assets/iocn/xiaoban.svg'
-import capsuleIcon from '@/assets/iocn/niudanji.svg'
+import fireflyIcon from '@/assets/icon/yinghuochong.svg'
+import xiaobanIcon from '@/assets/icon/xiaoban.svg'
+import capsuleIcon from '@/assets/icon/niudanji.svg'
 import type { Location, LocationDetail, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
 import { useLetterStore } from '@/stores/letter'
