@@ -234,11 +234,9 @@ onUnmounted(() => {
 
 <template>
   <main class="capsule-view">
-    <!-- 明亮色调高雅背景 -->
+    <!-- 图片背景 -->
     <div class="light-bg">
-      <div class="blob shape-1"></div>
-      <div class="blob shape-2"></div>
-      <div class="blob shape-3"></div>
+      <img src="@/assets/images/capsule-bg.jpg" class="bg-image" />
       <div class="backdrop-glass"></div>
     </div>
 
@@ -435,33 +433,25 @@ onUnmounted(() => {
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  background-color: #000; /* 视频加载前的底色 */
 }
-.blob {
+
+.bg-image {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.6;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  filter: brightness(0.85); /* 稍微压暗，保证白色文字和瓶子的清晰度 */
 }
-.shape-1 {
-  top: -10%; left: -10%; width: 50vw; height: 50vw;
-  background: #bae6fd;
-  animation: blobFloat 10s infinite alternate;
-}
-.shape-2 {
-  bottom: -20%; right: -10%; width: 60vw; height: 60vw;
-  background: #c7d2fe;
-  animation: blobFloat 12s infinite alternate-reverse;
-}
-.shape-3 {
-  top: 40%; left: 60%; width: 40vw; height: 40vw;
-  background: #fbcfe8;
-  animation: blobFloat 14s infinite alternate;
-}
+
 .backdrop-glass {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(30px);
+  background: rgba(255, 255, 255, 0.05); /* 进一步降低遮罩透明度，让视频更通透 */
+  backdrop-filter: blur(4px); /* 大幅减弱模糊，使视频纹理清晰可见 */
 }
 
 @keyframes blobFloat {
