@@ -2,7 +2,7 @@
 import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Microphone, Mute, Promotion, RefreshRight, VideoPause } from '@element-plus/icons-vue'
+import { ArrowLeft, Microphone, Mute, Promotion, RefreshRight, VideoPause, Close } from '@element-plus/icons-vue'
 import { openCapsule, publishCapsule } from '@/api/capsule'
 import { uploadFile } from '@/api/file'
 import type { CapsuleVO } from '@/types/models'
@@ -339,6 +339,10 @@ onUnmounted(() => {
         <!-- 视图：填写内容 -->
         <div v-else-if="currentView === 'writing'" class="view-writing">
           <div class="writing-card">
+            <!-- 关闭按钮 -->
+            <button class="card-close-btn" type="button" @click="currentView = 'main'" aria-label="关闭">
+              <el-icon><Close /></el-icon>
+            </button>
             <div class="card-deco"><div class="capsule-icon write-mode"></div></div>
             
             <div class="writing-header">
@@ -444,14 +448,14 @@ onUnmounted(() => {
   height: 100%;
   object-fit: cover;
   transform: translate(-50%, -50%);
-  filter: brightness(0.85); /* 稍微压暗，保证白色文字和瓶子的清晰度 */
+  filter: brightness(0.85); /* 恢复之前的亮度 */
 }
 
 .backdrop-glass {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.05); /* 进一步降低遮罩透明度，让视频更通透 */
-  backdrop-filter: blur(4px); /* 大幅减弱模糊，使视频纹理清晰可见 */
+  background: rgba(255, 255, 255, 0.05); /* 恢复之前的半透明遮罩 */
+  backdrop-filter: blur(4px); /* 恢复之前的背景模糊效果 */
 }
 
 @keyframes blobFloat {
@@ -462,7 +466,7 @@ onUnmounted(() => {
 /* 导航 */
 .top-nav {
   position: relative;
-  z-index: 10;
+  z-index: 1001;
   display: flex;
   align-items: center;
   padding: 24px 32px;
@@ -942,6 +946,30 @@ onUnmounted(() => {
   border-radius: 24px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.08);
   position: relative;
+}
+
+.card-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(0, 0, 0, 0.04);
+  color: #64748b;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.card-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1e293b;
+  transform: rotate(90deg);
 }
 
 .write-mode {
