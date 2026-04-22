@@ -6,7 +6,7 @@
           <el-icon class="back-icon"><ArrowLeft /></el-icon>
           {{ isEditMode ? ' 返回个人中心' : ' 返回地图' }}
         </el-button>
-        <h1>{{ isEditMode ? '编辑帖子' : '记录心声' }}</h1>
+        <h1>{{ isEditMode ? '编辑心声' : '记录心声' }}</h1>
       </header>
 
       <el-alert

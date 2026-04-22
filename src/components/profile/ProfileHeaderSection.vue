@@ -29,14 +29,25 @@
           </div>
 
           <div class="actions-area" v-if="isLoggedIn">
-            <el-dropdown class="profile-more-dropdown" trigger="click" @command="onProfileActionCommand">
+            <el-dropdown 
+              class="profile-more-dropdown" 
+              trigger="click" 
+              @command="onProfileActionCommand"
+              popper-class="profile-action-popper"
+            >
               <button type="button" class="profile-more-trigger" aria-label="更多操作">
                 <el-icon><MoreFilled /></el-icon>
               </button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="edit-profile">修改个人信息</el-dropdown-item>
-                  <el-dropdown-item command="logout" class="danger-dropdown-item">退出登录</el-dropdown-item>
+                  <el-dropdown-item command="edit-profile">
+                    <img src="@/assets/icon/edit.svg" class="dropdown-icon" alt="" />
+                    <span>修改个人信息</span>
+                  </el-dropdown-item>
+                  <el-dropdown-item command="logout" class="danger-dropdown-item">
+                    <img src="@/assets/icon/exit.svg" class="dropdown-icon" alt="" />
+                    <span>退出登录</span>
+                  </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -285,6 +296,35 @@ const onProfileActionCommand = (command: string | number | Record<string, unknow
   color: var(--el-color-danger);
 }
 
+.dropdown-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: middle;
+  object-fit: contain;
+}
+</style>
+
+<style>
+/* 全局样式覆盖，用于设置 el-dropdown 的圆角 */
+.profile-action-popper.el-popper {
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.profile-action-popper .el-dropdown-menu {
+  padding: 6px 0;
+}
+
+.profile-action-popper .el-dropdown-menu__item {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+</style>
+
+<style scoped>
 @media (max-width: 768px) {
   .banner-area {
     height: 150px;

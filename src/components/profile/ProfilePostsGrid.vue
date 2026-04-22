@@ -45,18 +45,15 @@
             <button class="edit-post-btn" type="button" :aria-label="`编辑帖子 ${post.id}`" @click="emit('edit-post', post)">
               <el-icon><EditPen /></el-icon>
             </button>
-            <el-dropdown trigger="click" @command="onPostDropdownCommand($event, post)" @click.stop>
-              <div class="header-right" @click.stop>
-                <el-icon><MoreFilled /></el-icon>
-              </div>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="delete" :disabled="isPostDeleting(post.id)" class="danger-dropdown-item">
-                    删除
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <button 
+              class="delete-post-btn" 
+              type="button" 
+              :aria-label="`删除帖子 ${post.id}`" 
+              @click="onDeleteClick(post)"
+              :disabled="isPostDeleting(post.id)"
+            >
+              <img src="@/assets/icon/delete.svg" class="delete-svg-icon" alt="删除" />
+            </button>
           </div>
         </div>
         <div class="card-body">
@@ -81,6 +78,7 @@
 
 <script setup lang="ts">
 import { EditPen, Lock, Location, MoreFilled, DataLine, Calendar } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import type { UserPostItem } from '@/api/user'
 
 const props = defineProps<{
@@ -101,10 +99,24 @@ const emit = defineEmits<{
 
 const isPostDeleting = (postId: number) => props.deletingPostIds.includes(postId)
 
-const onPostDropdownCommand = (command: string | number | Record<string, unknown>, post: UserPostItem) => {
-  if (String(command) === 'delete') {
+const onDeleteClick = (post: UserPostItem) => {
+  ElMessageBox.confirm(
+    '确定要删除这条心声吗？删除后将无法找回。',
+    '提示',
+    {
+      confirmButtonText: '确定删除',
+      cancelButtonText: '取消',
+      type: 'warning',
+      roundButton: true,
+      buttonSize: 'default',
+      customClass: 'custom-message-box',
+      lockScroll: false
+    }
+  ).then(() => {
     emit('delete-post', post)
-  }
+  }).catch(() => {
+    // 取消删除
+  })
 }
 </script>
 
@@ -334,6 +346,35 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
   background: var(--el-fill-color-light);
 }
 
+.delete-post-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-post-btn:hover {
+  background: #fff0f0;
+}
+
+.delete-svg-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.delete-post-btn:hover .delete-svg-icon {
+  opacity: 1;
+}
+
 .edit-post-btn:focus-visible {
   outline: 2px solid var(--el-color-primary-light-5);
   outline-offset: 2px;
@@ -342,7 +383,25 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
 :deep(.danger-dropdown-item) {
   color: var(--el-color-danger);
 }
+</style>
 
+<style>
+/* 消息确认框全局样式优化 */
+.custom-message-box {
+  border-radius: 16px;
+}
+.custom-message-box .el-message-box__header {
+  padding-top: 10px;
+}
+.custom-message-box .el-message-box__content {
+  padding-bottom: 10px;
+}
+.custom-message-box .el-message-box__btns {
+  padding-bottom: 10px;
+}
+</style>
+
+<style scoped>
 .card-body {
   display: flex;
   flex-direction: column;
