@@ -5,6 +5,8 @@ import { useChatStore } from '@/stores/chat';
 import { ArrowLeft } from '@element-plus/icons-vue';
 import { Vue3Lottie } from 'vue3-lottie';
 import scanJSON from '@/assets/Lottie/Scan.json';
+import moonJSON from '@/assets/Lottie/Moon.json';
+import loaderCatJSON from '@/assets/Lottie/Loader-cat.json';
 
 const router = useRouter();
 const chatStore = useChatStore();
@@ -17,10 +19,10 @@ const checkTimeWindow = () => {
   const hours = now.getHours();
   if (hours >= 8 && hours < 23) {
     isOpenTime.value = true;
-    systemTimeMsg.value = '匹配窗口开放中 (08:00 - 23:00)';
+    systemTimeMsg.value = '匹配窗口开放中 (22:00 - 23:00)';
   } else {
     isOpenTime.value = false;
-    systemTimeMsg.value = '小伴休息中，请在 08:00 - 23:00 来找我吧';
+    systemTimeMsg.value = '小伴休息中，请在 22:00 - 23:00 来找我吧';
   }
 };
 
@@ -85,8 +87,22 @@ const handleCancelMatch = () => {
           
           <!-- Center Avatar or Status -->
           <div class="center-content">
-            <div v-if="!isOpenTime" class="status-icon sleep-icon">🌙</div>
-            <div v-else class="status-icon ready-icon">✨</div>
+            <Vue3Lottie
+              v-if="!isOpenTime"
+              :animationData="moonJSON"
+              :width="88"
+              :height="88"
+              class="moon-lottie"
+            />
+            <Vue3Lottie
+              v-else
+              :animationData="loaderCatJSON"
+              :width="128"
+              :height="128"
+              :scale="1.55"
+              :noMargin="true"
+              class="loader-cat-lottie"
+            />
           </div>
         </template>
       </div>
@@ -194,7 +210,7 @@ const handleCancelMatch = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 40px;
+  margin-bottom: 2rem;
 }
 
 .scan-lottie {
@@ -239,16 +255,23 @@ const handleCancelMatch = () => {
 
 .center-content {
   position: relative;
-  width: 80px;
-  height: 80px;
-  background: white;
-  border-radius: 50%;
+  width: 8.5rem;
+  height: 8.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   z-index: 2;
-  font-size: 32px;
+}
+
+.moon-lottie {
+  width: 112px;
+  height: 112px;
+}
+
+.loader-cat-lottie {
+  width: 128px;
+  height: 128px;
+  overflow: visible;
 }
 
 .status-text {
