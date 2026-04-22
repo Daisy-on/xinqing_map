@@ -7,11 +7,15 @@
       </div>
       <div class="nav-actions">
         <div class="nav-item" @click="emit('mood-trend')">
-          <el-icon class="nav-value icon"><DataLine /></el-icon>
+          <div class="nav-value icon">
+            <img src="@/assets/icon/heart-dance.svg" class="nav-svg-icon" alt="趋势" />
+          </div>
           <span class="nav-label">心情趋势</span>
         </div>
         <div class="nav-item" @click="emit('mood-calendar')">
-          <el-icon class="nav-value icon"><Calendar /></el-icon>
+          <div class="nav-value icon">
+            <img src="@/assets/icon/daka.svg" class="nav-svg-icon" alt="打卡" />
+          </div>
           <span class="nav-label">心情打卡</span>
         </div>
         <div class="nav-item firefly-action" @click="emit('firefly')">
@@ -115,7 +119,7 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
   justify-content: space-between;
   padding: 12px 16px;
   background: var(--el-bg-color);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -172,6 +176,12 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
   color: var(--el-text-color-secondary);
 }
 
+.nav-svg-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
 .firefly-icon-btn-wrapper {
   position: relative;
   display: flex;
@@ -216,6 +226,10 @@ const onPostDropdownCommand = (command: string | number | Record<string, unknown
   }
   .nav-value.icon {
     font-size: 20px;
+  }
+  .nav-svg-icon {
+    width: 22px;
+    height: 22px;
   }
   .nav-label {
     font-size: 11px;

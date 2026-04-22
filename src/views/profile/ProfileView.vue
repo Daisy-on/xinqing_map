@@ -9,7 +9,7 @@
       @profile-action="onProfileActionCommand"
     />
 
-      <!-- 编辑资料弹窗 (TikTok 风格沉浸卡片) -->
+      <!-- 编辑资料弹窗 (抖音 风格沉浸卡片) -->
     <div class="profile-content-wrap">
       <EditProfileModal 
         v-model:visible="showEditModal"

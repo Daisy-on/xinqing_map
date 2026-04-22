@@ -792,7 +792,7 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 12px 26px;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -805,7 +805,7 @@ onBeforeUnmount(() => {
 .project-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 0;
   border: none;
   background: transparent;
@@ -813,27 +813,27 @@ onBeforeUnmount(() => {
 }
 
 .brand-logo-img {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
 }
 
 .brand-text-wrap {
   display: flex;
   flex-direction: column;
-  line-height: 1.05;
+  line-height: 1.1;
 }
 
 .brand-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
   color: #152844;
 }
 
 .brand-subtitle {
-  margin-top: 3px;
-  font-size: 10px;
+  margin-top: 4px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   color: #6f7f93;
 }
@@ -841,7 +841,7 @@ onBeforeUnmount(() => {
 .nav-right-actions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 24px;
 }
 
 .feature-link {
@@ -868,48 +868,49 @@ onBeforeUnmount(() => {
 }
 
 .firefly-link {
-  width: 56px;
+  width: 64px;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   font-size: 16px;
   font-weight: 600;
 }
 
 .nav-icon {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
 }
 
 .firefly-nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .nav-label {
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
 }
 
 .xiaoban-link {
-  width: 44px;
+  width: 52px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  font-size: 11px;
+  gap: 4px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .xiaoban-nav-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
 }
 
 .avatar-entry {
   padding: 0;
+  margin-left: 4px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -918,6 +919,8 @@ onBeforeUnmount(() => {
 .profile-avatar {
   border: 2px solid rgba(18, 35, 56, 0.08);
   box-shadow: 0 6px 16px rgba(15, 31, 52, 0.12);
+  width: 44px;
+  height: 44px;
 }
 
 .avatar-entry:hover {
@@ -926,16 +929,16 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .top-nav-bar {
-    padding: 10px 14px;
+    padding: 12px 18px;
   }
 
   .brand-logo-img {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
 
   .brand-title {
-    font-size: 17px;
+    font-size: 19px;
   }
 
   .brand-subtitle {
@@ -943,30 +946,37 @@ onBeforeUnmount(() => {
   }
 
   .firefly-link {
-    width: 48px;
+    width: 52px;
+    gap: 3px;
   }
 
   .firefly-nav-icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
   }
 
   .nav-label {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .nav-right-actions {
-    gap: 10px;
+    gap: 14px;
   }
 
   .xiaoban-link {
-    width: 38px;
-    font-size: 10px;
+    width: 42px;
+    font-size: 11px;
+    gap: 3px;
+  }
+
+  .xiaoban-nav-icon {
+    width: 20px;
+    height: 20px;
   }
 
   :deep(.profile-avatar) {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
   }
 
   .capsule-entry-btn {
