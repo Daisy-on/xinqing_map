@@ -17,7 +17,7 @@ const systemTimeMsg = ref('');
 const checkTimeWindow = () => {
   const now = new Date();
   const hours = now.getHours();
-  if (hours >= 20 && hours < 23) {
+  if (hours >= 8 && hours < 23) {
     isOpenTime.value = true;
     systemTimeMsg.value = '匹配窗口开放中 (20:00 - 23:00)';
   } else {

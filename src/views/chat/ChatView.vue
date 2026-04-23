@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router';
 import { useChatStore } from '@/stores/chat';
 import { ArrowLeft } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import xinyuBg from '@/assets/images/xinyu.png';
+import nimingIcon from '@/assets/icon/niming.svg';
 
 const router = useRouter();
 const chatStore = useChatStore();
@@ -12,9 +14,12 @@ const inputMsg = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
 
 const myId = computed(() => chatStore.getMyUserId());
+const chatBackgroundStyle = computed(() => ({
+  backgroundImage: `url(${xinyuBg})`,
+}));
 
 // --- 可拉伸高度控制 ---
-const inputBoxHeight = ref(100); // 默认初始高度
+const inputBoxHeight = ref(140); // 增加初始高度，避免默认高度太小或被压缩
 let startY = 0;
 let startHeight = 0;
 
@@ -138,19 +143,22 @@ const getClosedReasonText = (reason: string | null) => {
 </script>
 
 <template>
-  <div class="chat-container">
+  <div class="chat-container" :style="chatBackgroundStyle">
     <!-- Header -->
     <header class="chat-header">
       <el-icon class="back-btn" @click="handleBack"><ArrowLeft /></el-icon>
       <div class="peer-info">
-        <div class="avatar">匿</div>
+        <div class="avatar">
+          <img :src="nimingIcon" alt="匿名" class="avatar-icon" />
+        </div>
         <div class="name">小伴 #{{ chatStore.peerUserId ? String(chatStore.peerUserId).slice(-4) : '...' }}</div>
       </div>
       <div class="actions">
         <el-button 
           v-if="!chatStore.isRoomClosed"
-          type="danger" 
+          type="info" 
           link 
+          class="end-btn"
           @click="handleEndChat"
         >结束</el-button>
       </div>
@@ -213,8 +221,14 @@ const getClosedReasonText = (reason: string | null) => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f7f8fa;
+  background-color: #0a0b10;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
 }
 
 /* Header */
@@ -223,60 +237,72 @@ const getClosedReasonText = (reason: string | null) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(20, 22, 30, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 10;
 }
 
 .back-btn {
   font-size: 32px;
-  color: #333;
+  color: rgba(255, 255, 255, 0.9);
   cursor: pointer;
-  padding: 8px;
-  margin-left: -8px;
+  padding: 6px;
+  margin-left: -4px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 8px;
+  border-radius: 50%;
 }
 .back-btn:hover {
-  color: var(--el-color-primary, #409EFF);
-  text-shadow: 0 0 15px rgba(64, 158, 255, 0.6);
-  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
+  color: #a1c4fd;
+  transform: translateX(-2px);
 }
 
 .peer-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-  color: white;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
+  overflow: hidden;
+}
+
+.avatar-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 .name {
   font-size: 16px;
-  font-weight: 600;
-  color: #333;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.5px;
 }
 
 .actions {
-  width: 48px; /* 平衡两边空间 */
+  min-width: 48px;
   display: flex;
   justify-content: flex-end;
+}
+
+.end-btn {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+.end-btn:hover {
+  color: #f56c6c !important;
 }
 
 /* Messages */
@@ -286,18 +312,27 @@ const getClosedReasonText = (reason: string | null) => {
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  z-index: 2;
+  scrollbar-width: none; /* Firefox */
+  min-height: 0; /* 允许 flex 项目缩小 */
+}
+.message-list::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .system-msg {
   text-align: center;
   font-size: 12px;
-  color: #999;
+  color: rgba(255, 255, 255, 0.4);
   margin: 10px 0;
-  padding: 4px 12px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  border-radius: 20px;
   align-self: center;
+  max-width: 80%;
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .system-msg.mt {
@@ -305,8 +340,9 @@ const getClosedReasonText = (reason: string | null) => {
 }
 
 .system-msg.closed-msg {
-  background: rgba(245, 108, 108, 0.05);
-  color: #f56c6c;
+  background: rgba(245, 108, 108, 0.1);
+  color: #ff9a9a;
+  border: 1px solid rgba(245, 108, 108, 0.2);
   margin-top: 20px;
   animation: fadeIn 0.4s ease;
 }
@@ -315,8 +351,9 @@ const getClosedReasonText = (reason: string | null) => {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  max-width: 80%;
-  animation: slideUp 0.3s cubic-bezier(0.2, 0, 0, 1);
+  max-width: 85%;
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .message-row.is-mine {
@@ -325,62 +362,82 @@ const getClosedReasonText = (reason: string | null) => {
 }
 
 .message-bubble {
-  padding: 12px 16px;
-  border-radius: 18px;
-  border-bottom-left-radius: 4px;
-  background: white;
-  color: #333;
+  padding: 12px 18px;
+  border-radius: 20px;
+  border-top-left-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  color: rgba(255, 255, 255, 0.95);
   font-size: 15px;
-  line-height: 1.5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  line-height: 1.6;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   word-break: break-word;
   white-space: pre-wrap;
   max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .message-row.is-mine .message-bubble {
-  background: var(--el-color-primary, #409EFF);
-  color: white;
-  border-bottom-left-radius: 18px;
-  border-bottom-right-radius: 4px;
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.3) 0%, rgba(64, 158, 255, 0.15) 100%);
+  color: #fff;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 20px;
+  border: 1px solid rgba(64, 158, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(64, 158, 255, 0.15);
 }
 
 .time {
   font-size: 11px;
-  color: #aaa;
-  margin-top: 4px;
-  padding: 0 4px;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 6px 4px 0;
 }
 
 /* Footer / Input */
 .chat-footer {
-  background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(20, 22, 30, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
   display: flex;
   flex-direction: column;
+  z-index: 10;
+  flex-shrink: 0; /* 强制底部输入框不被压缩 */
+  /* 移除这里的 height transition，因为它会导致拖拽时平滑过渡与鼠标位置冲突，产生阻尼感 */
 }
 
 .resize-handle {
   position: absolute;
-  top: -4px;
+  top: -6px;
   left: 0;
   right: 0;
-  height: 8px;
+  height: 12px;
   cursor: row-resize;
-  z-index: 10;
+  z-index: 11;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.resize-handle::after {
+  content: '';
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
 }
 
 .chat-footer.is-disabled {
-  background: #fafafa;
+  background: rgba(10, 11, 16, 0.9);
 }
 
 .footer-overlay {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  color: #888;
+  padding: 24px;
+  color: rgba(255, 255, 255, 0.4);
   font-size: 14px;
   animation: fadeIn 0.3s ease;
 }
@@ -389,8 +446,8 @@ const getClosedReasonText = (reason: string | null) => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  background: #fff;
-  padding: 12px 16px;
+  background: transparent;
+  padding: 16px 20px;
   box-sizing: border-box;
   height: 100%;
 }
@@ -401,44 +458,50 @@ const getClosedReasonText = (reason: string | null) => {
   background: transparent;
   outline: none;
   font-size: 15px;
-  color: #333;
+  color: #fff;
   resize: none;
-  line-height: 1.5;
+  line-height: 1.6;
   overflow-y: auto;
   font-family: inherit;
 }
 
 .qq-textarea::placeholder {
-  color: #bbb;
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .send-action-bar {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .send-btn {
   border: none;
-  background: #f0f0f0;
-  color: #aaa;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.3);
   font-size: 14px;
   font-weight: 500;
   cursor: not-allowed;
-  padding: 6px 18px;
-  border-radius: 4px;
-  transition: all 0.2s;
+  padding: 8px 24px;
+  border-radius: 10px;
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .send-btn.active {
-  background: var(--el-color-primary, #409EFF);
+  background: linear-gradient(135deg, #409EFF 0%, #3a8ee6 100%);
   color: white;
   cursor: pointer;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+.send-btn.active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.5);
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
