@@ -55,10 +55,6 @@
           </div>
         </div>
 
-        <!-- Meta Footer -->
-        <div class="post-meta-footer">
-          <span class="read-count">阅读 {{ mockReadCount }}</span>
-        </div>
       </div>
       
       <div v-else class="error-state">
@@ -96,11 +92,6 @@ const post = ref<PostItem | null>(null)
 type PostAuthorInfo = Pick<User, 'id' | 'nickname' | 'avatar'>
 
 const author = ref<PostAuthorInfo | null>(null)
-
-const mockReadCount = computed(() => {
-  if (!post.value) return 1
-  return (post.value.id * 17 % 150) + 12
-})
 
 const formattedTime = computed(() => {
   const sourceTime = post.value?.updateTime || post.value?.createTime
@@ -310,17 +301,6 @@ onMounted(async () => {
   max-height: 400px;
   border-radius: 12px;
   overflow: hidden;
-}
-
-.post-meta-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
-
-.read-count {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
 }
 
 .bottom-action-bar {
