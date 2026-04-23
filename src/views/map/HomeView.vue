@@ -127,6 +127,7 @@ let allLandmarkLocations: Location[] = []
 let hasBoundMapEvents = false
 let hasBoundUserEvents = false
 let mapInitPromise: Promise<void> | null = null
+const LANDMARK_LIST_REFRESH_EVENT = 'xinqing-map:landmark-list-refresh'
 
 const isDetailPanelVisible = ref(false)
 const selectedLandmark = ref<Location | null>(null)
@@ -194,6 +195,11 @@ function unbindUserEvents() {
   window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthStorageChanged)
   window.removeEventListener('focus', syncTopBarUser)
   hasBoundUserEvents = false
+}
+
+function handleLandmarkListRefresh() {
+  if (!map || !mapApi) return
+  void loadLandmarks()
 }
 
 async function loadLandmarkDetail(locationId: number) {
@@ -671,6 +677,7 @@ async function initMapIfNeeded() {
 onMounted(() => {
   syncTopBarUser()
   bindUserEvents()
+  window.addEventListener(LANDMARK_LIST_REFRESH_EVENT, handleLandmarkListRefresh)
   void initMapIfNeeded()
 })
 
@@ -690,6 +697,7 @@ onDeactivated(() => {
 
 onBeforeUnmount(() => {
   unbindUserEvents()
+  window.removeEventListener(LANDMARK_LIST_REFRESH_EVENT, handleLandmarkListRefresh)
 
   if (!map) return
 
