@@ -510,3 +510,72 @@ const getClosedReasonText = (reason: string | null) => {
   to { opacity: 1; }
 }
 </style>
+
+<style>
+/* 全局样式修改 Element Plus 的弹窗，使其符合深夜暗色系风格 */
+.el-message-box {
+  background: rgba(30, 32, 40, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 24px !important;
+  padding: 16px 16px !important;
+}
+
+.el-message-box__title {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600 !important;
+}
+
+.el-message-box__content {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 15px !important;
+  padding: 20px 0 !important;
+}
+
+.el-message-box__btns {
+  padding-top: 10px !important;
+}
+
+.el-message-box__btns .el-button {
+  border-radius: 12px !important;
+  padding: 10px 20px !important;
+  height: auto !important;
+  transition: all 0.3s !important;
+}
+
+/* “先放后台”按钮样式 */
+.el-message-box__btns .el-button--default {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+.el-message-box__btns .el-button--default:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+/* “结束聊天”按钮样式 */
+.el-message-box__btns .el-button--primary {
+  background: linear-gradient(135deg, #409EFF 0%, #3a8ee6 100%) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
+}
+.el-message-box__btns .el-button--primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4) !important;
+}
+
+/* 提示图标颜色微调 */
+.el-message-box__status.el-icon {
+  color: #e6a23c !important;
+}
+
+/* 关闭按钮 */
+.el-message-box__headerbtn .el-message-box__close {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+.el-message-box__headerbtn .el-message-box__close:hover {
+  color: #fff !important;
+}
+</style>
