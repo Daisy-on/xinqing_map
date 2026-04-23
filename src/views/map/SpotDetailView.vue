@@ -139,16 +139,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft, ArrowRight, CloseBold, UserFilled } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
-import CloudOverlay from '@/components/weather/CloudOverlay.vue'
-import WeatherCanvas from '@/components/weather/WeatherCanvas.vue'
 import { useWeatherAudio } from '@/composables/useWeatherAudio'
+
+const CloudOverlay = defineAsyncComponent(() => import('@/components/weather/CloudOverlay.vue'))
+const WeatherCanvas = defineAsyncComponent(() => import('@/components/weather/WeatherCanvas.vue'))
 
 type WeatherCode = 'clear_sky' | 'sunny' | 'cloudy' | 'overcast' | 'light_rain' | 'heavy_rain' | 'thunderstorm' | 'snow'
 

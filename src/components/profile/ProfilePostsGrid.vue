@@ -23,7 +23,7 @@
             <img src="@/assets/icon/yinghuochong.svg" class="firefly-svg-icon" alt="" />
             <span v-if="hasUnreadLetter" class="glowing-red-dot"></span>
           </div>
-          <span class="nav-label">心遇</span>
+          <span class="nav-label">萤火虫</span>
         </div>
       </div>
     </div>

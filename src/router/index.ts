@@ -1,16 +1,4 @@
 ﻿import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '@/views/map/HomeView.vue'
-import AuthView from '@/views/auth/AuthView.vue'
-import SpotDetailView from '@/views/map/SpotDetailView.vue'
-import ComposeView from '@/views/social/ComposeView.vue'
-import ProfileView from '@/views/profile/ProfileView.vue'
-import PostDetailView from '@/views/social/PostDetailView.vue'
-import MatchView from '@/views/chat/MatchView.vue'
-import ChatView from '@/views/chat/ChatView.vue'
-import FireflyView from '@/views/special/FireflyView.vue'
-import CapsuleView from '@/views/special/CapsuleView.vue'
-import MoodCalendarView from '@/views/mood/MoodCalendarView.vue'
-import MoodEditView from '@/views/mood/MoodEditView.vue'
 import { getToken } from '@/utils/auth'
 
 const router = createRouter({
@@ -19,74 +7,76 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: HomeView,
+      component: () => import('@/views/map/HomeView.vue'),
       meta: { keepAlive: true },
     },
     {
       path: '/auth',
       name: 'auth',
-      component: AuthView,
+      component: () => import('@/views/auth/AuthView.vue'),
     },
     {
       path: '/firefly',
       name: 'firefly',
-      component: FireflyView,
-      meta: { requiresAuth: true }
+      component: () => import('@/views/special/FireflyView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/match',
       name: 'match',
-      component: MatchView,
-      meta: { requiresAuth: true }
+      component: () => import('@/views/chat/MatchView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/chat',
       name: 'chat',
-      component: ChatView,
-      meta: { requiresAuth: true }
+      component: () => import('@/views/chat/ChatView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/spots/:spotId',
       name: 'spot-detail',
-      component: SpotDetailView,
+      component: () => import('@/views/map/SpotDetailView.vue'),
     },
     {
       path: '/compose',
       name: 'compose',
-      component: ComposeView,
+      component: () => import('@/views/social/ComposeView.vue'),
     },
     {
       path: '/profile',
       name: 'profile',
-      component: ProfileView,
+      component: () => import('@/views/profile/ProfileView.vue'),
     },
     {
       path: '/mood/calendar',
       name: 'mood-calendar',
-      component: MoodCalendarView,
-      meta: { requiresAuth: true }
+      component: () => import('@/views/mood/MoodCalendarView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/mood/edit/:date',
       name: 'mood-edit',
-      component: MoodEditView,
-      meta: { requiresAuth: true }
-    },    {
+      component: () => import('@/views/mood/MoodEditView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mood/trend',
       name: 'mood_trend',
       component: () => import('@/views/mood/MoodTrendView.vue'),
-      meta: { requiresAuth: true }
-    },    {
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/post/:id',
       name: 'post-detail',
-      component: PostDetailView,
+      component: () => import('@/views/social/PostDetailView.vue'),
     },
     {
       path: '/capsule',
       name: 'capsule',
-      component: CapsuleView,
-      meta: { requiresAuth: true }
-    }
+      component: () => import('@/views/special/CapsuleView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 

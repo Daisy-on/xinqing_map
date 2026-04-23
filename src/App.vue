@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
-import { onMounted, onBeforeUnmount } from 'vue'
-import FireflyDeliveryOverlay from '@/components/common/FireflyDeliveryOverlay.vue'
+import { defineAsyncComponent, onMounted, onBeforeUnmount } from 'vue'
 import { useLetterStore } from '@/stores/letter'
 import { getToken, AUTH_STORAGE_CHANGED_EVENT } from '@/utils/auth'
 
 const letterStore = useLetterStore()
+const FireflyDeliveryOverlay = defineAsyncComponent(() => import('@/components/common/FireflyDeliveryOverlay.vue'))
 
 const handleAuthChange = () => {
   const token = getToken()

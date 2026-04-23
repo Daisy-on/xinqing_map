@@ -68,14 +68,12 @@
 </template>
 
 <script setup lang="ts">
-import { onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue'
+import { defineAsyncComponent, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchLocationDetail, fetchLocationList } from '@/api/location'
 import { loadBaiduMapGL } from '@/utils/baiduMapLoader'
-import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
-import LandmarkDetailPanel from '@/components/map/LandmarkDetailPanel.vue'
 import { UserFilled } from '@element-plus/icons-vue'
 import fireflyIcon from '@/assets/icon/yinghuochong.svg'
 import xiaobanIcon from '@/assets/icon/xiaoban.svg'
@@ -88,6 +86,8 @@ type BoundaryPoint = { lng: number; lat: number }
 
 const router = useRouter()
 const letterStore = useLetterStore()
+const SplashAnimation = defineAsyncComponent(() => import('@/components/common/SplashAnimation.vue'))
+const LandmarkDetailPanel = defineAsyncComponent(() => import('@/components/map/LandmarkDetailPanel.vue'))
 
 const MAP_MIN_ZOOM = 18
 const MAP_MAX_ZOOM = 22
