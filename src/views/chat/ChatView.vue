@@ -87,7 +87,8 @@ const handleBack = () => {
     ElMessageBox.confirm('返回大厅仍会保持连接，要结束当前聊天吗？', '提示', {
       confirmButtonText: '结束聊天',
       cancelButtonText: '先放后台',
-      type: 'warning'
+      type: 'warning',
+      customClass: 'chat-message-box'
     }).then(() => {
       chatStore.endChat();
       router.push('/match');
@@ -105,7 +106,8 @@ const handleEndChat = () => {
   ElMessageBox.confirm('确定要结束当前的相遇吗？', '结束聊天', {
     confirmButtonText: '确认',
     cancelButtonText: '取消',
-    type: 'warning'
+    type: 'warning',
+    customClass: 'chat-message-box'
   }).then(() => {
     chatStore.endChat();
   }).catch(() => {});
@@ -512,8 +514,8 @@ const getClosedReasonText = (reason: string | null) => {
 </style>
 
 <style>
-/* 全局样式修改 Element Plus 的弹窗，使其符合深夜暗色系风格 */
-.el-message-box {
+/* 仅聊天页使用的暗色弹窗样式 */
+.chat-message-box {
   background: rgba(30, 32, 40, 0.9) !important;
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
@@ -522,22 +524,22 @@ const getClosedReasonText = (reason: string | null) => {
   padding: 16px 16px !important;
 }
 
-.el-message-box__title {
+.chat-message-box .el-message-box__title {
   color: rgba(255, 255, 255, 0.9) !important;
   font-weight: 600 !important;
 }
 
-.el-message-box__content {
+.chat-message-box .el-message-box__content {
   color: rgba(255, 255, 255, 0.7) !important;
   font-size: 15px !important;
   padding: 20px 0 !important;
 }
 
-.el-message-box__btns {
+.chat-message-box .el-message-box__btns {
   padding-top: 10px !important;
 }
 
-.el-message-box__btns .el-button {
+.chat-message-box .el-message-box__btns .el-button {
   border-radius: 12px !important;
   padding: 10px 20px !important;
   height: auto !important;
@@ -545,37 +547,37 @@ const getClosedReasonText = (reason: string | null) => {
 }
 
 /* “先放后台”按钮样式 */
-.el-message-box__btns .el-button--default {
+.chat-message-box .el-message-box__btns .el-button--default {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: rgba(255, 255, 255, 0.6) !important;
 }
-.el-message-box__btns .el-button--default:hover {
+.chat-message-box .el-message-box__btns .el-button--default:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
 }
 
 /* “结束聊天”按钮样式 */
-.el-message-box__btns .el-button--primary {
+.chat-message-box .el-message-box__btns .el-button--primary {
   background: linear-gradient(135deg, #409EFF 0%, #3a8ee6 100%) !important;
   border: none !important;
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3) !important;
 }
-.el-message-box__btns .el-button--primary:hover {
+.chat-message-box .el-message-box__btns .el-button--primary:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4) !important;
 }
 
 /* 提示图标颜色微调 */
-.el-message-box__status.el-icon {
+.chat-message-box .el-message-box__status.el-icon {
   color: #e6a23c !important;
 }
 
 /* 关闭按钮 */
-.el-message-box__headerbtn .el-message-box__close {
+.chat-message-box .el-message-box__headerbtn .el-message-box__close {
   color: rgba(255, 255, 255, 0.4) !important;
 }
-.el-message-box__headerbtn .el-message-box__close:hover {
+.chat-message-box .el-message-box__headerbtn .el-message-box__close:hover {
   color: #fff !important;
 }
 </style>
