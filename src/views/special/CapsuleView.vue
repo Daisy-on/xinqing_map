@@ -271,7 +271,7 @@ onUnmounted(() => {
           </div>
           <div class="intro-texts">
             <h2 class="title">树洞里的秘密</h2>
-            <p class="subtitle">摇晃玻璃瓶，倾听陌生人的心情。</p>
+            <p class="subtitle">摇晃瓶子，倾听陌生人的寄语。</p>
           </div>
           <div class="action-buttons">
             <button class="btn-primary" @click="goToWrite">塞入一颗</button>
@@ -370,7 +370,7 @@ onUnmounted(() => {
               <textarea 
                 v-model="publishForm.content" 
                 class="custom-textarea"
-                placeholder="写下你的心情或小秘密..."
+                placeholder="写下你的寄语或小秘密..."
                 maxlength="500"
               ></textarea>
               <div class="word-limit">{{ publishForm.content.length }}/500</div>

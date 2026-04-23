@@ -8,7 +8,7 @@
         <!-- 治愈系毛玻璃弹窗 -->
         <div class="delivery-popup slide-up">
           <div class="popup-content">
-             <h3>✨ 萤火虫飞回来了</h3>
+             <h3>萤火虫飞回来了</h3>
              <p>带着远方的心情回信</p>
              <div class="actions">
                <button class="btn-read" @click="goToLetter">立即查看</button>
