@@ -51,17 +51,6 @@
           <el-option :value="2" label="女" />
         </el-select>
       </div>
-
-      <div class="form-item">
-        <label class="item-label">简介</label>
-        <div class="input-container read-only">
-          <textarea 
-            class="custom-textarea" 
-            readonly 
-            rows="3"
-          >这个人很懒，什么也没有留下~</textarea>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -248,27 +237,6 @@ const nicknameLength = computed(() => {
 :deep(.el-select__wrapper.is-focused) {
   background-color: #fff;
   box-shadow: 0 0 0 1px #e63f52 !important;
-}
-.input-container.read-only {
-  background-color: #f9f9f9;
-  height: auto;
-  padding: 10px 14px;
-  cursor: not-allowed;
-}
-.input-container.read-only:focus-within {
-  background-color: #f9f9f9;
-  border-color: transparent;
-  box-shadow: none;
-}
-.custom-textarea {
-  width: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #999;
-  font-size: 14px;
-  resize: none;
-  line-height: 1.5;
 }
 
 /* Footer 配置 */

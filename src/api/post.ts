@@ -162,7 +162,7 @@ export async function fetchPostDetail(postId: number): Promise<PostItem> {
 }
 
 export async function deletePost(postId: number): Promise<void> {
-  await http.delete<ApiResponse<null>>('/post/' + postId)
+  await http.delete<ApiResponse<null>>('/post/delete/' + postId)
 }
 
 export async function togglePostLike(postId: number): Promise<PostLikeResult> {

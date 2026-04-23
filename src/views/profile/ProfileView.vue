@@ -241,17 +241,6 @@ const handlePostMenuCommand = async (command: string, post: UserPostItem) => {
     return
   }
 
-  try {
-    await ElMessageBox.confirm('删除后不可恢复，确认删除这条动态吗？', '删除动态', {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
-      type: 'warning',
-      distinguishCancelAndClose: true,
-    })
-  } catch {
-    return
-  }
-
   deletingPostIds.value = [...deletingPostIds.value, post.id]
   try {
     await deletePost(post.id)
