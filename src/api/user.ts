@@ -86,8 +86,6 @@ export async function fetchUserDetailById(userId: number): Promise<User> {
   return response.data
 }
 
-export const fetchUserInfo = fetchUserDetailById
-
 export async function fetchAvatarList(): Promise<AvatarPreset[]> {
   const response = await http.get<ApiResponse<AvatarPreset[]>>('/avatar/list')
   return response.data.data || []

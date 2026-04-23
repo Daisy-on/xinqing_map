@@ -1,11 +1,6 @@
 ﻿import http from './http'
+import type { ApiResponse } from '@/types/api'
 import type { EmotionTag, PagedResult, PostItem } from '@/types/models'
-
-interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
-}
 
 type BackendPostItem = PostItem & {
   image?: string | null

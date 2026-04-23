@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { EditPen, Lock, Location, MoreFilled, DataLine, Calendar } from '@element-plus/icons-vue'
+import { EditPen, Location } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import type { UserPostItem } from '@/api/user'
 
@@ -302,31 +302,6 @@ const onDeleteClick = (post: UserPostItem) => {
   font-size: 13px;
 }
 
-.privacy-tag {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  background: var(--el-fill-color-light);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.header-right {
-  color: var(--el-text-color-secondary);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-right:hover {
-  color: var(--el-text-color-primary);
-  background: var(--el-fill-color-light);
-}
-
 .edit-post-btn {
   width: 28px;
   height: 28px;
@@ -378,10 +353,6 @@ const onDeleteClick = (post: UserPostItem) => {
 .edit-post-btn:focus-visible {
   outline: 2px solid var(--el-color-primary-light-5);
   outline-offset: 2px;
-}
-
-:deep(.danger-dropdown-item) {
-  color: var(--el-color-danger);
 }
 </style>
 

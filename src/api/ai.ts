@@ -1,14 +1,9 @@
 import http from './http'
+import type { ApiResponse } from '@/types/api'
 
 export interface AiLetterVO {
   emotion_tag: string
   letter_content: string
-}
-
-interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
 }
 
 /**

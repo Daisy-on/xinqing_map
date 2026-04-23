@@ -2,7 +2,7 @@
 import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, Microphone, Mute, Promotion, RefreshRight, VideoPause, Close } from '@element-plus/icons-vue'
+import { ArrowLeft, Microphone, Mute, RefreshRight, VideoPause, Close } from '@element-plus/icons-vue'
 import { openCapsule, publishCapsule } from '@/api/capsule'
 import { uploadFile } from '@/api/file'
 import type { CapsuleVO } from '@/types/models'

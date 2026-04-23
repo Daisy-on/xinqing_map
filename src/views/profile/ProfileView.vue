@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { deletePost } from '@/api/post'
 import { fetchCurrentUser, fetchUserPosts, type UserPostItem } from '@/api/user'
 import type { User } from '@/types/models'

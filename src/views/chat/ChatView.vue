@@ -1,10 +1,9 @@
 <script setup lang="ts">
 // @ts-nocheck
-// @ts-nocheck
 import { ref, onMounted, nextTick, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useChatStore } from '@/stores/chat';
-import { ArrowLeft, More } from '@element-plus/icons-vue';
+import { ArrowLeft } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const router = useRouter();

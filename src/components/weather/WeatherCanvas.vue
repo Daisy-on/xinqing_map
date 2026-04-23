@@ -8,7 +8,6 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-// @ts-nocheck
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 
 interface WeatherConfig {

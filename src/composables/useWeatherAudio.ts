@@ -1,5 +1,4 @@
 // @ts-nocheck
-// @ts-nocheck
 import { ref, watch, onUnmounted } from 'vue';
 import birdSongUrl from '@/assets/sounds/bird-song.mp3'
 import heavyRainUrl from '@/assets/sounds/heavy-rain.mp3'

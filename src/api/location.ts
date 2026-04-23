@@ -1,11 +1,6 @@
 import http from './http'
+import type { ApiResponse } from '@/types/api'
 import type { BackendLocationDetailItem, BackendLocationItem, Location, LocationDetail } from '@/types/models'
-
-interface ApiResponse<T> {
-  code: number
-  message: string
-  data: T
-}
 
 function toFiniteNumber(value: unknown): number {
   const parsed = Number(value)
