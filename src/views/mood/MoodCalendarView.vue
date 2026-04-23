@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Edit, ArrowRight, DataLine } from '@element-plus/icons-vue'
+import { ArrowLeft, Edit, ArrowRight } from '@element-plus/icons-vue'
 import { getTodayStatus } from '@/api/mood'
 import { getMoodById, preloadMoodIcons } from '@/utils/moodHelpers'
 import { useMoodStore } from '@/stores/mood'
+import heartDanceIcon from '@/assets/icon/heart-dance.svg'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -84,8 +85,8 @@ onMounted(() => {
           </button>
         </div>
         <div class="header-right">
-          <button class="arrow-btn" type="button" aria-label="统计趋势" @click="router.push('/mood/trend')">
-            <el-icon><DataLine /></el-icon>
+          <button class="arrow-btn trend-btn" type="button" aria-label="统计趋势" @click="router.push('/mood/trend')">
+            <img :src="heartDanceIcon" class="trend-svg-icon" alt="" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -265,6 +266,28 @@ onMounted(() => {
   padding: 4px;
 }
 
+.trend-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.trend-btn:hover {
+  background: rgba(255, 255, 255, 0.92);
+  transform: translateY(-1px);
+}
+
+.trend-svg-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  display: block;
+}
+
 .week-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -395,5 +418,17 @@ onMounted(() => {
 
 .fab-btn:hover {
   transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .trend-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .trend-svg-icon {
+    width: 16px;
+    height: 16px;
+  }
 }
 </style>

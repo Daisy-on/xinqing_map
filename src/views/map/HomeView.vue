@@ -827,7 +827,7 @@ onBeforeUnmount(() => {
 .brand-title {
   font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: 0.1em;
   color: #152844;
 }
 

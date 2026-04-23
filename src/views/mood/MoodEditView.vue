@@ -312,7 +312,7 @@ onMounted(() => {
   object-fit: contain;
 }
 .mood-name {
-  margin-top: 8px;
+  margin-top: 4px;
   font-size: 13px;
   color: #666;
 }
