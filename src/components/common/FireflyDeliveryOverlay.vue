@@ -163,4 +163,45 @@ const goToLetter = () => {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .delivery-popup {
+    width: min(64vw, 340px);
+    max-width: 340px;
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .delivery-popup h3 {
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+
+  .delivery-popup p {
+    margin-bottom: 18px;
+    font-size: 0.92rem;
+  }
+
+  .actions {
+    flex-direction: row;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1;
+    width: auto;
+    min-height: 32px;
+    padding: 8px 2px;
+    font-size: 0.95rem;
+    border-radius: 14px;
+  }
+
+  .firefly-entity {
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    margin-top: -5px;
+  }
+}
 </style>

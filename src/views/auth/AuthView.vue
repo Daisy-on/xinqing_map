@@ -17,7 +17,7 @@
 
         <div class="visual-content">
           <h1>心晴</h1>
-          <p>记录心情，连接地点，留下你的此刻。</p>
+          <p>寻找你的心情坐标，留下你的此刻。</p>
         </div>
       </section>
 
@@ -508,7 +508,13 @@ async function handleRegister() {
     font-size: 15px;
   }
   .auth-card {
-    padding: 24px 20px;
+    padding: 16px 20px 24px;
+  }
+  .auth-header {
+    margin-top: -8px;
+  }
+  .auth-form {
+    margin-top: -6px;
   }
 }
 </style>
