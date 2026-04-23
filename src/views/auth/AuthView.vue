@@ -377,6 +377,7 @@ async function handleRegister() {
   font-weight: 800;
   letter-spacing: 1.5px;
   line-height: 1.2;
+  transform: translateX(5rem);
 }
 
 .visual-content p {
@@ -385,6 +386,7 @@ async function handleRegister() {
   color: rgba(27, 42, 64, 0.85);
   max-width: 400px;
   line-height: 1.6;
+  transform: translateX(5rem);
 }
 
 /* --- 右侧表单区 --- */

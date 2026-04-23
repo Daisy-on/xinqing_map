@@ -6,6 +6,10 @@ import { getToken, AUTH_STORAGE_CHANGED_EVENT } from '@/utils/auth'
 
 const letterStore = useLetterStore()
 const FireflyDeliveryOverlay = defineAsyncComponent(() => import('@/components/common/FireflyDeliveryOverlay.vue'))
+const LANDMARK_LIST_REFRESH_EVENT = 'xinqing-map:landmark-list-refresh'
+const LANDMARK_LIST_REFRESH_INTERVAL = 5 * 60 * 1000
+
+let landmarkRefreshTimer: ReturnType<typeof window.setInterval> | null = null
 
 const handleAuthChange = () => {
   const token = getToken()
@@ -17,13 +21,32 @@ const handleAuthChange = () => {
   letterStore.disconnect()
 }
 
+const dispatchLandmarkRefresh = () => {
+  window.dispatchEvent(new CustomEvent(LANDMARK_LIST_REFRESH_EVENT))
+}
+
+const startLandmarkRefreshTimer = () => {
+  if (landmarkRefreshTimer !== null) return
+
+  landmarkRefreshTimer = window.setInterval(dispatchLandmarkRefresh, LANDMARK_LIST_REFRESH_INTERVAL)
+}
+
+const stopLandmarkRefreshTimer = () => {
+  if (landmarkRefreshTimer === null) return
+
+  window.clearInterval(landmarkRefreshTimer)
+  landmarkRefreshTimer = null
+}
+
 onMounted(() => {
   handleAuthChange()
   window.addEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthChange as EventListener)
+  startLandmarkRefreshTimer()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener(AUTH_STORAGE_CHANGED_EVENT, handleAuthChange as EventListener)
+  stopLandmarkRefreshTimer()
   letterStore.disconnect()
 })
 </script>
