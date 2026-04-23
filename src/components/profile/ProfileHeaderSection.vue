@@ -25,7 +25,7 @@
               <span class="uid" v-if="isLoggedIn">UID: {{ userInfo?.account || '-' }}</span>
             </div>
 
-            <p class="bio-text" v-if="!isLoggedIn">登录后体验更多功能，记录你的心情地图。</p>
+            <p class="bio-text" v-if="!isLoggedIn">登录后体验更多功能，开启你的心晴之旅。</p>
           </div>
 
           <div class="actions-area" v-if="isLoggedIn">

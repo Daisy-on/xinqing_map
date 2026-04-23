@@ -453,6 +453,12 @@ const onDeleteClick = (post: UserPostItem) => {
 }
 
 .empty-state-wrapper {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 60px 0;
 }
 
