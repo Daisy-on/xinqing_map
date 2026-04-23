@@ -498,10 +498,10 @@ onUnmounted(() => {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 2px;
-  color: #1e293b;
+  color: #30476d;
 }
 
 .scene-container {
@@ -719,11 +719,11 @@ onUnmounted(() => {
   font-size: 26px;
   font-weight: 700;
   margin-bottom: 8px;
-  color: #0f172a;
+  color: #2e619b;
 }
 .intro-texts .subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: #3f60a9;
   letter-spacing: 0.5px;
 }
 
@@ -734,7 +734,7 @@ onUnmounted(() => {
 
 .btn-primary,
 .btn-secondary {
-  padding: 14px 32px;
+  padding: 12px 24px;
   border-radius: 30px;
   font-size: 15px;
   font-weight: 600;
@@ -745,7 +745,7 @@ onUnmounted(() => {
 
 .btn-primary {
   background: #fff;
-  color: #38bdf8;
+  color: #49c8ff;
   box-shadow: 0 8px 16px rgba(56, 189, 248, 0.2);
 }
 .btn-primary:hover {

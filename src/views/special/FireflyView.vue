@@ -9,8 +9,8 @@ const router = useRouter()
 
 // 状态定义
 const loading = ref(true)
-const letters = ref<(AiLetterVO & { id: number; isOpen: boolean })[]>([])
-const activeLetter = ref<(AiLetterVO & { id: number; isOpen: boolean }) | null>(null)
+const letters = ref<(AiLetterVO & { id: number; isOpen: boolean; isReturning?: boolean })[]>([])
+const activeLetter = ref<(AiLetterVO & { id: number; isOpen: boolean; isReturning?: boolean }) | null>(null)
 const isOverlayVisible = ref(false)
 const isDrawerOpen = ref(false)
 
@@ -49,7 +49,7 @@ const handleBack = () => {
 
 // 桌面打开信封动画 -> 弹出展开的信纸
 const handleOpenEnvelope = (letter: typeof letters.value[0]) => {
-  if (letter.isOpen) return
+  if (letter.isOpen || letter.isReturning) return
   
   letter.isOpen = true
   setTimeout(() => {
@@ -59,12 +59,11 @@ const handleOpenEnvelope = (letter: typeof letters.value[0]) => {
   }, 1000)
 }
 
-// 抽屉内打开信件：关闭抽屉并阅信
+// 抽屉内打开信件：保留抽屉展开，完整播放信件打开动画
 const handleOpenEnvelopeFromDrawer = (letter: typeof letters.value[0]) => {
-  if (letter.isOpen) return
+  if (letter.isOpen || letter.isReturning) return
   
   letter.isOpen = true
-  isDrawerOpen.value = false // 关上抽屉
   setTimeout(() => {
     activeLetter.value = letter
     isOverlayVisible.value = true
@@ -113,8 +112,13 @@ const handlePaperClick = () => {
 const closeOverlay = () => {
   isOverlayVisible.value = false
   setTimeout(() => {
-    if (activeLetter.value) {
-      activeLetter.value.isOpen = false 
+    const closingLetter = activeLetter.value
+    if (closingLetter) {
+      closingLetter.isReturning = true
+      closingLetter.isOpen = false 
+      setTimeout(() => {
+        closingLetter.isReturning = false
+      }, 620)
     }
     activeLetter.value = null
     displayedText.value = ''
@@ -192,6 +196,7 @@ const formatContent = (text: string) => {
       v-model="isDrawerOpen"
       direction="btt"
       size="75%"
+      :z-index="1800"
       :with-header="false"
       class="wood-drawer-theme"
     >
@@ -203,7 +208,7 @@ const formatContent = (text: string) => {
             v-for="letter in drawerLetters" 
             :key="letter.id"
             class="envelope-wrapper drawer-letter"
-            :class="{ 'is-open': letter.isOpen }"
+            :class="{ 'is-open': letter.isOpen, 'is-returning': letter.isReturning }"
             @click="handleOpenEnvelopeFromDrawer(letter)"
           >
             <div class="envelope-back"></div>
@@ -308,55 +313,70 @@ const formatContent = (text: string) => {
 @media (max-width: 800px) { .desk-surface { transform: rotateX(55deg) rotateZ(-12deg) scale(0.65); } }
 @media (max-width: 500px) { .desk-surface { transform: rotateX(56deg) rotateZ(0deg) scale(0.5); } }
 
-  /* 抽屉卡片提示 (针对新版背景图片微调位置) */
+  /* 抽屉卡片提示 - 视口底部居中 */
   .drawer-hint-card {
-    position: absolute;
-    bottom: 100px; right: 480px; /* 调整至图片中抽屉拉手右侧区域 */
+    position: fixed; /* 改为 fixed 以相对于视口定位 */
+    bottom: 40px; 
+    left: 50%;
+    transform: translateX(-50%) translateZ(100px); /* 居中并保持 3D 厚度 */
     display: flex; align-items: center;
-    gap: 12px; padding: 10px 16px;
+    gap: 12px; padding: 12px 24px;
     background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 50;
-    animation: float-hint 3s infinite ease-in-out;
-    /* 核心修复：取消 3D 转换对该卡片的影响，使其在 2D 合成层显示，防止被背景穿透或遮挡 */
-    transform: translateZ(100px);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100; /* 确保在最上层 */
+    animation: float-hint-fixed 3s infinite ease-in-out;
   }
 
-.drawer-hint-card:hover {
-    transform: translateZ(110px) translateY(-5px) scale(1.05);
+  .drawer-hint-card:hover {
+    transform: translateX(-50%) translateZ(110px) translateY(-5px) scale(1.05);
     background: #fff;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
   }
 
-.hint-icon { font-size: 20px; }
-.firefly-icon {
-  text-shadow: 0 0 15px rgba(253, 224, 71, 0.9), 0 0 30px rgba(253, 224, 71, 0.6);
-  animation: firefly-glow 2s infinite alternate;
-}
-@keyframes firefly-glow {
-  from { opacity: 0.7; filter: drop-shadow(0 0 5px #fde047); transform: scale(0.9); }
-  to { opacity: 1; filter: drop-shadow(0 0 15px #fde047) brightness(1.2); transform: scale(1.1); }
-}
-.hint-text { display: flex; flex-direction: column; }
-.hint-title { font-size: 14px; font-weight: 600; color: #4b5563; }
-.hint-count { font-size: 12px; color: #9ca3af; }
-.hint-arrow { margin-left: 4px; color: #6366f1; font-weight: bold; transition: transform 0.3s; }
-.drawer-hint-card:hover .hint-arrow { transform: translateX(4px); }
+  /* 针对 fixed 定位的居中浮动动画 */
+  @keyframes float-hint-fixed {
+    0%, 100% { transform: translateX(-50%) translateZ(100px) translateY(0); }
+    50% { transform: translateX(-50%) translateZ(100px) translateY(-8px); }
+  }
 
-@keyframes float-hint {
-  0%, 100% { transform: translateZ(100px) translateY(0); }
-  50% { transform: translateZ(100px) translateY(-8px); }
-}
+  @media (max-width: 800px) {
+    .drawer-hint-card { 
+      bottom: 30px; 
+      padding: 10px 20px;
+    }
+  }
 
-@media (max-width: 800px) {
-  .drawer-hint-card { bottom: 80px; right: 50%; transform: translateX(50%); }
-  .drawer-hint-card:hover { transform: translateX(50%) translateY(-5px) scale(1.05); }
-}
+  /* 抽屉入口内部元素样式 */
+  .hint-icon { font-size: 20px; }
+  .firefly-icon {
+    text-shadow: 0 0 15px rgba(253, 224, 71, 0.9), 0 0 30px rgba(253, 224, 71, 0.6);
+    animation: firefly-glow 2s infinite alternate;
+  }
+  .hint-text { display: flex; flex-direction: column; }
+  .hint-title { 
+    font-size: 15px; 
+    font-weight: 700; 
+    color: #1e293b; /* 使用更深、更利于阅读的颜色 */
+    letter-spacing: 0.5px;
+  }
+  .hint-count { 
+    font-size: 11px; 
+    color: #64748b; /* 醒目一些的次级文字 */
+    font-weight: 500;
+  }
+  .hint-arrow { 
+    margin-left: 6px; 
+    color: #7677e0; 
+    font-weight: bold; 
+    transition: transform 0.3s;
+    font-size: 18px;
+  }
+  .drawer-hint-card:hover .hint-arrow { transform: translateX(5px); }
 
 /* --- 3D 信封样式复用与位置定制 --- */
 .envelope-wrapper {
@@ -408,6 +428,9 @@ const formatContent = (text: string) => {
 }
 .paper-preview { margin: 20px; height: 8px; background: #f0f0f0; border-radius: 4px; width: 60%; box-shadow: 0 16px 0 #f0f0f0, 0 32px 0 #f0f0f0; }
 .envelope-wrapper.is-open .inner-paper { transform: translateY(-80px) !important; z-index: 10; }
+.envelope-wrapper.is-returning .inner-paper {
+  z-index: 35;
+}
 .envelope-pocket {
   position: absolute; bottom: 0; left: 0; width: 0; height: 0; border-style: solid;
   border-width: 100px 160px; border-color: transparent #ede7db #e3dccf #ede7db;
@@ -456,7 +479,38 @@ const formatContent = (text: string) => {
 .close-btn { position: absolute; top: -10px; right: -40px; background: transparent; border: none; font-size: 28px; color: #8c939d; cursor: pointer; transition: color 0.2s, transform 0.2s; padding: 8px; }
 .close-btn:hover { color: #3b424a; transform: scale(1.1); }
 @media (max-width: 768px) { .close-btn { top: 10px; right: 10px; z-index: 10; color: #a4b0be; } }
-.readable-paper { width: 100%; height: 100%; background: #fffdf9; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02); padding: 40px 48px; overflow-y: auto; cursor: text; }
+.readable-paper {
+  width: 100%;
+  height: 100%;
+  background: #fffdf9;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.02);
+  padding: 40px 48px;
+  overflow-y: overlay; /* 使用 overlay 模式 */
+  cursor: text;
+}
+
+/* 隐藏滚动条但保留滚动功能 (针对移动端及部分浏览器) */
+.readable-paper::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* 如果用户希望有极简滚动条，可以改用以下样式代替上面的隐藏方案 */
+/*
+.readable-paper::-webkit-scrollbar {
+  width: 4px;
+}
+.readable-paper::-webkit-scrollbar-track {
+  background: transparent;
+}
+.readable-paper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+*/
+
 @media (max-width: 768px) { .readable-paper { padding: 40px 24px; } }
 .paper-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 16px; margin-bottom: 32px; font-family: inherit; }
 .tag { font-size: 14px; color: #a4b0be; letter-spacing: 1px; }
