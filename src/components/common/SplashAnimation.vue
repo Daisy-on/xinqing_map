@@ -7,6 +7,8 @@
     <!-- 彩虹 -->
     <div class="rainbow-container">
       <div class="rainbow"></div>
+      <!-- 云朵遮盖彩虹底部 -->
+      <canvas ref="cloudCanvas" class="cloud-canvas"></canvas>
     </div>
     
     <!-- 3D 穿梭 WebM 视频 (替代以前的图片云层) -->
@@ -48,6 +50,7 @@ defineProps<{
   isVisible: boolean;
 }>()
 
+const cloudCanvas = ref<HTMLCanvasElement | null>(null)
 const prefersReducedMotion = ref(false)
 const videoReady = ref(false)
 const videoFailed = ref(false)
@@ -70,7 +73,54 @@ function syncReducedMotionState() {
   prefersReducedMotion.value = reducedMotionMediaQuery.matches
 }
 
+function initClouds() {
+  const canvas = cloudCanvas.value
+  if (!canvas) return
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const resize = () => {
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    drawClouds()
+  }
+
+  const drawClouds = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    // 绘制云朵的辅助函数
+    const drawCloudAt = (x: number, y: number, size: number) => {
+      ctx.beginPath()
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)'
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.5)'
+      ctx.shadowBlur = 40
+
+      // 简单的一组圆弧构成蓬松云朵
+      ctx.arc(x, y, size, 0, Math.PI * 2)
+      ctx.arc(x + size * 0.6, y - size * 0.4, size * 0.7, 0, Math.PI * 2)
+      ctx.arc(x + size * 1.2, y, size * 0.8, 0, Math.PI * 2)
+      ctx.arc(x + size * 0.4, y + size * 0.3, size * 0.6, 0, Math.PI * 2)
+      ctx.fill()
+    }
+
+    // 彩虹底部在大约 50vh 的位置 (clip-path: inset(0 0 50% 0))
+    // rainbow-container top: -10vh, height: 80vh
+    // 底部基准线约在屏幕中心
+    const centerY = canvas.height * 0.72 
+    const spread = canvas.width * 0.45 // 离中心两侧的距离
+
+    // 左侧云
+    drawCloudAt(canvas.width / 2 - spread, centerY, 80)
+    // 右侧云
+    drawCloudAt(canvas.width / 2 + spread - 40, centerY + 10, 85)
+  }
+
+  window.addEventListener('resize', resize)
+  resize()
+}
+
 onMounted(() => {
+  initClouds()
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
 
   reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -162,6 +212,24 @@ onBeforeUnmount(() => {
   opacity: 0;
   animation: rainbowReveal 4s ease forwards 2s;
   pointer-events: none;
+  z-index: 2; /* 确保彩虹和云在视频层 (z-index: 5) 之下 */
+}
+
+/* Canvas 云朵覆盖 */
+.cloud-canvas {
+  position: absolute;
+  top: 10vh; /* 补偿容器的 -10vh */
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  filter: blur(8px);
+  animation: floatClouds 6s ease-in-out infinite alternate;
+}
+
+@keyframes floatClouds {
+  0% { transform: translateY(0) scale(0.95); opacity: 0.6; }
+  100% { transform: translateY(15px) scale(1.05); opacity: 0.9; }
 }
 
 .rainbow {
@@ -205,7 +273,7 @@ onBeforeUnmount(() => {
 }
 
 .splash-video.is-ready {
-  opacity: 0.92;
+  opacity: 0.16;
 }
 
 /* Logo 与 Slogan 沉浸式出现 */
