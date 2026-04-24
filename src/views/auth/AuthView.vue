@@ -161,13 +161,33 @@ const registerForm = reactive({
   password: '',
 })
 
+const accountPattern = /^[A-Za-z0-9._-]+$/
+
+const validateAccount = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+  if (!value) {
+    callback(new Error('请输入账号'))
+    return
+  }
+
+  if (!accountPattern.test(value)) {
+    callback(new Error('账号只能包含英文、数字、点、下划线或中划线'))
+    return
+  }
+
+  callback()
+}
+
 const loginRules: FormRules = {
-  account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  account: [
+    { validator: validateAccount, trigger: ['blur', 'change'] },
+  ],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
 const registerRules: FormRules = {
-  account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  account: [
+    { validator: validateAccount, trigger: ['blur', 'change'] },
+  ],
   nickname: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
