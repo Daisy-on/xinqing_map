@@ -170,7 +170,7 @@ const validateAccount = (_rule: unknown, value: string, callback: (error?: Error
   }
 
   if (!accountPattern.test(value)) {
-    callback(new Error('账号只能包含英文、数字、点、下划线或中划线'))
+    callback(new Error('账号只能包含英文、数字、.、_或-'))
     return
   }
 
