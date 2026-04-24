@@ -73,6 +73,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { fetchLocationDetail, fetchLocationList } from '@/api/location'
 import { loadBaiduMapGL } from '@/utils/baiduMapLoader'
+import SplashAnimation from '@/components/common/SplashAnimation.vue'
 import LandmarkCard from '@/components/map/LandmarkCard.vue'
 import { UserFilled } from '@element-plus/icons-vue'
 import fireflyIcon from '@/assets/icon/yinghuochong.svg'
@@ -86,7 +87,6 @@ type BoundaryPoint = { lng: number; lat: number }
 
 const router = useRouter()
 const letterStore = useLetterStore()
-const SplashAnimation = defineAsyncComponent(() => import('@/components/common/SplashAnimation.vue'))
 const LandmarkDetailPanel = defineAsyncComponent(() => import('@/components/map/LandmarkDetailPanel.vue'))
 
 const MAP_MIN_ZOOM = 18
@@ -722,7 +722,11 @@ onBeforeUnmount(() => {
 .home-view {
   position: relative;
   width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .map-container {

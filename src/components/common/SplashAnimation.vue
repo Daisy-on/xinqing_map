@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="splash-screen" :class="{ 'is-hiding': !isVisible }">
+  <div class="splash-screen" :class="{ 'is-hiding': !isVisible, 'reduced-motion': prefersReducedMotion }">
     <!-- 背景与太阳 -->
     <div class="sky-bg"></div>
     <div class="sun"></div>
@@ -15,9 +15,15 @@
         autoplay 
         muted 
         playsinline
+        loop
+        preload="auto"
+        :class="{ 'is-ready': showVideo }"
         class="splash-video"
+        @loadeddata="handleVideoReady"
+        @canplay="handleVideoReady"
+        @error="handleVideoError"
       >
-        <source src="@/assets/video/splash.webm" type="video/webm">
+        <source :src="splashVideoSrc" type="video/webm">
       </video>
     </div>
 
@@ -35,9 +41,58 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import splashVideoSrc from '@/assets/video/splash.webm'
+
+defineProps<{
   isVisible: boolean;
-}>();
+}>()
+
+const prefersReducedMotion = ref(false)
+const videoReady = ref(false)
+const videoFailed = ref(false)
+
+const showVideo = computed(() => !prefersReducedMotion.value && videoReady.value && !videoFailed.value)
+
+let reducedMotionMediaQuery: MediaQueryList | null = null
+
+function handleVideoReady() {
+  if (videoFailed.value || prefersReducedMotion.value) return
+  videoReady.value = true
+}
+
+function handleVideoError() {
+  videoFailed.value = true
+}
+
+function syncReducedMotionState() {
+  if (!reducedMotionMediaQuery) return
+  prefersReducedMotion.value = reducedMotionMediaQuery.matches
+}
+
+onMounted(() => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
+
+  reducedMotionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+  syncReducedMotionState()
+
+  if (typeof reducedMotionMediaQuery.addEventListener === 'function') {
+    reducedMotionMediaQuery.addEventListener('change', syncReducedMotionState)
+    return
+  }
+
+  reducedMotionMediaQuery.addListener(syncReducedMotionState)
+})
+
+onBeforeUnmount(() => {
+  if (!reducedMotionMediaQuery) return
+
+  if (typeof reducedMotionMediaQuery.removeEventListener === 'function') {
+    reducedMotionMediaQuery.removeEventListener('change', syncReducedMotionState)
+  } else {
+    reducedMotionMediaQuery.removeListener(syncReducedMotionState)
+  }
+})
 </script>
 
 <style scoped>
@@ -46,7 +101,7 @@ const props = defineProps<{
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background-color: #a8c8db;
+  background-color: #f5f9fc;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -60,13 +115,24 @@ const props = defineProps<{
   pointer-events: none;
 }
 
+.splash-screen.reduced-motion .sky-bg,
+.splash-screen.reduced-motion .sun,
+.splash-screen.reduced-motion .rainbow-container,
+.splash-screen.reduced-motion .splash-logo,
+.splash-screen.reduced-motion .loading-subtitle {
+  animation: none !important;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
 /* 天空渐变变亮 */
 .sky-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, #2e9bef 0%, #dbe0e0 100%);
-  opacity: 0;
-  animation: skyClear 3s ease-in-out forwards 0.5s;
+  background: linear-gradient(180deg, #2e9bef 0%, #eef4f7 100%);
+  opacity: 1;
+  animation: skyClear 3s ease-in-out forwards 0.2s;
 }
 
 /* 太阳升起 */
@@ -131,7 +197,15 @@ const props = defineProps<{
   width: 100vw;
   height: 100vh;
   object-fit: cover;
-  /* 如果导出的 WebM 带 Alpha 透明通道，背景会自动透出底部的彩虹 */
+  opacity: 0;
+  mix-blend-mode: screen;
+  filter: saturate(1.05) brightness(1.03);
+  transition: opacity 0.45s ease;
+  will-change: opacity, transform;
+}
+
+.splash-video.is-ready {
+  opacity: 0.92;
 }
 
 /* Logo 与 Slogan 沉浸式出现 */
@@ -184,8 +258,26 @@ const props = defineProps<{
 
 /* 核心动画 */
 @keyframes skyClear {
-  0% { opacity: 0; }
+  0% { opacity: 0.92; }
   100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-screen,
+  .sky-bg,
+  .sun,
+  .rainbow-container,
+  .rainbow,
+  .splash-logo,
+  .loading-subtitle,
+  .splash-video {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .splash-video {
+    display: none;
+  }
 }
 
 @keyframes sunRise {

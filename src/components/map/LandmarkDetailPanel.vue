@@ -98,9 +98,9 @@ onUnmounted(() => {
   unlockPageScroll()
 })
 
-const isMobile = computed(() => windowWidth.value < 768)
-const drawerDirection = computed(() => 'ltr')
-const drawerSize = computed(() => isMobile.value ? '100vw' : '400px')
+const isMobile = computed(() => windowWidth.value <= 767)
+const drawerDirection = computed(() => (isMobile.value ? 'btt' : 'ltr'))
+const drawerSize = computed(() => (isMobile.value ? '100dvh' : '400px'))
 const imageLoadFailed = ref(false)
 let lockedScrollTop = 0
 
@@ -121,7 +121,9 @@ function lockPageScroll() {
   lockedScrollTop = window.scrollY || window.pageYOffset || 0
 
   document.documentElement.style.overflow = 'hidden'
+  document.documentElement.style.overscrollBehavior = 'none'
   document.body.style.overflow = 'hidden'
+  document.body.style.overscrollBehavior = 'none'
   document.body.style.position = 'fixed'
   document.body.style.top = `-${lockedScrollTop}px`
   document.body.style.left = '0'
@@ -132,7 +134,9 @@ function lockPageScroll() {
 
 function unlockPageScroll() {
   document.documentElement.style.overflow = ''
+  document.documentElement.style.overscrollBehavior = ''
   document.body.style.overflow = ''
+  document.body.style.overscrollBehavior = ''
   document.body.style.position = ''
   document.body.style.top = ''
   document.body.style.left = ''
@@ -292,8 +296,8 @@ const viewPosts = () => {
     max-width: 100vw !important;
     max-height: 100dvh !important;
     height: 100dvh !important;
-    top: 0 !important;
-    bottom: auto !important;
+    top: auto !important;
+    bottom: 0 !important;
     left: 0 !important;
     margin: 0 !important;
     border-radius: 0 !important;
@@ -316,7 +320,7 @@ const viewPosts = () => {
 
   .drawer-header {
     height: 34dvh;
-    max-height: 240px;
+    max-height: 260px;
     min-height: 180px;
   }
 
