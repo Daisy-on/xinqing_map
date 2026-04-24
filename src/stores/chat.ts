@@ -45,10 +45,12 @@ export const useChatStore = defineStore('chat', () => {
     }
     
     // 使用当前协议与主机，自动转换 ws/wss
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    //const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     // const host = window.location.host; 
     // Vite 本地代理通常需要在前端直接连到后端端口，或者通过 nginx。这里写死指向后端 ws
-    const wsUrl = `ws://localhost:8080/ws/match?token=${token}`;
+    //const wsUrl = `ws://localhost:8080/ws/match?token=${token}`;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/match?token=${token}`;
     
     ws.value = new WebSocket(wsUrl);
     
