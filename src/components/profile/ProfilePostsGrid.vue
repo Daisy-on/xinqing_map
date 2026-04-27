@@ -1,4 +1,5 @@
 <template>
+  <!-- AI辅助生成：豆包Seed-1.8, 2026-3-26 -->
   <div class="content-area">
     <div class="section-title-row qq-space-nav">
       <div class="nav-item active">

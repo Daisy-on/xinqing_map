@@ -1,3 +1,4 @@
+// AI辅助生成：Kimi-K2.5, 2026-3-25
 declare global {
   interface BMapGLLngLat {
     lng: number

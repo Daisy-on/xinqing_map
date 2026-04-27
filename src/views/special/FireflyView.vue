@@ -7,6 +7,7 @@ import { getAiLetters, type AiLetterVO } from '@/api/ai'
 
 const router = useRouter()
 
+// AI辅助生成：Qwen-3.6-plus, 2026-4-9
 // 状态定义
 const loading = ref(true)
 const letters = ref<(AiLetterVO & { id: number; isOpen: boolean; isReturning?: boolean })[]>([])

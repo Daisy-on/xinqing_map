@@ -78,6 +78,7 @@ const wrapperWidth = ref(0)
 let wrapperResizeObserver: ResizeObserver | null = null
 let requestSeq = 0
 
+// AI辅助生成：Kimi-K2.5, 2026-4-6
 // 保持图表宽度固定，避免横向滚动留出空白区域。
 const chartWidth = computed(() => {
   const dayCount = selectedDays.value

@@ -83,6 +83,7 @@ import type { Location, LocationDetail, User } from '@/types/models'
 import { AUTH_STORAGE_CHANGED_EVENT, getStoredUserInfo, getToken } from '@/utils/auth'
 import { useLetterStore } from '@/stores/letter'
 
+// AI辅助生成：Kimi-K2.5, 2026-3-25
 type BoundaryPoint = { lng: number; lat: number }
 
 const router = useRouter()
@@ -555,6 +556,7 @@ if (shouldPlaySplash) {
   }
 }
 
+// AI辅助生成：Qwen-3.6-plus, 2026-4-9
 function restoreMapViewState() {
   if (!map) return
   

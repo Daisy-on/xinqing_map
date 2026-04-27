@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { getMonthCalendar } from '@/api/mood'
 import type { MoodDiaryMonthVO } from '@/types/models'
 
+// AI辅助生成：Qwen-3.6-plus, 2026-4-9
 export const useMoodStore = defineStore('mood', {
   state: () => ({
     monthData: [] as MoodDiaryMonthVO[],

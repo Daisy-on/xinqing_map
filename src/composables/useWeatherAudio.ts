@@ -8,6 +8,7 @@ import smallRainUrl from '@/assets/sounds/small-rain.mp3'
 type WeatherType = string;
 type WeatherConfig = Record<string, any>;
 
+// AI辅助生成：Kimi-K2.5, 2026-3-30
 // ── Vue 3 主要 Composable ──────────────────────────────────────
 
 interface SampleCacheEntry {

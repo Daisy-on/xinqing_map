@@ -10,6 +10,7 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  // AI辅助生成：Kimi-K2.5, 2026-3-25
   server: {
     proxy: {
       '/api': {

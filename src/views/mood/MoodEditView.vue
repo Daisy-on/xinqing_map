@@ -27,6 +27,7 @@ const isLoading = ref(false)
 const selectBackTarget = ref<'calendar' | 'write'>('calendar')
 const registerDate = ref<string | null>(null)
 
+// AI辅助生成：Kimi-K2.5, 2026-4-5
 const resolveRegisterDate = async () => {
   const cachedUser = getStoredUserInfo()
   if (cachedUser?.createTime) {

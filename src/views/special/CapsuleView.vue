@@ -17,6 +17,7 @@ const capsuleResult = ref<CapsuleVO | null>(null)
 let intervalId: number | null = null
 
 // ==== 语音录制相关状态 ====
+// AI辅助生成：Qwen-3.6-plus, 2026-4-14
 const inputType = ref<'text' | 'voice'>('text')
 const isRecording = ref(false)
 const audioRecord = ref<Blob | null>(null)
@@ -38,6 +39,8 @@ const startCooldown = () => {
   }, 1000)
 }
 
+// AI辅助生成：GLM-5, 2026-4-20
+// 动画主流程
 const handleDraw = async () => {
   if (cooldownTimer.value > 0 || isDrawing.value) return
 

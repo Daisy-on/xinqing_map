@@ -53,6 +53,7 @@ let width = typeof window !== 'undefined' ? window.innerWidth : 800;
 let height = typeof window !== 'undefined' ? window.innerHeight : 600;
 let groundLevel = height - 4;
 
+// AI辅助生成：Kimi-K2.5, 2026-3-30
 // 雪花类
 class SnowFlake {
   x: number;

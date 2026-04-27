@@ -1,5 +1,6 @@
 let scriptPromise: Promise<BMapGLNamespace> | null = null;
 
+// AI辅助生成：Kimi-K2.5, 2026-3-25
 export function loadBaiduMapGL(ak: string): Promise<BMapGLNamespace> {
   if (scriptPromise) {
     return scriptPromise as Promise<BMapGLNamespace>;

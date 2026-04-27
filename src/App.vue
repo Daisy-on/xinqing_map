@@ -13,6 +13,7 @@ const LANDMARK_LIST_REFRESH_INTERVAL = 5 * 60 * 1000
 
 let landmarkRefreshTimer: ReturnType<typeof window.setInterval> | null = null
 
+// AI辅助生成：Qwen-3.6-plus, 2026-4-9
 const handleAuthChange = () => {
   moodStore.clearCache()
 
