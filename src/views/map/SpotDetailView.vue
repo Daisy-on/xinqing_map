@@ -106,12 +106,16 @@
           <p class="detail-content">{{ selectedPost.content }}</p>
 
           <div v-if="selectedPost.imageUrls?.length" class="detail-images" :class="{ single: selectedPost.imageUrls.length === 1 }">
-            <img
+            <el-image
               v-for="(url, idx) in selectedPost.imageUrls"
               :key="url + idx"
               :src="url"
+              class="detail-image-item"
+              fit="cover"
+              :preview-src-list="selectedPost.imageUrls"
+              :initial-index="idx"
               alt="帖子配图"
-              loading="lazy"
+              hide-on-click-modal
             />
           </div>
 
@@ -1038,12 +1042,18 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr;
 }
 
-.detail-images img {
+.detail-image-item {
   width: 100%;
   aspect-ratio: 16 / 10;
-  object-fit: cover;
+  display: block;
   border-radius: 12px;
   border: 1px solid rgba(113, 137, 161, 0.26);
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.detail-image-item :deep(.el-image__inner) {
+  object-fit: cover;
 }
 
 .detail-actions {

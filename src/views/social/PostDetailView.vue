@@ -39,18 +39,20 @@
           <div class="post-text">{{ post.content }}</div>
           <div v-if="post.imageUrls && post.imageUrls.length > 0" class="post-images">
             <template v-for="(img, idx) in post.imageUrls" :key="idx">
-              <el-image 
-                :src="img" 
-                class="post-image-item" 
-                fit="cover" 
-                :preview-src-list="post.imageUrls" 
-                :initial-index="idx"
-                hide-on-click-modal
-              >
-                <template #placeholder>
-                  <div class="image-placeholder"><el-skeleton-item variant="image" style="width: 100%; height: 100%;" /></div>
-                </template>
-              </el-image>
+              <div class="post-image-frame">
+                <el-image 
+                  :src="img" 
+                  class="post-image-item" 
+                  fit="contain" 
+                  :preview-src-list="post.imageUrls" 
+                  :initial-index="idx"
+                  hide-on-click-modal
+                >
+                  <template #placeholder>
+                    <div class="image-placeholder"><el-skeleton-item variant="image" style="width: 100%; height: 100%;" /></div>
+                  </template>
+                </el-image>
+              </div>
             </template>
           </div>
         </div>
@@ -225,6 +227,12 @@ onMounted(async () => {
   min-height: 0;
   overflow-y: auto;
   padding: 16px 20px 96px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.main-content::-webkit-scrollbar {
+  display: none;
 }
 
 .loading-state, .error-state {
@@ -293,14 +301,37 @@ onMounted(async () => {
 .post-images {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+}
+
+.post-image-frame {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .post-image-item {
   width: 100%;
-  max-height: 400px;
+  height: 100%;
+  display: block;
+}
+
+.post-image-item :deep(.el-image__inner) {
+  object-fit: cover;
+  object-position: center;
   border-radius: 12px;
-  overflow: hidden;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
 }
 
 .bottom-action-bar {
