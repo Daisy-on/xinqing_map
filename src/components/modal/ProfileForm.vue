@@ -1,6 +1,6 @@
 <template>
   <div class="route-view-container">
-  <!-- Header -->
+  <!-- 顶部栏 -->
   <div class="modal-header">
     <div class="header-left"></div>
     <div class="header-title">编辑资料</div>
@@ -9,7 +9,7 @@
     </div>
   </div>
 
-  <!-- Scrollable Body -->
+  <!-- 可滚动主体 -->
   <div class="modal-body">
     <div class="avatar-section">
       <div class="avatar-wrapper" @click="$emit('open-avatar')">
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <!-- Footer -->
+  <!-- 底部栏 -->
   <div class="modal-footer">
     <button class="footer-btn btn-cancel" @click="$emit('close')">取消</button>
     <button class="footer-btn btn-save" :disabled="loading" @click="$emit('save')">
@@ -78,7 +78,7 @@ const props = defineProps<{
   loading: boolean
 }>()
 
-// Use defineModel or emit explicitly
+// 使用 defineModel，或者显式 emit
 const emit = defineEmits<{
   (e: 'update:modelValue', val: any): void
   (e: 'close'): void

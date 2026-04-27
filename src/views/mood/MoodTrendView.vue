@@ -1,6 +1,6 @@
 <template>
   <div class="mood-trend-view">
-    <!-- Header -->
+    <!-- 顶部导航 -->
     <header class="top-nav">
       <button class="back-btn-glass" type="button" @click="router.back()">
         <el-icon><ArrowLeft /></el-icon>
@@ -10,7 +10,7 @@
     </header>
 
     <main class="trend-content">
-      <!-- Segment Control (7, 14, 30 days) -->
+      <!-- 时间切换（7 / 14 / 30 天） -->
       <div class="time-segments">
         <button 
           v-for="option in timeOptions" 
@@ -23,7 +23,7 @@
         </button>
       </div>
 
-      <!-- Chart Container -->
+      <!-- 图表容器 -->
       <section class="chart-section">
         <div ref="scrollWrapperRef" class="chart-scroll-wrapper">
           <div ref="chartContainerRef" class="echarts-container" :style="{ width: chartWidth }"></div>
@@ -42,7 +42,7 @@
         </div>
       </section>
 
-      <!-- Sub text or summary (optional) -->
+      <!-- 补充说明或总结（可选） -->
       <p class="summary-text" v-if="trendData.length">
         记录了属于你的色彩轨迹。持续打卡，遇见更清晰的自己。
       </p>
@@ -78,7 +78,7 @@ const wrapperWidth = ref(0)
 let wrapperResizeObserver: ResizeObserver | null = null
 let requestSeq = 0
 
-// Keep chart width deterministic to avoid overscrolling into blank space.
+// 保持图表宽度固定，避免横向滚动留出空白区域。
 const chartWidth = computed(() => {
   const dayCount = selectedDays.value
   const perDayWidth = dayCount === 30 ? 54 : 60
@@ -89,7 +89,7 @@ const chartWidth = computed(() => {
   return `${Math.max(targetWidth, wrapperWidth.value)}px`
 })
 
-// Cache to avoid refetching calendar constantly
+// 缓存日历结果，避免频繁重新请求。
 let cachedRegisterDate: string | null = null
 
 const fetchImplicitRegisterDate = async () => {
@@ -102,7 +102,7 @@ const fetchImplicitRegisterDate = async () => {
     const p2 = getMonthCalendar(prevMonth.year(), prevMonth.month() + 1)
     const p3 = getMonthCalendar(prevMonth.subtract(1, 'month').year(), prevMonth.subtract(1, 'month').month() + 1)
     
-    // Load last 3 months just to be safe for 30-day views
+    // 为 30 天游览兜底，先加载最近 3 个月的数据。
     const [c1, c2, c3] = await Promise.all([p1, p2, p3])
     const combined = [...c3, ...c2, ...c1]
     
@@ -115,7 +115,7 @@ const fetchImplicitRegisterDate = async () => {
     console.error('Failed to probe calendar', error)
   }
   
-  // Fallback if not found: allow at least 60 days
+  // 兜底：如果没有找到注册日期，至少允许查看 60 天范围。
   return current.subtract(2, 'month').format('YYYY-MM-DD')
 }
 
@@ -148,10 +148,10 @@ const renderChart = () => {
   
   if (!chartInstance || !trendData.value.length) return
 
-  // Format data
+  // 格式化数据
   const xAxisData = trendData.value.map(pt => dayjs(pt.date).format('MM-DD'))
   
-  // Custom series point data to keep exact dot colors
+  // 自定义系列点数据，确保圆点颜色保持准确
   const seriesData = trendData.value.map(pt => {
     const pointColor = pt.hasRecord ? (pt.emotionTagColor || '#cfd8dc') : '#e0e0e0'
     return {
@@ -162,7 +162,7 @@ const renderChart = () => {
     }
   })
 
-  // To create a continuous gradient along the X-axis for the line
+  // 为折线创建沿 X 轴连续变化的渐变
   const colorStops = trendData.value.map((pt, idx) => {
     const offset = trendData.value.length > 1 ? idx / (trendData.value.length - 1) : 0
     return {
@@ -173,7 +173,7 @@ const renderChart = () => {
 
   const lineGradient = new echarts.graphic.LinearGradient(0, 0, 1, 0, colorStops)
 
-  // To create a beautiful glowing line and area
+  // 绘制更柔和的发光折线和面积区域
   const option: echarts.EChartsOption = {
     grid: {
       left: 24,
@@ -248,7 +248,7 @@ const renderChart = () => {
         data: seriesData,
         symbol: 'circle',
         symbolSize: (value, params) => {
-          // Exaggerate dots if they correspond to actual records
+          // 如果对应真实记录，则放大圆点
           return trendData.value[params.dataIndex]?.hasRecord ? 10 : 6
         },
         itemStyle: {
@@ -266,7 +266,7 @@ const renderChart = () => {
         },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(150, 150, 150, 0.15)' }, // standard overlay, visualMap controls the line color only well
+            { offset: 0, color: 'rgba(150, 150, 150, 0.15)' }, // 标准遮罩层，折线颜色主要由 visualMap 控制
             { offset: 1, color: 'rgba(255, 255, 255, 0)' }
           ])
         }
@@ -276,7 +276,7 @@ const renderChart = () => {
 
   chartInstance.setOption(option, { notMerge: true, lazyUpdate: false })
 
-  // Resize after DOM width settles, then lock viewport to latest date (right edge).
+  // 在 DOM 宽度稳定后再调整尺寸，并将视口锁定到最新日期（右侧）。
   nextTick(() => {
     if (chartInstance && chartContainerRef.value) {
       chartInstance.resize({
@@ -298,35 +298,35 @@ const loadTrendData = async () => {
   const beginTarget = now.subtract(reqDays - 1, 'day').format('YYYY-MM-DD')
 
   try {
-    // 1. Probe the safe starting date
+    // 1. 先探测安全起始日期
     const registerDate = await fetchImplicitRegisterDate()
     if (currentRequest !== requestSeq) return
 
-    // 2. Bound the request date to the register date
+    // 2. 将请求起始日期限制在注册日期之后
     const safeBegin = dayjs(beginTarget).isBefore(dayjs(registerDate)) ? registerDate : beginTarget
     
-    // 3. Fetch data from backend
+    // 3. 从后端拉取数据
     const rawData = await getTrendPoints(safeBegin, end)
     if (currentRequest !== requestSeq) return
 
-    // 4. Pad the beginning of the data if incomplete to ensure 'reqDays' ticks on X Axis.
+    // 4. 如果数据不完整，则补齐开头，确保 X 轴上有 reqDays 个刻度。
     let fullData = [...rawData]
     if (rawData.length < reqDays) {
       const paddedData = []
-      // We start adding empty points from beginTarget up to the first item (safeBegin)
-      // actually, just loop from beginTarget to end and map or merge
+      // 从 beginTarget 开始补空点，直到第一个有效数据点（safeBegin）。
+      // 实际上这里直接从 beginTarget 循环到结尾，逐个映射或合并即可。
       for (let i = 0; i < reqDays; i++) {
         const iterDate = now.subtract(reqDays - 1 - i, 'day').format('YYYY-MM-DD')
         const existing = fullData.find(d => d.date === iterDate)
         if (existing) {
           paddedData.push(existing)
         } else {
-          // Empty placeholder padding
+          // 空白占位补齐
           paddedData.push({
             date: iterDate,
             emotionTagId: null,
             emotionTagName: null,
-            emotionTagColor: '#e0e0e0', // Placeholder offline gray
+            emotionTagColor: '#e0e0e0', // 占位灰色
             emotionValue: 0,
             hasRecord: false
           })
@@ -518,7 +518,7 @@ onUnmounted(() => {
   overscroll-behavior-x: contain;
   touch-action: pan-x;
   -webkit-overflow-scrolling: touch;
-  /* Hide scrollbar for cleaner look */
+  /* 隐藏滚动条，让界面更清爽 */
   scrollbar-width: none;
 }
 .chart-scroll-wrapper::-webkit-scrollbar {
@@ -548,7 +548,7 @@ onUnmounted(() => {
   opacity: 0.8;
 }
 
-/* Animations */
+/* 动画 */
 .chart-section {
   animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

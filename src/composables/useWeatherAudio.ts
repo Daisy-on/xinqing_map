@@ -8,7 +8,7 @@ import smallRainUrl from '@/assets/sounds/small-rain.mp3'
 type WeatherType = string;
 type WeatherConfig = Record<string, any>;
 
-// ── Main Vue 3 Composable ──────────────────────────────────────
+// ── Vue 3 主要 Composable ──────────────────────────────────────
 
 interface SampleCacheEntry {
   ctx: AudioContext
@@ -59,7 +59,7 @@ export function useWeatherAudio() {
     const ctx = ctxRef.value
     if (ctx && ctx.state === 'suspended') {
       void ctx.resume().catch(() => {
-        // Resume may be blocked before the first user gesture.
+        // 在第一次用户手势之前，恢复播放可能会被浏览器拦截。
       })
     }
   }
@@ -118,16 +118,16 @@ export function useWeatherAudio() {
     }
 
     if (immediate) {
-      try { active.source.stop() } catch { /* already stopped */ }
-      try { active.source.disconnect() } catch { /* already disconnected */ }
+      try { active.source.stop() } catch { /* 已经停止 */ }
+      try { active.source.disconnect() } catch { /* 已经断开连接 */ }
       activeAmbientRef.value = null
       return
     }
 
     fadeTo(active.gain, 0, 0.18)
     active.stopTimer = setTimeout(() => {
-      try { active.source.stop() } catch { /* already stopped */ }
-      try { active.source.disconnect() } catch { /* already disconnected */ }
+      try { active.source.stop() } catch { /* 已经停止 */ }
+      try { active.source.disconnect() } catch { /* 已经断开连接 */ }
       activeAmbientRef.value = null
     }, 240)
   }
@@ -201,7 +201,7 @@ export function useWeatherAudio() {
       panner.connect(master)
       source.start()
       source.onended = () => {
-        try { source.disconnect() } catch { /* already disconnected */ }
+        try { source.disconnect() } catch { /* 已经断开连接 */ }
       }
     })()
   }
@@ -279,7 +279,7 @@ export function useWeatherAudio() {
       try {
         await ctx.resume()
       } catch {
-        // Resume may fail if the browser still considers playback locked.
+        // 如果浏览器仍然认为播放处于锁定状态，恢复播放可能会失败。
       }
     }
     updateWeatherState()

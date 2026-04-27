@@ -62,14 +62,14 @@ const handleCancelMatch = () => {
 
 <template>
   <div class="match-container">
-    <!-- Header -->
+    <!-- 顶部栏 -->
     <header class="match-header">
       <el-icon class="back-btn" @click="handleBack"><ArrowLeft /></el-icon>
       <h2>心遇</h2>
       <div class="placeholder"></div>
     </header>
 
-    <!-- Main Content -->
+    <!-- 主内容 -->
     <main class="match-main">
       <div class="radar-wrapper" :class="{ 'is-matching': chatStore.isMatching }">
         <template v-if="chatStore.isMatching">
@@ -85,7 +85,7 @@ const handleCancelMatch = () => {
           <div class="radar-circle circle-2"></div>
           <div class="radar-circle circle-3"></div>
           
-          <!-- Center Avatar or Status -->
+          <!-- 中间头像或状态 -->
           <div class="center-content">
             <Vue3Lottie
               v-if="!isOpenTime"
@@ -202,7 +202,7 @@ const handleCancelMatch = () => {
   padding: 20px;
 }
 
-/* Radar Animation */
+/* 雷达动画 */
 .radar-wrapper {
   position: relative;
   width: 260px;

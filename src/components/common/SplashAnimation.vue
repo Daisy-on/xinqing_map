@@ -104,7 +104,7 @@ function initClouds() {
     }
 
     // 彩虹底部在大约 50vh 的位置 (clip-path: inset(0 0 50% 0))
-    // rainbow-container top: -10vh, height: 80vh
+    // rainbow-container 的 top 为 -10vh，height 为 80vh
     // 底部基准线约在屏幕中心
     const centerY = canvas.height * 0.72 
     const spread = canvas.width * 0.45 // 离中心两侧的距离

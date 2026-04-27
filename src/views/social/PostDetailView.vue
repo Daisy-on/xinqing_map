@@ -1,20 +1,20 @@
 <template>
   <div class="post-detail-layout">
-    <!-- Top Nav -->
+    <!-- 顶部导航 -->
     <div class="header-nav">
       <div class="icon-btn" @click="goBack">
         <el-icon><ArrowLeft /></el-icon>
       </div>
     </div>
 
-    <!-- Scrollable Content -->
+    <!-- 可滚动内容 -->
     <div class="main-content">
       <div v-if="loading" class="loading-state">
         <el-skeleton animated :rows="5" />
       </div>
       
       <div v-else-if="post" class="post-container">
-        <!-- Author Info -->
+        <!-- 作者信息 -->
         <div class="author-info">
           <el-avatar :size="44" :src="author?.avatar" class="avatar">
             <el-icon v-if="!author?.avatar" :size="24"><UserFilled /></el-icon>
@@ -22,7 +22,7 @@
           <div class="author-meta">
             <div class="author-name-row">
               <span class="nickname">{{ author?.nickname || '心晴用户' }}</span>
-              <!-- Mock gender -->
+              <!-- 模拟性别 -->
               <el-icon v-if="(author?.id || 1) % 2 === 1" class="gender-icon male"><Male /></el-icon>
               <el-icon v-else class="gender-icon female"><Female /></el-icon>
             </div>
@@ -34,7 +34,7 @@
           </div>
         </div>
 
-        <!-- Post Content -->
+        <!-- 帖子内容 -->
         <div class="post-body">
           <div class="post-text">{{ post.content }}</div>
           <div v-if="post.imageUrls && post.imageUrls.length > 0" class="post-images">
@@ -62,7 +62,7 @@
       </div>
     </div>
 
-    <!-- Bottom Action Bar (Fixed) -->
+    <!-- 底部操作栏（固定） -->
     <div class="bottom-action-bar">
       <div class="action-bar-inner">
         <div class="like-action-btn" aria-label="点赞数">

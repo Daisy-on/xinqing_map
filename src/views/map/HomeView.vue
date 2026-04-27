@@ -551,7 +551,7 @@ if (shouldPlaySplash) {
   try {
     sessionStorage.setItem(HOME_SPLASH_PLAYED_KEY, '1')
   } catch {
-    // Ignore storage write errors and keep graceful fallback behavior.
+    // 忽略存储写入错误，保持优雅兜底行为。
   }
 }
 

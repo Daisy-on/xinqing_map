@@ -25,7 +25,7 @@ function setPostImageCache(cache: Record<string, string>) {
   try {
     sessionStorage.setItem(POST_IMAGE_CACHE_KEY, JSON.stringify(cache))
   } catch {
-    // Ignore cache write failures.
+    // 忽略缓存写入失败。
   }
 }
 

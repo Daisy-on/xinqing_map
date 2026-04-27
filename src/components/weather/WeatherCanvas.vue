@@ -53,7 +53,7 @@ let width = typeof window !== 'undefined' ? window.innerWidth : 800;
 let height = typeof window !== 'undefined' ? window.innerHeight : 600;
 let groundLevel = height - 4;
 
-// SnowFlake class
+// 雪花类
 class SnowFlake {
   x: number;
   y: number;
@@ -105,7 +105,7 @@ class SnowFlake {
   }
 }
 
-// Snow pile manager class
+// 积雪管理类
 class SnowPile {
   flakes: { x: number; y: number; size: number; life: number }[] = [];
 
@@ -185,12 +185,12 @@ class SnowPile {
   }
 }
 
-// Watch for config changes
+// 监听配置变化
 watch(() => props.config, (newConfig) => {
   configRef.value = { ...configRef.value, ...newConfig };
 }, { deep: true });
 
-// Watch for weather changes to re-initialize particles
+// 监听天气变化并重新初始化粒子
 watch(() => props.weather, () => {
   if (initParticlesFn) {
     initParticlesFn();
@@ -204,11 +204,11 @@ onMounted(() => {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Initialize canvas
+  // 初始化画布
   canvas.width = width;
   canvas.height = height;
 
-  // Particle pool setup (rain splash particles)
+  // 粒子池初始化（雨滴溅射粒子）
   const SPLASH_POOL_SIZE = 256;
   const splashPool = {
     x: new Float32Array(SPLASH_POOL_SIZE),
@@ -263,7 +263,7 @@ onMounted(() => {
     },
   };
 
-  // Rain particle system
+  // 雨滴粒子系统
   const MAX_RAIN = 600;
   const BIN_COUNT = 3;
   const binThresholds: [number, number][] = [
@@ -381,7 +381,7 @@ onMounted(() => {
     },
   };
 
-  // Hail system
+  // 冰雹系统
   const MAX_HAIL = 150;
   const HAIL_VERTS = 6;
   const hailRotation = new Float32Array(MAX_HAIL);
@@ -498,7 +498,7 @@ onMounted(() => {
     },
   };
 
-  // Hail bounce particles
+  // 冰雹反弹粒子
   const HAIL_BOUNCE_POOL = 120;
   const hailBounce = {
     x: new Float32Array(HAIL_BOUNCE_POOL),
@@ -562,7 +562,7 @@ onMounted(() => {
     },
   };
 
-  // Ground ice system
+  // 地面积冰系统
   const ICE_TEX_SHAPES = 3;
   const ICE_TEX_SIZES = 3;
   const ICE_TEX_BASE = 6;
@@ -696,7 +696,7 @@ onMounted(() => {
     },
   };
 
-  // Fog system
+  // 雾气系统
   const FOG_TEX_SIZE = 128;
   const fogTexCanvas = document.createElement('canvas');
   fogTexCanvas.width = FOG_TEX_SIZE;
@@ -765,7 +765,7 @@ onMounted(() => {
     ctx.globalAlpha = 1;
   }
 
-  // Sandstorm system
+  // 沙尘暴系统
   const GRAIN_SHAPES = 12;
   const grainVertices: number[][][] = [];
   for (let s = 0; s < GRAIN_SHAPES; s++) {
@@ -1046,7 +1046,7 @@ onMounted(() => {
     },
   };
 
-  // Lightning system
+  // 闪电系统
   class Lightning {
     life: number;
     x: number;
@@ -1122,7 +1122,7 @@ onMounted(() => {
     }
   }
 
-  // Animation state
+  // 动画状态
   let snows: SnowFlake[] = [];
   let snowPile: SnowPile | null = null;
   let lightnings: Lightning[] = [];
@@ -1137,7 +1137,7 @@ onMounted(() => {
     return 6000 + extraDelay + Math.random() * 8000;
   };
 
-  // Lens flare / Halo data for sunny weather
+  // 晴天镜头光晕数据
   const halos: {
     distance: number;
     size: number;
@@ -1187,7 +1187,7 @@ onMounted(() => {
       sandData.setCount(Math.floor(particleCount * 1.5));
       debrisData.setCount(Math.min(Math.floor(particleCount * 0.12), MAX_DEBRIS));
     } else if (weather === 'sunny') {
-      // Initialize refined lens flare elements
+      // 初始化更精细的镜头光晕元素
       const counts = 6;
       for (let i = 0; i < counts; i++) {
         halos.push({
@@ -1204,7 +1204,7 @@ onMounted(() => {
   initParticlesFn = initParticles;
   initParticles();
 
-  // Animation loop
+  // 动画循环
   let fpsFrameCount = 0;
   let fpsLastTime = performance.now();
   let thunderTriggerOnce = false;
@@ -1217,7 +1217,7 @@ onMounted(() => {
 
     const { intensity = 1, time = 12, thunder = false, wind: windVal = 0, speed: speedMult = 1 } = configRef.value;
 
-    // Darkness calculation
+    // 计算暗度
     let darkness = 0;
     if (time < 6 || time > 18) {
       if (time < 6) {
@@ -1238,7 +1238,7 @@ onMounted(() => {
       ctx.fillRect(0, 0, width, height);
     }
 
-    // Flash
+    // 闪光
     if (flashOpacity > 0) {
       ctx.fillStyle = `rgba(255, 255, 255, ${flashOpacity})`;
       ctx.fillRect(0, 0, width, height);
@@ -1246,7 +1246,7 @@ onMounted(() => {
       if (flashOpacity < 0) flashOpacity = 0;
     }
 
-    // Weather rendering
+    // 天气渲染
     if (props.weather === 'rainy') {
       rainData.setCount(configRef.value.particleCount || 100);
       rainData.updateAll(windVal, speedMult);
@@ -1254,7 +1254,7 @@ onMounted(() => {
       splashPool.update();
       splashPool.draw(ctx);
 
-      // Thunder
+      // 雷声
       if (thunder) {
         if (thunderTriggerOnce) {
           flashOpacity = 0.6 + Math.random() * 0.4;
@@ -1409,7 +1409,7 @@ onMounted(() => {
       const centerY = height / 2;
       const centerX = width / 2;
       
-      // 1. Draw Sunbeams (Existing)
+      // 1. 绘制太阳光束（已有）
       const beamCount = 3;
       const baseAngle = Math.PI / 5 + windVal * 0.1;
       
@@ -1436,13 +1436,13 @@ onMounted(() => {
         ctx.restore();
       }
 
-      // 2. Draw Lens Fare / Halos (New)
+      // 2. 绘制镜头光晕（新增）
       halos.forEach((halo, idx) => {
-        // Calculate position on the axis from sun to center
+        // 计算太阳到中心连线上的位置
         const dx = (centerX - sourceX) * halo.distance;
         const dy = (centerY - sourceY) * halo.distance;
         
-        // Add delicate breathing movement
+        // 加入轻微呼吸动效
         const driftX = Math.sin(now * 0.0004 + idx) * 15;
         const driftY = Math.cos(now * 0.0005 + idx) * 15 + Math.sin(now * 0.0008) * 10;
         
@@ -1463,7 +1463,7 @@ onMounted(() => {
         ctx.arc(hx, hy, currentSize, 0, Math.PI * 2);
         ctx.fill();
 
-        // Optional sharp ring for some halos
+        // 某些光晕可选的锐利光环
         if (idx === 1 || idx === 3) {
             ctx.strokeStyle = `rgba(${halo.color}, ${currentOpacity * 0.3})`;
             ctx.lineWidth = 1;

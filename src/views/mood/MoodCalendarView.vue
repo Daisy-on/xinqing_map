@@ -122,7 +122,7 @@ onMounted(() => {
                   <img :src="getMoodById(item.emotionTagId || 6).icon" class="mood-icon" />
                 </div>
                 <div v-else-if="!item.isFuture" class="empty-circle"></div>
-                <!-- if future, no circle -->
+                <!-- 如果是未来日期，不显示圆点 -->
               </div>
             </div>
           </TransitionGroup>
@@ -134,7 +134,7 @@ onMounted(() => {
         </div>
       </div>
       
-      <!-- Floating Action Button for Today -->
+      <!-- 今日悬浮按钮 -->
       <div v-if="!todayStatus" class="fab-container">
         <div class="fab-tooltip">今天还没写日记</div>
         <button class="fab-btn" @click="navigateToEdit(dayjs().format('YYYY-MM-DD'), { isFuture: false } as any)">

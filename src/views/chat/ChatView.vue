@@ -146,7 +146,7 @@ const getClosedReasonText = (reason: string | null) => {
 
 <template>
   <div class="chat-container" :style="chatBackgroundStyle">
-    <!-- Header -->
+    <!-- 顶部栏 -->
     <header class="chat-header">
       <el-icon class="back-btn" @click="handleBack"><ArrowLeft /></el-icon>
       <div class="peer-info">
@@ -166,7 +166,7 @@ const getClosedReasonText = (reason: string | null) => {
       </div>
     </header>
 
-    <!-- Message List -->
+    <!-- 消息列表 -->
     <main class="message-list" ref="messagesContainer">
       <div class="system-msg mt">你们已成功连接，开始友好的交流吧~</div>
       
@@ -188,7 +188,7 @@ const getClosedReasonText = (reason: string | null) => {
       </div>
     </main>
 
-    <!-- Input Area -->
+    <!-- 输入区 -->
     <footer class="chat-footer" :class="{ 'is-disabled': chatStore.isRoomClosed }" :style="{ height: chatStore.isRoomClosed ? 'auto' : inputBoxHeight + 'px' }">
       <div v-if="!chatStore.isRoomClosed" class="resize-handle" @mousedown="startDrag" @touchstart="startDrag"></div>
       <div v-if="chatStore.isRoomClosed" class="footer-overlay">
@@ -233,7 +233,7 @@ const getClosedReasonText = (reason: string | null) => {
   overflow: hidden;
 }
 
-/* Header */
+/* 顶部栏 */
 .chat-header {
   display: flex;
   align-items: center;
@@ -307,7 +307,7 @@ const getClosedReasonText = (reason: string | null) => {
   color: #f56c6c !important;
 }
 
-/* Messages */
+/* 消息区 */
 .message-list {
   flex: 1;
   overflow-y: auto;
@@ -396,7 +396,7 @@ const getClosedReasonText = (reason: string | null) => {
   margin: 6px 4px 0;
 }
 
-/* Footer / Input */
+/* 底部输入区 */
 .chat-footer {
   background: rgba(20, 22, 30, 0.85);
   backdrop-filter: blur(25px);
@@ -407,7 +407,7 @@ const getClosedReasonText = (reason: string | null) => {
   flex-direction: column;
   z-index: 10;
   flex-shrink: 0; /* 强制底部输入框不被压缩 */
-  /* 移除这里的 height transition，因为它会导致拖拽时平滑过渡与鼠标位置冲突，产生阻尼感 */
+  /* 这里移除 height 过渡，因为拖拽时会和鼠标位置产生冲突，造成阻尼感 */
 }
 
 .resize-handle {

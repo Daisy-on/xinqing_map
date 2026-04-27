@@ -304,7 +304,7 @@ const runCardAnimation = async (
   try {
     await cardAnimation.finished
   } catch {
-    // Ignore aborted animation errors.
+    // 忽略已中止的动画错误。
   }
 
   cardAnimation = null
@@ -577,7 +577,7 @@ onMounted(async () => {
   window.addEventListener('resize', () => {
     window.clearTimeout(resizeTimer)
     resizeTimer = window.setTimeout(() => {
-      // Handle resize if needed for new components
+      // 如有新组件，则处理尺寸调整
     }, 120)
   })
 })

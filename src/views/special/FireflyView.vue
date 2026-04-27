@@ -133,7 +133,7 @@ const formatContent = (text: string) => {
 
 <template>
   <div class="firefly-container">
-    <!-- Header -->
+    <!-- 顶部栏 -->
     <header class="top-nav">
       <div class="back-btn" @click="handleBack">
         <el-icon><ArrowLeft /></el-icon>
@@ -142,7 +142,7 @@ const formatContent = (text: string) => {
       <div class="placeholder"></div>
     </header>
 
-    <!-- Main Content -->
+    <!-- 主内容 -->
     <main class="content-area">
       <div v-if="loading" class="empty-state">
         <div class="loading-ring"></div>
@@ -154,7 +154,7 @@ const formatContent = (text: string) => {
         <p>晨光熹微，信箱里空空如也。<br>也许晚些时候，萤火虫会为你带来新的回信。</p>
       </div>
 
-      <!-- Desk Background Scene -->
+      <!-- 桌面背景场景 -->
       <div v-else class="desk-scene">
         <div class="desk-surface">
           <!-- 桌面上的信件 (前1~2封) -->
@@ -191,7 +191,7 @@ const formatContent = (text: string) => {
       </div>
     </main>
 
-    <!-- Drawer: 残留信件列表 (采用底边滑出的逻辑) -->
+    <!-- 抽屉：残留信件列表（采用底边滑出的逻辑） -->
     <el-drawer
       v-model="isDrawerOpen"
       direction="btt"
@@ -223,7 +223,7 @@ const formatContent = (text: string) => {
       </div>
     </el-drawer>
 
-    <!-- Reading Overlay (展开的信纸阅读页) -->
+    <!-- 阅读蒙层（展开的信纸阅读页） -->
     <div class="reading-overlay" :class="{ 'is-visible': isOverlayVisible }">
       <div class="overlay-backdrop" @click="closeOverlay"></div>
       

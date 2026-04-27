@@ -108,7 +108,7 @@ onMounted(() => {
 <template>
   <div class="edit-page">
     <div class="edit-container" v-if="status === 'ready'">
-      <!-- SELECT STEP -->
+      <!-- 选择步骤 -->
       <transition name="fade" mode="out-in">
         <div v-if="step === 'select'" class="step-select">
           <div class="top-nav">
@@ -141,7 +141,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- WRITE STEP -->
+        <!-- 填写步骤 -->
         <div v-else class="step-write">
           <div class="top-nav writing-nav">
             <button class="back-btn" @click="handleBackFromWrite">
@@ -207,7 +207,7 @@ onMounted(() => {
   flex-direction: column;
 }
 
-/* Common Nav */
+/* 通用导航 */
 .top-nav {
   display: flex;
   align-items: center;
@@ -242,7 +242,7 @@ onMounted(() => {
   color: #888;
 }
 
-/* Dial Layout */
+/* 转盘布局 */
 .dial-wrapper {
   flex: 1;
   display: flex;
@@ -273,10 +273,10 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   cursor: pointer;
-  /* Animate outwards from center */
+  /* 从中心向外展开 */
   animation: bloomOut 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   animation-delay: var(--delay);
-  opacity: 0; /* hidden before delay */
+  opacity: 0; /* 延迟前隐藏 */
 }
 
 @keyframes bloomOut {
@@ -317,7 +317,7 @@ onMounted(() => {
   color: #666;
 }
 
-/* Write Step */
+/* 填写步骤 */
 .writing-nav {
   padding-bottom: 10px;
 }
@@ -412,7 +412,7 @@ onMounted(() => {
   color: #c0c0c0;
 }
 
-/* Transitions */
+/* 过渡动画 */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;

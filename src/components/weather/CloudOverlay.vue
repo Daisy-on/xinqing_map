@@ -88,7 +88,7 @@ const hasLayer2 = computed(() => {
   background-repeat: repeat-x;
 }
 
-/* Layer specific speed and style */
+/* 分层对应的速度与样式 */
 .layer-1 {
   background-image: url('@/assets/images/clouds_1.png');
   background-size: cover;
