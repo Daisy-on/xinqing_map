@@ -2,9 +2,11 @@
 import { RouterView } from 'vue-router'
 import { defineAsyncComponent, onMounted, onBeforeUnmount } from 'vue'
 import { useLetterStore } from '@/stores/letter'
+import { useMoodStore } from '@/stores/mood'
 import { getToken, AUTH_STORAGE_CHANGED_EVENT } from '@/utils/auth'
 
 const letterStore = useLetterStore()
+const moodStore = useMoodStore()
 const FireflyDeliveryOverlay = defineAsyncComponent(() => import('@/components/common/FireflyDeliveryOverlay.vue'))
 const LANDMARK_LIST_REFRESH_EVENT = 'xinqing-map:landmark-list-refresh'
 const LANDMARK_LIST_REFRESH_INTERVAL = 5 * 60 * 1000
@@ -12,6 +14,8 @@ const LANDMARK_LIST_REFRESH_INTERVAL = 5 * 60 * 1000
 let landmarkRefreshTimer: ReturnType<typeof window.setInterval> | null = null
 
 const handleAuthChange = () => {
+  moodStore.clearCache()
+
   const token = getToken()
   if (token) {
     letterStore.connect(token)

@@ -4,9 +4,11 @@ import { useRouter, useRoute } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { MOODS, getMoodById } from '@/utils/moodHelpers'
 import { checkInToday, backfillDiary, updateDiary, getDiaryDetail } from '@/api/mood'
+import { fetchCurrentUser } from '@/api/user'
 import { useMoodStore } from '@/stores/mood'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
+import { getStoredUserInfo } from '@/utils/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,15 +25,46 @@ const diaryNote = ref('')
 const hasOriginalRecord = ref(false)
 const isLoading = ref(false)
 const selectBackTarget = ref<'calendar' | 'write'>('calendar')
+const registerDate = ref<string | null>(null)
+
+const resolveRegisterDate = async () => {
+  const cachedUser = getStoredUserInfo()
+  if (cachedUser?.createTime) {
+    return dayjs(cachedUser.createTime).format('YYYY-MM-DD')
+  }
+
+  try {
+    const currentUser = await fetchCurrentUser()
+    return currentUser.createTime ? dayjs(currentUser.createTime).format('YYYY-MM-DD') : null
+  } catch (error) {
+    console.error('Failed to resolve current user', error)
+    return null
+  }
+}
+
+const isBeforeRegisterDate = (date: string) => {
+  if (!registerDate.value) return false
+  return dayjs(date).isBefore(dayjs(registerDate.value), 'day')
+}
 
 const loadDetail = async () => {
   try {
-    const detail = await getDiaryDetail(rawDate)
+    const [resolvedRegisterDate, detail] = await Promise.all([
+      resolveRegisterDate(),
+      getDiaryDetail(rawDate),
+    ])
+
+    registerDate.value = resolvedRegisterDate
+
     if (detail) {
       hasOriginalRecord.value = true
       selectedMoodId.value = detail.emotionTagId
       diaryNote.value = detail.note || ''
       step.value = 'write'
+    } else if (isBeforeRegisterDate(rawDate)) {
+      ElMessage.warning('该日期早于你的注册时间，无法记录心情')
+      router.replace('/mood/calendar')
+      return
     } else {
       step.value = 'select'
     }
@@ -75,6 +108,12 @@ const handleComplete = async () => {
     ElMessage.warning('请选择一个心情')
     return
   }
+
+  if (isBeforeRegisterDate(rawDate)) {
+    ElMessage.warning('该日期早于你的注册时间，无法记录心情')
+    return
+  }
+
   isLoading.value = true
   try {
     const payload = {

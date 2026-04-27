@@ -4,6 +4,7 @@ export interface User {
   nickname: string
   avatar?: string
   gender?: number
+  createTime?: string
 }
 
 export interface AvatarPreset {

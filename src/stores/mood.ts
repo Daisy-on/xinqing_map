@@ -9,8 +9,8 @@ export const useMoodStore = defineStore('mood', {
     loading: false
   }),
   actions: {
-    async fetchMonthData(year: number, month: number, force = false) {
-      const key = `${year}-${month.toString().padStart(2, '0')}`
+    async fetchMonthData(year: number, month: number, scopeKey = '', force = false) {
+      const key = `${scopeKey}:${year}-${month.toString().padStart(2, '0')}`
       if (!force && this.lastFetchKey === key && this.monthData.length > 0) return
       this.loading = true
       try {

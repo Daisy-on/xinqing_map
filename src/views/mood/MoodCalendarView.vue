@@ -2,11 +2,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Edit, ArrowRight } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { getTodayStatus } from '@/api/mood'
 import { getMoodById, preloadMoodIcons } from '@/utils/moodHelpers'
 import { useMoodStore } from '@/stores/mood'
+import { getStoredUserInfo, getToken } from '@/utils/auth'
 import heartDanceIcon from '@/assets/icon/heart-dance.svg'
 import dayjs from 'dayjs'
+import type { MoodDiaryMonthVO } from '@/types/models'
 
 const router = useRouter()
 const moodStore = useMoodStore()
@@ -20,6 +23,10 @@ const monthStr = computed(() => `${year.value}年${month.value}月`)
 
 const weekDays = ['一', '二', '三', '四', '五', '六', '日']
 
+const getMoodScopeKey = () => {
+  return String(getStoredUserInfo()?.id ?? getToken() ?? '')
+}
+
 const paddingDays = computed(() => {
   const firstItem = moodStore.monthData[0]
   if (!firstItem) return []
@@ -30,7 +37,7 @@ const paddingDays = computed(() => {
 })
 
 const fetchMonthData = () => {
-  moodStore.fetchMonthData(year.value, month.value)
+  moodStore.fetchMonthData(year.value, month.value, getMoodScopeKey())
 }
 
 const checkToday = async () => {
@@ -56,9 +63,24 @@ const isToday = (date: string) => {
   return dayjs(date).isSame(dayjs(), 'day')
 }
 
-const navigateToEdit = (date: string, item: any) => {
-  if (item.isFuture) return // cannot edit future
+const isDateBlocked = (item: MoodDiaryMonthVO) => item.isFuture || !item.canBackfill
+
+const navigateToEdit = (date: string) => {
   router.push(`/mood/edit/${date}`)
+}
+
+const handleDayClick = (item: MoodDiaryMonthVO) => {
+  if (item.isFuture) {
+    ElMessage.warning('未来日期不能打卡')
+    return
+  }
+
+  if (!item.canBackfill) {
+    ElMessage.warning('该日期早于你的注册时间，无法记录心情')
+    return
+  }
+
+  navigateToEdit(item.diaryDate)
 }
 
 onMounted(() => {
@@ -110,9 +132,10 @@ onMounted(() => {
                 'is-today': isToday(item.diaryDate),
                 'is-future': item.isFuture,
                 'has-record': item.hasRecord,
-                'clickable': !item.isFuture
+                'clickable': !isDateBlocked(item),
+                'is-disabled': isDateBlocked(item)
               }"
-              @click="navigateToEdit(item.diaryDate, item)"
+              @click="handleDayClick(item)"
             >
               <span class="date-num" v-if="!isToday(item.diaryDate)">{{ dayjs(item.diaryDate).date() }}</span>
               <span class="date-num today-label" v-else>今天</span>
@@ -137,7 +160,7 @@ onMounted(() => {
       <!-- 今日悬浮按钮 -->
       <div v-if="!todayStatus" class="fab-container">
         <div class="fab-tooltip">今天还没写日记</div>
-        <button class="fab-btn" @click="navigateToEdit(dayjs().format('YYYY-MM-DD'), { isFuture: false } as any)">
+        <button class="fab-btn" @click="navigateToEdit(dayjs().format('YYYY-MM-DD'))">
           <el-icon><Edit /></el-icon>
         </button>
       </div>
@@ -321,6 +344,15 @@ onMounted(() => {
 
 .day-cell.clickable:hover {
   background: rgba(0, 0, 0, 0.02);
+}
+
+.day-cell.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.day-cell.is-disabled:hover {
+  background: transparent;
 }
 
 .date-num {
