@@ -175,6 +175,7 @@ const isSharedAnimating = ref(false)
 const sharedCardStyle = ref<Record<string, string>>({})
 const lastBubbleRect = ref<DOMRect | null>(null)
 const postDetailCache = ref<Record<number, PostItem>>({})
+let postDetailRequestSerial = 0
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -314,20 +315,59 @@ const runCardAnimation = async (
   cardAnimation = null
 }
 
+const getLatestPostState = (postId: number) => {
+  return posts.value.find((item) => item.id === postId) || null
+}
+
+const mergePostState = (...sources: Array<PostItem | null | undefined>) => {
+  const merged = sources.reduce<PostItem | null>((acc, source) => {
+    if (!source) return acc
+    return acc ? { ...acc, ...source } : { ...source }
+  }, null)
+
+  if (!merged) return null
+
+  const latestSource = sources
+    .slice()
+    .reverse()
+    .find((item): item is PostItem => !!item)
+
+  return {
+    ...merged,
+    liked: latestSource?.liked ?? merged.liked,
+    likeCount: typeof latestSource?.likeCount === 'number' ? latestSource.likeCount : merged.likeCount,
+  }
+}
+
 const loadPostDetailById = async (postId: number) => {
   const cached = postDetailCache.value[postId]
+  const currentSerial = ++postDetailRequestSerial
+  const latestPost = getLatestPostState(postId)
+  const baseState = mergePostState(
+    cached,
+    selectedPost.value?.id === postId ? selectedPost.value : null,
+    latestPost,
+  )
+
   if (cached) {
     if (selectedPost.value?.id === postId) {
-      selectedPost.value = cached
+      selectedPost.value = baseState || cached
     }
     return
   }
 
   try {
     const detail = await fetchPostDetail(postId)
-    postDetailCache.value[postId] = detail
+    if (currentSerial !== postDetailRequestSerial) return
+
+    const mergedDetail = mergePostState(
+      detail,
+      selectedPost.value?.id === postId ? selectedPost.value : null,
+      latestPost,
+    ) || detail
+    postDetailCache.value[postId] = mergedDetail
     if (selectedPost.value?.id === postId) {
-      selectedPost.value = detail
+      selectedPost.value = mergedDetail
     }
   } catch (error) {
     console.warn('Failed to load post detail by id', error)
@@ -338,7 +378,7 @@ const openPost = async (post: PostItem, event: MouseEvent | KeyboardEvent) => {
   const target = event.currentTarget as HTMLElement | null
   lastBubbleRect.value = target?.getBoundingClientRect() || null
 
-  selectedPost.value = postDetailCache.value[post.id] || post
+  selectedPost.value = mergePostState(postDetailCache.value[post.id], post) || post
   void loadPostDetailById(post.id)
 
   if (reducedMotion || !lastBubbleRect.value) {
@@ -448,6 +488,16 @@ const applyLikeResult = (postId: number, likeCount: number, liked: boolean) => {
   if (selectedPost.value?.id === postId) {
     selectedPost.value = {
       ...selectedPost.value,
+      likeCount,
+      liked,
+    }
+  }
+
+  const latestPost = getLatestPostState(postId)
+  if (latestPost) {
+    postDetailCache.value[postId] = {
+      ...latestPost,
+      ...postDetailCache.value[postId],
       likeCount,
       liked,
     }
