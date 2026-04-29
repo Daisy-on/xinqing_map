@@ -150,6 +150,7 @@ import { ArrowLeft, ArrowRight, CloseBold, UserFilled } from '@element-plus/icon
 import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
+import { getToken } from '@/utils/auth'
 import { useWeatherAudio } from '@/composables/useWeatherAudio'
 
 const CloudOverlay = defineAsyncComponent(() => import('@/components/weather/CloudOverlay.vue'))
@@ -313,6 +314,15 @@ const runCardAnimation = async (
   }
 
   cardAnimation = null
+}
+
+const requireLoginForLike = () => {
+  if (getToken()) {
+    return true
+  }
+
+  ElMessage.warning('请先登录后再点赞')
+  return false
 }
 
 const getLatestPostState = (postId: number) => {
@@ -506,6 +516,7 @@ const applyLikeResult = (postId: number, likeCount: number, liked: boolean) => {
 
 const likeSelected = async () => {
   if (!selectedPost.value || isLiking.value) return
+  if (!requireLoginForLike()) return
 
   isLiking.value = true
   try {
@@ -513,7 +524,8 @@ const likeSelected = async () => {
     applyLikeResult(result.postId, result.likeCount, result.liked)
   } catch (error: any) {
     const status = error?.response?.status
-    if (status === 401) {
+    const code = error?.response?.data?.code
+    if (status === 401 || code === 401) {
       ElMessage.warning('请先登录后再点赞')
       return
     }
@@ -529,6 +541,7 @@ const isPostLiking = (postId: number) => likingPostIds.value.includes(postId)
 const likeInBubble = async (post: PostItem, event: MouseEvent) => {
   event.stopPropagation()
   if (isPostLiking(post.id)) return
+  if (!requireLoginForLike()) return
 
   likingPostIds.value = [...likingPostIds.value, post.id]
   try {
@@ -536,7 +549,8 @@ const likeInBubble = async (post: PostItem, event: MouseEvent) => {
     applyLikeResult(result.postId, result.likeCount, result.liked)
   } catch (error: any) {
     const status = error?.response?.status
-    if (status === 401) {
+    const code = error?.response?.data?.code
+    if (status === 401 || code === 401) {
       ElMessage.warning('请先登录后再点赞')
       return
     }
