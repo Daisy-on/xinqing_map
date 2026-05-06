@@ -27,6 +27,18 @@ const isLoading = ref(false)
 const selectBackTarget = ref<'calendar' | 'write'>('calendar')
 const registerDate = ref<string | null>(null)
 
+const getMoodOrigin = () => {
+  const origin = route.query.from
+  return Array.isArray(origin) ? origin[0] : origin
+}
+
+const getCalendarTarget = () => {
+  return {
+    name: 'mood-calendar',
+    query: { from: getMoodOrigin() === 'map' ? 'map' : 'profile' },
+  }
+}
+
 // AI辅助生成：Kimi-K2.5, 2026-4-5
 const resolveRegisterDate = async () => {
   const cachedUser = getStoredUserInfo()
@@ -64,7 +76,7 @@ const loadDetail = async () => {
       step.value = 'write'
     } else if (isBeforeRegisterDate(rawDate)) {
       ElMessage.warning('该日期早于你的注册时间，无法记录心情')
-      router.replace('/mood/calendar')
+      router.replace(getCalendarTarget())
       return
     } else {
       step.value = 'select'
@@ -100,7 +112,7 @@ const handleBackFromSelect = () => {
   if (selectBackTarget.value === 'write') {
     step.value = 'write'
   } else {
-    router.replace('/mood/calendar')
+      router.replace(getCalendarTarget())
   }
 }
 
@@ -132,7 +144,7 @@ const handleComplete = async () => {
       ElMessage.success('补卡成功')
     }
     moodStore.clearCache()
-    router.replace('/mood/calendar')
+    router.replace(getCalendarTarget())
   } catch (error) {
     console.error('Failed to submit diary', error)
   } finally {

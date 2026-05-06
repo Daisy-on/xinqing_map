@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ArrowLeft, Edit, ArrowRight } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getTodayStatus } from '@/api/mood'
@@ -12,6 +12,7 @@ import dayjs from 'dayjs'
 import type { MoodDiaryMonthVO } from '@/types/models'
 
 const router = useRouter()
+const route = useRoute()
 const moodStore = useMoodStore()
 
 const currentDate = ref(dayjs())
@@ -25,6 +26,15 @@ const weekDays = ['一', '二', '三', '四', '五', '六', '日']
 
 const getMoodScopeKey = () => {
   return String(getStoredUserInfo()?.id ?? getToken() ?? '')
+}
+
+const getMoodOrigin = () => {
+  const origin = route.query.from
+  return Array.isArray(origin) ? origin[0] : origin
+}
+
+const getBackTarget = () => {
+  return getMoodOrigin() === 'map' ? '/' : '/profile'
 }
 
 const paddingDays = computed(() => {
@@ -94,7 +104,7 @@ onMounted(() => {
   <div class="calendar-page">
     <div class="calendar-container animate-fade-in-up">
       <div class="top-nav">
-        <button class="back-btn" @click="router.push('/profile')">
+        <button class="back-btn" @click="router.push(getBackTarget())">
           <el-icon><ArrowLeft /></el-icon>
         </button>
         <div class="month-selector">
@@ -107,7 +117,7 @@ onMounted(() => {
           </button>
         </div>
         <div class="header-right">
-          <button class="arrow-btn trend-btn" type="button" aria-label="统计趋势" @click="router.push('/mood/trend')">
+          <button class="arrow-btn trend-btn" type="button" aria-label="统计趋势" @click="router.push({ name: 'mood_trend', query: { ...route.query } })">
             <img :src="heartDanceIcon" class="trend-svg-icon" alt="" aria-hidden="true" />
           </button>
         </div>

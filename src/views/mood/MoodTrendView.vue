@@ -2,7 +2,7 @@
   <div class="mood-trend-view">
     <!-- 顶部导航 -->
     <header class="top-nav">
-      <button class="back-btn-glass" type="button" @click="router.back()">
+      <button class="back-btn-glass" type="button" @click="router.push(getBackTarget())">
         <el-icon><ArrowLeft /></el-icon>
       </button>
       <h1 class="page-title">心情趋势</h1>
@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
@@ -61,6 +61,7 @@ import { getTrendPoints, getMonthCalendar, type MoodTrendPointVO } from '@/api/m
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const scrollWrapperRef = ref<HTMLElement | null>(null)
 const chartContainerRef = ref<HTMLElement | null>(null)
 let chartInstance: ECharts | null = null
@@ -77,6 +78,15 @@ const trendData = ref<MoodTrendPointVO[]>([])
 const wrapperWidth = ref(0)
 let wrapperResizeObserver: ResizeObserver | null = null
 let requestSeq = 0
+
+const getMoodOrigin = () => {
+  const origin = route.query.from
+  return Array.isArray(origin) ? origin[0] : origin
+}
+
+const getBackTarget = () => {
+  return getMoodOrigin() === 'map' ? '/' : '/profile'
+}
 
 // AI辅助生成：Kimi-K2.5, 2026-4-6
 // 保持图表宽度固定，避免横向滚动留出空白区域。

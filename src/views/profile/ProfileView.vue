@@ -64,11 +64,11 @@ const handleLoginEntry = () => {
 }
 
 const handleMoodTrend = () => {
-  router.push('/mood/trend')
+  router.push({ name: 'mood_trend', query: { from: 'profile' } })
 }
 
 const handleMoodCalendar = () => {
-  router.push('/mood/calendar')
+  router.push({ name: 'mood-calendar', query: { from: 'profile' } })
 }
 
 const handleFireflyClick = () => {

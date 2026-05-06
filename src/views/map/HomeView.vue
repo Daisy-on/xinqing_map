@@ -16,12 +16,12 @@
           <span class="nav-label">心遇</span>
         </button>
 
-        <button class="feature-link standard-nav-link desktop-only" type="button" @click="router.push('/mood/trend')">
+        <button class="feature-link standard-nav-link desktop-only" type="button" @click="router.push({ name: 'mood_trend', query: { from: 'map' } })">
           <img class="nav-icon" src="@/assets/icon/heart-dance.svg" alt="" aria-hidden="true" />
           <span class="nav-label">心情趋势</span>
         </button>
 
-        <button class="feature-link standard-nav-link desktop-only" type="button" @click="router.push('/mood/calendar')">
+        <button class="feature-link standard-nav-link desktop-only" type="button" @click="router.push({ name: 'mood-calendar', query: { from: 'map' } })">
           <img class="nav-icon" src="@/assets/icon/daka.svg" alt="" aria-hidden="true" />
           <span class="nav-label">心情打卡</span>
         </button>
