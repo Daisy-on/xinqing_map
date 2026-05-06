@@ -11,6 +11,21 @@
       </button>
 
       <div class="nav-right-actions">
+        <button class="feature-link standard-nav-link" type="button" @click="handleXiaobanClick">
+          <img class="nav-icon" :src="xiaobanIcon" alt="" aria-hidden="true" />
+          <span class="nav-label">心遇</span>
+        </button>
+
+        <button class="feature-link standard-nav-link desktop-only" type="button" @click="router.push('/mood/trend')">
+          <img class="nav-icon" src="@/assets/icon/heart-dance.svg" alt="" aria-hidden="true" />
+          <span class="nav-label">心情趋势</span>
+        </button>
+
+        <button class="feature-link standard-nav-link desktop-only" type="button" @click="router.push('/mood/calendar')">
+          <img class="nav-icon" src="@/assets/icon/daka.svg" alt="" aria-hidden="true" />
+          <span class="nav-label">心情打卡</span>
+        </button>
+
         <button class="feature-link firefly-link" type="button" @click="handleFireflyClick">
           <div class="firefly-icon-wrapper">
             <img class="nav-icon firefly-nav-icon" :src="fireflyIcon" alt="" aria-hidden="true" />
@@ -19,14 +34,9 @@
           </div>
         </button>
 
-        <button class="feature-link xiaoban-link" type="button" @click="handleXiaobanClick">
-          <img class="nav-icon xiaoban-nav-icon" :src="xiaobanIcon" alt="" aria-hidden="true" />
-          <span>心遇</span>
-        </button>
-
         <button class="avatar-entry" type="button" aria-label="个人中心" @click="handleProfileEntry">
-          <el-avatar :size="42" :src="currentUser?.avatar || ''" class="profile-avatar">
-            <el-icon :size="22"><UserFilled /></el-icon>
+          <el-avatar :size="50" :src="currentUser?.avatar || ''" class="profile-avatar">
+            <el-icon :size="24"><UserFilled /></el-icon>
           </el-avatar>
         </button>
       </div>
@@ -806,7 +816,7 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 16px 32px;
+  padding: 16px 5vw;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -906,20 +916,14 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.xiaoban-link {
-  width: 52px;
+.standard-nav-link {
+  min-width: 52px;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  font-size: 12px;
   font-weight: 600;
-}
-
-.xiaoban-nav-icon {
-  width: 22px;
-  height: 22px;
 }
 
 .avatar-entry {
@@ -933,8 +937,8 @@ onBeforeUnmount(() => {
 .profile-avatar {
   border: 2px solid rgba(18, 35, 56, 0.08);
   box-shadow: 0 6px 16px rgba(15, 31, 52, 0.12);
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
 }
 
 .avatar-entry:hover {
@@ -943,7 +947,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 768px) {
   .top-nav-bar {
-    padding: 12px 18px;
+    padding: 12px 4vw;
   }
 
   .brand-logo-img {
@@ -977,20 +981,18 @@ onBeforeUnmount(() => {
     gap: 14px;
   }
 
-  .xiaoban-link {
-    width: 42px;
-    font-size: 11px;
+  .standard-nav-link {
+    min-width: 42px;
     gap: 3px;
   }
 
-  .xiaoban-nav-icon {
-    width: 20px;
-    height: 20px;
+  :deep(.profile-avatar) {
+    width: 42px;
+    height: 42px;
   }
 
-  :deep(.profile-avatar) {
-    width: 38px;
-    height: 38px;
+  .desktop-only {
+    display: none !important;
   }
 
   .capsule-entry-btn {
