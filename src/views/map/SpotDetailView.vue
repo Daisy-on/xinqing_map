@@ -90,8 +90,18 @@
           <div v-if="selectedPost.imageUrls?.length" class="detail-images"
             :class="{ single: selectedPost.imageUrls.length === 1 }">
             <el-image v-for="(url, idx) in selectedPost.imageUrls" :key="url + idx" :src="url" class="detail-image-item"
-              fit="cover" :preview-src-list="selectedPost.imageUrls" :initial-index="idx" alt="帖子配图"
-              hide-on-click-modal />
+              fit="cover" :preview-src-list="selectedPost.imageUrls" :initial-index="idx" alt="帖子配图" hide-on-click-modal
+              lazy>
+              <template #placeholder>
+                <div class="image-placeholder"><el-skeleton-item variant="image" style="width: 100%; height: 100%;" />
+                </div>
+              </template>
+              <template #error>
+                <div class="image-placeholder"><el-icon :size="24" color="#7189a1">
+                    <Picture />
+                  </el-icon></div>
+              </template>
+            </el-image>
           </div>
 
           <footer class="detail-actions">
@@ -115,7 +125,7 @@
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowLeft, ArrowRight, CloseBold, UserFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, CloseBold, Picture, UserFilled } from '@element-plus/icons-vue'
 import { fetchLocationList } from '@/api/location'
 import { fetchPostDetail, fetchPostList, togglePostLike } from '@/api/post'
 import type { Location, PostItem } from '@/types/models'
@@ -1120,6 +1130,15 @@ onBeforeUnmount(() => {
 
 .detail-image-item :deep(.el-image__inner) {
   object-fit: cover;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
 }
 
 .detail-actions {
