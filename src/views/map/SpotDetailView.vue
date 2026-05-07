@@ -25,18 +25,10 @@
 
         <transition :name="slideDirection">
           <div v-if="posts.length > 0" class="bubbles-layer" :key="currentPage">
-            <article
-              v-for="(post, index) in posts"
-              :key="post.id"
-              class="post-bubble"
-              :class="bubbleClassByIndex(index)"
-              :style="bubbleStyleByIndex(index)"
-              role="button"
-              tabindex="0"
-              @click="openPost(post, $event)"
-              @keydown.enter.prevent="openPost(post, $event)"
-              @keydown.space.prevent="openPost(post, $event)"
-            >
+            <article v-for="(post, index) in posts" :key="post.id" class="post-bubble"
+              :class="bubbleClassByIndex(index)" :style="bubbleStyleByIndex(index)" role="button" tabindex="0"
+              @click="openPost(post, $event)" @keydown.enter.prevent="openPost(post, $event)"
+              @keydown.space.prevent="openPost(post, $event)">
               <span class="bubble-tag" :style="{ backgroundColor: post.emotionTagColor || '#6AA6FF' }">
                 {{ post.emotionTagName || '心情' }}
               </span>
@@ -44,14 +36,8 @@
               <time class="bubble-time">
                 编辑于{{ formatPostTime(post.updateTime || post.createTime) }}
               </time>
-              <button
-                type="button"
-                class="bubble-like-btn"
-                :class="{ liked: !!post.liked }"
-                :disabled="isPostLiking(post.id)"
-                @click.stop="likeInBubble(post, $event)"
-                aria-label="点赞"
-              >
+              <button type="button" class="bubble-like-btn" :class="{ liked: !!post.liked }"
+                :disabled="isPostLiking(post.id)" @click.stop="likeInBubble(post, $event)" aria-label="点赞">
                 <span class="bubble-heart" aria-hidden="true">{{ post.liked ? '❤' : '♡' }}</span>
                 <span class="bubble-like-count">{{ post.likeCount ?? 0 }}</span>
               </button>
@@ -59,42 +45,38 @@
           </div>
         </transition>
       </div>
-      
+
       <div v-if="totalPosts > 10" class="pagination-controls">
-        <el-button 
-          :disabled="currentPage === 1" 
-          @click="prevPage" 
-          round
-        >
-          <el-icon><ArrowLeft /></el-icon> 上一页
+        <el-button :disabled="currentPage === 1" @click="prevPage" round>
+          <el-icon>
+            <ArrowLeft />
+          </el-icon> 上一页
         </el-button>
         <span class="page-indicator">{{ currentPage }} / {{ Math.ceil(totalPosts / 10) }}</span>
-        <el-button 
-          :disabled="currentPage * 10 >= totalPosts" 
-          @click="nextPage" 
-          round
-        >
-          下一页 <el-icon><ArrowRight /></el-icon>
+        <el-button :disabled="currentPage * 10 >= totalPosts" @click="nextPage" round>
+          下一页 <el-icon>
+            <ArrowRight />
+          </el-icon>
         </el-button>
       </div>
     </div>
 
     <transition name="veil-fade">
       <div v-if="selectedPost" class="detail-veil" @click.self="closePost">
-        <article
-          ref="detailCardRef"
-          class="detail-card"
-          :class="{ 'shared-animating': isSharedAnimating }"
-          :style="sharedCardStyle"
-        >
+        <article ref="detailCardRef" class="detail-card" :class="{ 'shared-animating': isSharedAnimating }"
+          :style="sharedCardStyle">
           <button type="button" class="detail-close" @click="closePost" aria-label="关闭详情">
-            <el-icon><CloseBold /></el-icon>
+            <el-icon>
+              <CloseBold />
+            </el-icon>
           </button>
 
           <header class="detail-header">
             <div class="publisher-info">
               <el-avatar :size="36" :src="selectedPost.avatar" class="publisher-avatar">
-                <el-icon v-if="!selectedPost.avatar"><UserFilled /></el-icon>
+                <el-icon v-if="!selectedPost.avatar">
+                  <UserFilled />
+                </el-icon>
               </el-avatar>
               <span class="publisher-nickname">{{ selectedPost.nickname || '心晴用户' }}</span>
             </div>
@@ -105,18 +87,11 @@
 
           <p class="detail-content">{{ selectedPost.content }}</p>
 
-          <div v-if="selectedPost.imageUrls?.length" class="detail-images" :class="{ single: selectedPost.imageUrls.length === 1 }">
-            <el-image
-              v-for="(url, idx) in selectedPost.imageUrls"
-              :key="url + idx"
-              :src="url"
-              class="detail-image-item"
-              fit="cover"
-              :preview-src-list="selectedPost.imageUrls"
-              :initial-index="idx"
-              alt="帖子配图"
-              hide-on-click-modal
-            />
+          <div v-if="selectedPost.imageUrls?.length" class="detail-images"
+            :class="{ single: selectedPost.imageUrls.length === 1 }">
+            <el-image v-for="(url, idx) in selectedPost.imageUrls" :key="url + idx" :src="url" class="detail-image-item"
+              fit="cover" :preview-src-list="selectedPost.imageUrls" :initial-index="idx" alt="帖子配图"
+              hide-on-click-modal />
           </div>
 
           <footer class="detail-actions">
@@ -124,14 +99,8 @@
               编辑于{{ formatPostTime(selectedPost.updateTime || selectedPost.createTime) }}
             </time>
 
-            <button
-              type="button"
-              class="detail-like-btn"
-              :class="{ liked: selectedPost?.liked }"
-              :disabled="isLiking"
-              @click="likeSelected"
-              aria-label="点赞"
-            >
+            <button type="button" class="detail-like-btn" :class="{ liked: selectedPost?.liked }" :disabled="isLiking"
+              @click="likeSelected" aria-label="点赞">
               <span class="heart-icon" aria-hidden="true">{{ selectedPost?.liked ? '❤' : '♡' }}</span>
               <span>{{ selectedLikeCount }}</span>
             </button>
@@ -329,10 +298,22 @@ const getLatestPostState = (postId: number) => {
   return posts.value.find((item) => item.id === postId) || null
 }
 
+const mergeDefinedPostFields = (base: PostItem, patch: PostItem) => {
+  const next = { ...base }
+
+  for (const [key, value] of Object.entries(patch) as Array<[keyof PostItem, any]>) {
+    if (value !== undefined) {
+      ; (next as any)[key] = value
+    }
+  }
+
+  return next
+}
+
 const mergePostState = (...sources: Array<PostItem | null | undefined>) => {
   const merged = sources.reduce<PostItem | null>((acc, source) => {
     if (!source) return acc
-    return acc ? { ...acc, ...source } : { ...source }
+    return acc ? mergeDefinedPostFields(acc, source) : { ...source }
   }, null)
 
   if (!merged) return null
@@ -416,7 +397,7 @@ const openPost = async (post: PostItem, event: MouseEvent | KeyboardEvent) => {
     card,
     [
       {
-        transform: 	`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
         opacity: 0,
       },
       {
@@ -462,7 +443,7 @@ const closePost = async () => {
         opacity: 1,
       },
       {
-        transform: 	`translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
+        transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`,
         opacity: 0,
       },
     ],
@@ -777,6 +758,7 @@ onBeforeUnmount(() => {
   padding: 6px 12px;
   border-radius: 20px;
 }
+
 .bubbles-layer {
   position: absolute;
   inset: 0;
@@ -796,6 +778,7 @@ onBeforeUnmount(() => {
   transform: translateX(40px) scale(0.96);
   opacity: 0;
 }
+
 .slide-left-leave-to {
   transform: translateX(-40px) scale(0.96);
   opacity: 0;
@@ -805,6 +788,7 @@ onBeforeUnmount(() => {
   transform: translateX(-40px) scale(0.96);
   opacity: 0;
 }
+
 .slide-right-leave-to {
   transform: translateX(40px) scale(0.96);
   opacity: 0;
@@ -849,6 +833,7 @@ onBeforeUnmount(() => {
 .bubble-a {
   transform: translate(var(--tx, 0), var(--ty, 0)) rotate(-2deg);
 }
+
 .bubble-a:hover {
   transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)) rotate(-2deg) scale(1.02);
 }
@@ -856,6 +841,7 @@ onBeforeUnmount(() => {
 .bubble-b {
   transform: translate(var(--tx, 0), var(--ty, 0)) rotate(1.2deg);
 }
+
 .bubble-b:hover {
   transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)) rotate(1.2deg) scale(1.02);
 }
@@ -863,6 +849,7 @@ onBeforeUnmount(() => {
 .bubble-c {
   transform: translate(var(--tx, 0), var(--ty, 0)) rotate(-0.6deg);
 }
+
 .bubble-c:hover {
   transform: translate(var(--tx, 0), calc(var(--ty, 0) - 4px)) rotate(-0.6deg) scale(1.02);
 }
@@ -950,14 +937,29 @@ onBeforeUnmount(() => {
 }
 
 @keyframes liked-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes ripple {
-  0% { transform: scale(0.8); opacity: 1; }
-  100% { transform: scale(2.2); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 .bubble-heart {
@@ -1173,7 +1175,8 @@ onBeforeUnmount(() => {
   content: "";
   position: absolute;
   top: 50%;
-  left: 10px; /* 精确对应 heart-icon 的中心位置 */
+  left: 10px;
+  /* 精确对应 heart-icon 的中心位置 */
   width: 20px;
   height: 20px;
   transform: translate(-50%, -50%) scale(0);
@@ -1196,15 +1199,33 @@ onBeforeUnmount(() => {
 }
 
 @keyframes heart-bounce {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.45); }
-  65% { transform: scale(0.85); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.45);
+  }
+
+  65% {
+    transform: scale(0.85);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes ripple-center {
-  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.9; }
-  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(2.8);
+    opacity: 0;
+  }
 }
 
 .veil-fade-enter-active,
@@ -1300,6 +1321,7 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .post-bubble,
   .scatter-container,
   .action-btn {
