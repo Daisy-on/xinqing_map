@@ -1,4 +1,4 @@
-﻿import http from './http'
+import http from './http'
 import type { ApiResponse } from '@/types/api'
 import type { EmotionTag, PagedResult, PostItem } from '@/types/models'
 
@@ -21,6 +21,16 @@ function getPostImageCache(): Record<string, string> {
   }
 }
 
+function normalizeImageUrl(value: string | null | undefined): string {
+  if (typeof value !== 'string') return ''
+
+  return value
+    .trim()
+    .replace(/^['"`]+/, '')
+    .replace(/['"`]+$/, '')
+    .trim()
+}
+
 function setPostImageCache(cache: Record<string, string>) {
   try {
     sessionStorage.setItem(POST_IMAGE_CACHE_KEY, JSON.stringify(cache))
@@ -39,7 +49,7 @@ function cachePostImage(postId: number, imageUrl: string) {
 function getCachedPostImage(postId: number): string {
   const cache = getPostImageCache()
   const value = cache[String(postId)]
-  return typeof value === 'string' ? value.trim() : ''
+  return normalizeImageUrl(value)
 }
 
 export function getPostCoverImage(postId: number): string {
@@ -48,15 +58,24 @@ export function getPostCoverImage(postId: number): string {
 
 function normalizePostItem(item: BackendPostItem): PostItem {
   const imageUrls = Array.isArray(item.imageUrls)
-    ? item.imageUrls.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+    ? item.imageUrls
+      .map((value) => normalizeImageUrl(value))
+      .filter((value): value is string => value.length > 0)
     : []
 
-  const image = typeof item.image === 'string' ? item.image.trim() : ''
+  const image = normalizeImageUrl(item.image)
   const cachedImage = Number.isFinite(item.id) ? getCachedPostImage(item.id) : ''
   const finalImage = image || cachedImage
 
   if (!imageUrls.length && finalImage) {
     imageUrls.push(finalImage)
+  }
+
+  if (Number.isFinite(item.id)) {
+    const cacheableImage = imageUrls[0] || finalImage
+    if (cacheableImage) {
+      cachePostImage(item.id, cacheableImage)
+    }
   }
 
   return {
@@ -132,7 +151,7 @@ export async function uploadPostImage(file: File): Promise<string> {
     },
   })
 
-  const imageUrl = typeof response.data?.data === 'string' ? response.data.data.trim() : ''
+  const imageUrl = normalizeImageUrl(response.data?.data)
   if (!imageUrl) {
     throw new Error('图片上传失败，请稍后重试')
   }
@@ -166,4 +185,3 @@ export async function togglePostLike(postId: number): Promise<PostLikeResult> {
   })
   return response.data.data
 }
-

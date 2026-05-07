@@ -87,23 +87,22 @@
 
           <p class="detail-content">{{ selectedPost.content }}</p>
 
-          <div v-if="selectedPost.imageUrls?.length" class="detail-images"
-            :class="{ single: selectedPost.imageUrls.length === 1 }">
-            <el-image v-for="(url, idx) in selectedPost.imageUrls" :key="url + idx" :src="url" class="detail-image-item"
-              fit="cover" :preview-src-list="selectedPost.imageUrls" :initial-index="idx" alt="帖子配图" hide-on-click-modal
-              lazy>
+          <div v-if="detailImageUrls.length" class="detail-images" :class="{ single: detailImageUrls.length === 1 }">
+            <el-image v-for="(url, idx) in detailImageUrls" :key="url + idx" :src="url" class="detail-image-item"
+              fit="cover" :preview-src-list="detailImageUrls" :initial-index="idx" alt="帖子配图" hide-on-click-modal>
               <template #placeholder>
                 <div class="image-placeholder"><el-skeleton-item variant="image" style="width: 100%; height: 100%;" />
                 </div>
               </template>
               <template #error>
-                <div class="image-placeholder"><el-icon :size="24" color="#7189a1">
+                <div class="image-placeholder">
+                  <el-icon :size="24" color="#7189a1">
                     <Picture />
-                  </el-icon></div>
+                  </el-icon>
+                </div>
               </template>
             </el-image>
           </div>
-
           <footer class="detail-actions">
             <time class="detail-time">
               编辑于{{ formatPostTime(selectedPost.updateTime || selectedPost.createTime) }}
@@ -244,6 +243,16 @@ const selectedLikeCount = computed(() => {
   if (!selectedPost.value) return 0
   return selectedPost.value.likeCount ?? 0
 })
+
+const detailImageUrls = computed(() => selectedPost.value?.imageUrls ?? [])
+
+const preloadImageUrls = (urls: string[]) => {
+  urls.forEach((url) => {
+    const image = new window.Image()
+    image.decoding = 'async'
+    image.src = url
+  })
+}
 
 const goBack = () => {
   router.push('/')
@@ -648,6 +657,15 @@ watch(activeWeatherCode, (newCode) => {
     triggerThunder()
   }
 })
+
+watch(
+  () => detailImageUrls.value.join('|'),
+  () => {
+    if (detailImageUrls.value.length) {
+      preloadImageUrls(detailImageUrls.value)
+    }
+  },
+)
 
 onBeforeUnmount(() => {
   window.clearTimeout(resizeTimer)
